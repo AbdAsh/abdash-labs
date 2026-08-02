@@ -1,0 +1,436 @@
+{
+  "nodes": [
+    {
+      "id": "organization:helix-labs",
+      "name": "Helix Labs",
+      "type": "organization",
+      "aliases": [
+        "Helix Labs"
+      ],
+      "description": "A genomics company building a portable sequencer for field clinics.",
+      "mentions": 5,
+      "chunkIds": [
+        "c0",
+        "c1",
+        "c2",
+        "c4",
+        "c5"
+      ]
+    },
+    {
+      "id": "person:sarah-chen",
+      "name": "Dr. Sarah Chen",
+      "type": "person",
+      "aliases": [
+        "Dr. Sarah Chen",
+        "Sarah Chen"
+      ],
+      "description": "A biochemist who founded Helix Labs.",
+      "mentions": 5,
+      "chunkIds": [
+        "c0",
+        "c2",
+        "c3",
+        "c5"
+      ]
+    },
+    {
+      "id": "place:rotterdam",
+      "name": "Rotterdam",
+      "type": "place",
+      "aliases": [
+        "Rotterdam"
+      ],
+      "description": "The Dutch city where Helix Labs was founded.",
+      "mentions": 2,
+      "chunkIds": [
+        "c0",
+        "c3"
+      ]
+    },
+    {
+      "id": "organization:delft-university-of-technology",
+      "name": "Delft University of Technology",
+      "type": "organization",
+      "aliases": [
+        "Delft University of Technology"
+      ],
+      "description": "The university where Chen spent the previous decade.",
+      "mentions": 2,
+      "chunkIds": [
+        "c0",
+        "c5"
+      ]
+    },
+    {
+      "id": "date:2019",
+      "name": "2019",
+      "type": "date",
+      "aliases": [
+        "2019"
+      ],
+      "description": "The year Helix Labs was founded.",
+      "mentions": 1,
+      "chunkIds": [
+        "c0"
+      ]
+    },
+    {
+      "id": "artifact:helix",
+      "name": "Helix",
+      "type": "artifact",
+      "aliases": [
+        "Helix"
+      ],
+      "description": "A portable sequencer weighing under two kilograms.",
+      "mentions": 4,
+      "chunkIds": [
+        "c1",
+        "c3",
+        "c4",
+        "c5"
+      ]
+    },
+    {
+      "id": "person:marcus-webb",
+      "name": "Marcus Webb",
+      "type": "person",
+      "aliases": [
+        "Marcus Webb"
+      ],
+      "description": "Chief scientist at Helix Labs from 2020.",
+      "mentions": 2,
+      "chunkIds": [
+        "c1",
+        "c4"
+      ]
+    },
+    {
+      "id": "organization:orbit-biosciences",
+      "name": "Orbit Biosciences",
+      "type": "organization",
+      "aliases": [
+        "Orbit Biosciences"
+      ],
+      "description": "A larger, better funded rival working on the same problem since 2016.",
+      "mentions": 3,
+      "chunkIds": [
+        "c2",
+        "c4",
+        "c5"
+      ]
+    },
+    {
+      "id": "person:priya-raman",
+      "name": "Priya Raman",
+      "type": "person",
+      "aliases": [
+        "Priya Raman"
+      ],
+      "description": "Ran the field programme from Rotterdam.",
+      "mentions": 2,
+      "chunkIds": [
+        "c3",
+        "c4"
+      ]
+    },
+    {
+      "id": "date:march-2023",
+      "name": "March 2023",
+      "type": "date",
+      "aliases": [
+        "March 2023"
+      ],
+      "description": "When Helix Labs and Orbit Biosciences merged.",
+      "mentions": 1,
+      "chunkIds": [
+        "c4"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "person:sarah-chen|founded|organization:helix-labs",
+      "source": "person:sarah-chen",
+      "target": "organization:helix-labs",
+      "relation": "founded",
+      "weight": 2,
+      "evidence": [
+        {
+          "chunkId": "c0",
+          "quote": "Helix Labs was founded in Rotterdam in 2019 by Dr. Sarah Chen"
+        },
+        {
+          "chunkId": "c2",
+          "quote": "Sarah Chen had in fact left Orbit Biosciences to start Helix Labs"
+        }
+      ]
+    },
+    {
+      "id": "organization:delft-university-of-technology|holds a stake in|organization:helix-labs",
+      "source": "organization:delft-university-of-technology",
+      "target": "organization:helix-labs",
+      "relation": "holds a stake in",
+      "weight": 1,
+      "evidence": [
+        {
+          "chunkId": "c5",
+          "quote": "Delft University of Technology retained a small equity stake in Helix Labs from the founding"
+        }
+      ]
+    },
+    {
+      "id": "organization:delft-university-of-technology|tested|artifact:helix",
+      "source": "organization:delft-university-of-technology",
+      "target": "artifact:helix",
+      "relation": "tested",
+      "weight": 1,
+      "evidence": [
+        {
+          "chunkId": "c5",
+          "quote": "two of its laboratories continued to test the Helix in the field"
+        }
+      ]
+    },
+    {
+      "id": "organization:helix-labs|based in|place:rotterdam",
+      "source": "organization:helix-labs",
+      "target": "place:rotterdam",
+      "relation": "based in",
+      "weight": 1,
+      "evidence": [
+        {
+          "chunkId": "c0",
+          "quote": "Helix Labs was founded in Rotterdam"
+        }
+      ]
+    },
+    {
+      "id": "organization:helix-labs|founded in|date:2019",
+      "source": "organization:helix-labs",
+      "target": "date:2019",
+      "relation": "founded in",
+      "weight": 1,
+      "evidence": [
+        {
+          "chunkId": "c0",
+          "quote": "Helix Labs was founded in Rotterdam in 2019"
+        }
+      ]
+    },
+    {
+      "id": "organization:helix-labs|merged in|date:march-2023",
+      "source": "organization:helix-labs",
+      "target": "date:march-2023",
+      "relation": "merged in",
+      "weight": 1,
+      "evidence": [
+        {
+          "chunkId": "c4",
+          "quote": "In March 2023 Helix Labs merged with Orbit Biosciences"
+        }
+      ]
+    },
+    {
+      "id": "organization:helix-labs|merged with|organization:orbit-biosciences",
+      "source": "organization:helix-labs",
+      "target": "organization:orbit-biosciences",
+      "relation": "merged with",
+      "weight": 1,
+      "evidence": [
+        {
+          "chunkId": "c4",
+          "quote": "In March 2023 Helix Labs merged with Orbit Biosciences"
+        }
+      ]
+    },
+    {
+      "id": "organization:helix-labs|shipped|artifact:helix",
+      "source": "organization:helix-labs",
+      "target": "artifact:helix",
+      "relation": "shipped",
+      "weight": 1,
+      "evidence": [
+        {
+          "chunkId": "c1",
+          "quote": "Helix Labs shipped its first prototype, called Helix, to three clinics in 2021"
+        }
+      ]
+    },
+    {
+      "id": "organization:orbit-biosciences|competed with|organization:helix-labs",
+      "source": "organization:orbit-biosciences",
+      "target": "organization:helix-labs",
+      "relation": "competed with",
+      "weight": 1,
+      "evidence": [
+        {
+          "chunkId": "c2",
+          "quote": "For four years the two companies competed for the same grants and the same customers"
+        }
+      ]
+    },
+    {
+      "id": "organization:orbit-biosciences|kept the name of|artifact:helix",
+      "source": "organization:orbit-biosciences",
+      "target": "artifact:helix",
+      "relation": "kept the name of",
+      "weight": 1,
+      "evidence": [
+        {
+          "chunkId": "c4",
+          "quote": "The merged company kept the Helix name for the device"
+        }
+      ]
+    },
+    {
+      "id": "person:marcus-webb|joined|organization:helix-labs",
+      "source": "person:marcus-webb",
+      "target": "organization:helix-labs",
+      "relation": "joined",
+      "weight": 1,
+      "evidence": [
+        {
+          "chunkId": "c1",
+          "quote": "Marcus Webb, who joined Helix Labs as chief scientist in 2020"
+        }
+      ]
+    },
+    {
+      "id": "person:marcus-webb|left|organization:helix-labs",
+      "source": "person:marcus-webb",
+      "target": "organization:helix-labs",
+      "relation": "left",
+      "weight": 1,
+      "evidence": [
+        {
+          "chunkId": "c4",
+          "quote": "Marcus Webb left within the year"
+        }
+      ]
+    },
+    {
+      "id": "person:marcus-webb|rebuilt|artifact:helix",
+      "source": "person:marcus-webb",
+      "target": "artifact:helix",
+      "relation": "rebuilt",
+      "weight": 1,
+      "evidence": [
+        {
+          "chunkId": "c1",
+          "quote": "rebuilt the basecaller inside Helix twice in eighteen months"
+        }
+      ]
+    },
+    {
+      "id": "person:priya-raman|based in|place:rotterdam",
+      "source": "person:priya-raman",
+      "target": "place:rotterdam",
+      "relation": "based in",
+      "weight": 1,
+      "evidence": [
+        {
+          "chunkId": "c3",
+          "quote": "Priya Raman ran the field programme from Rotterdam"
+        }
+      ]
+    },
+    {
+      "id": "person:priya-raman|deployed|artifact:helix",
+      "source": "person:priya-raman",
+      "target": "artifact:helix",
+      "relation": "deployed",
+      "weight": 1,
+      "evidence": [
+        {
+          "chunkId": "c3",
+          "quote": "she placed Helix units in clinics across four countries"
+        }
+      ]
+    },
+    {
+      "id": "person:priya-raman|reports to|person:sarah-chen",
+      "source": "person:priya-raman",
+      "target": "person:sarah-chen",
+      "relation": "reports to",
+      "weight": 1,
+      "evidence": [
+        {
+          "chunkId": "c3",
+          "quote": "Priya Raman reported directly to Dr. Sarah Chen"
+        }
+      ]
+    },
+    {
+      "id": "person:priya-raman|stayed at|organization:orbit-biosciences",
+      "source": "person:priya-raman",
+      "target": "organization:orbit-biosciences",
+      "relation": "stayed at",
+      "weight": 1,
+      "evidence": [
+        {
+          "chunkId": "c4",
+          "quote": "Priya Raman stayed on to run the combined field programme"
+        }
+      ]
+    },
+    {
+      "id": "person:sarah-chen|left|organization:orbit-biosciences",
+      "source": "person:sarah-chen",
+      "target": "organization:orbit-biosciences",
+      "relation": "left",
+      "weight": 1,
+      "evidence": [
+        {
+          "chunkId": "c2",
+          "quote": "Sarah Chen had in fact left Orbit Biosciences to start Helix Labs"
+        }
+      ]
+    },
+    {
+      "id": "person:sarah-chen|previously at|organization:delft-university-of-technology",
+      "source": "person:sarah-chen",
+      "target": "organization:delft-university-of-technology",
+      "relation": "previously at",
+      "weight": 1,
+      "evidence": [
+        {
+          "chunkId": "c0",
+          "quote": "Dr. Sarah Chen, a biochemist who had spent the previous decade at Delft University of Technology"
+        }
+      ]
+    },
+    {
+      "id": "person:sarah-chen|returned to|organization:delft-university-of-technology",
+      "source": "person:sarah-chen",
+      "target": "organization:delft-university-of-technology",
+      "relation": "returned to",
+      "weight": 1,
+      "evidence": [
+        {
+          "chunkId": "c5",
+          "quote": "Dr. Sarah Chen returned to Delft as a visiting professor in 2024"
+        }
+      ]
+    },
+    {
+      "id": "person:sarah-chen|sits on the board of|organization:orbit-biosciences",
+      "source": "person:sarah-chen",
+      "target": "organization:orbit-biosciences",
+      "relation": "sits on the board of",
+      "weight": 1,
+      "evidence": [
+        {
+          "chunkId": "c5",
+          "quote": "while remaining on the board of Orbit Biosciences"
+        }
+      ]
+    }
+  ],
+  "stats": {
+    "chunks": 6,
+    "keptRelations": 22,
+    "droppedRelations": 0,
+    "unresolvedRelations": 0
+  }
+}
