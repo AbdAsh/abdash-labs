@@ -1,0 +1,754 @@
+/* Recto — the open book.
+ *
+ * House rule for this file: no physical direction, anywhere. Every offset,
+ * margin, padding, border and alignment is written on the inline/block axes,
+ * so putting dir="rtl" on the spread container mirrors the entire layout —
+ * verso and recto swap sides, the gutter stays in the middle, page edges stay
+ * on the outside — with no duplicated rules and no second stylesheet.
+ *
+ * The check is a grep for the physical property names; below this comment
+ * block there should be no hits. */
+
+:root {
+  color-scheme: light dark;
+
+  --paper: #fbfbfc;
+  --paper-sunk: #f1f2f5;
+  --ink: #14161a;
+  --ink-soft: #5b616b;
+  --ink-faint: #8b919b;
+  --rule: #d7dae0;
+  --rule-strong: #b3b8c1;
+  --accent: #1f4ea1;
+  --accent-wash: #e8eefa;
+  --danger: #a3282a;
+
+  --sans: 'Instrument Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --serif: 'Newsreader', 'Noto Naskh Arabic', ui-serif, Georgia, 'Times New Roman', serif;
+
+  --step-0: 0.9375rem;
+  --step--1: 0.8125rem;
+  --step--2: 0.6875rem;
+  --step-1: 1.0625rem;
+  --step-2: 1.375rem;
+
+  --space: 1rem;
+  --measure: 34rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #101215;
+    --paper-sunk: #16191d;
+    --ink: #e7e9ec;
+    --ink-soft: #9aa1ab;
+    --ink-faint: #6d747e;
+    --rule: #2a2e35;
+    --rule-strong: #3c424b;
+    --accent: #86aef2;
+    --accent-wash: #1a222f;
+    --danger: #e0817f;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--step-0);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+figure {
+  margin: 0;
+}
+
+ul,
+ol {
+  list-style: none;
+  padding: 0;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+input,
+select {
+  font: inherit;
+  color: inherit;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 0; /* no rounded boxes anywhere — this is print, not cards */
+  padding-block: 0.4rem;
+  padding-inline: 0.55rem;
+}
+
+input:focus-visible,
+select:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ─── The spread ───────────────────────────────────────────────────────── */
+
+.spread {
+  display: grid;
+  grid-template-columns: minmax(0, 21rem) 1px minmax(0, 1fr);
+  align-items: stretch;
+  min-block-size: calc(100dvh - 2.5rem);
+}
+
+/* The gutter: a real one, not a margin. */
+.spread__gutter {
+  background: var(--rule-strong);
+}
+
+/* Page-edge treatment at the outer margins. `double` reads as the edge of a
+   stack of leaves without resorting to a shadow. */
+.spread__verso {
+  border-inline-start: 3px double var(--rule);
+  background: var(--paper-sunk);
+  overflow-y: auto;
+  max-block-size: calc(100dvh - 2.5rem);
+  position: sticky;
+  inset-block-start: 0;
+}
+
+.spread__recto {
+  border-inline-end: 3px double var(--rule);
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.spread__drawer-toggle,
+.spread__scrim {
+  display: none;
+}
+
+/* ─── Verso: sources ───────────────────────────────────────────────────── */
+
+.verso {
+  padding-block: 1.5rem 2rem;
+  padding-inline: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.wordmark {
+  font-family: var(--serif);
+  font-size: var(--step-2);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+.tagline {
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.panel__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-block-end: 0.35rem;
+  border-block-end: 1px solid var(--rule-strong);
+}
+
+.panel__head h2 {
+  font-size: var(--step--2);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.tally {
+  font-size: var(--step--2);
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.stack > li + li {
+  border-block-start: 1px solid var(--rule);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.row[data-current] {
+  background: var(--accent-wash);
+}
+
+.row__main,
+.row__main--static {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  text-align: start;
+  padding-block: 0.5rem;
+  padding-inline: 0.35rem;
+}
+
+.row__main--static {
+  cursor: default;
+}
+
+.row__title {
+  font-size: var(--step--1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row[data-current] .row__title {
+  font-weight: 600;
+}
+
+.row__meta {
+  font-size: var(--step--2);
+  color: var(--ink-faint);
+}
+
+.row__discard {
+  flex: none;
+  inline-size: 1.6rem;
+  block-size: 1.6rem;
+  color: var(--ink-faint);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.row__discard:hover {
+  color: var(--danger);
+}
+
+.row__confirm {
+  display: flex;
+  gap: 0.35rem;
+  padding-inline-end: 0.35rem;
+}
+
+.row__confirm button {
+  font-size: var(--step--2);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.row__confirm button:first-child {
+  color: var(--danger);
+}
+
+.row__rename {
+  flex: 1 1 auto;
+  padding-block: 0.3rem;
+}
+
+.row__rename input {
+  inline-size: 100%;
+}
+
+.action {
+  align-self: start;
+  font-size: var(--step--1);
+  padding-block: 0.35rem;
+  padding-inline: 0.6rem;
+  border: 1px solid var(--rule-strong);
+}
+
+.action:hover:not(:disabled) {
+  border-color: var(--ink);
+}
+
+.action:disabled {
+  color: var(--ink-faint);
+  border-style: dashed;
+  cursor: not-allowed;
+}
+
+.action--quiet {
+  border: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  padding-inline: 0;
+  color: var(--ink-soft);
+}
+
+.empty {
+  font-size: var(--step--1);
+  color: var(--ink-faint);
+  padding-block: 0.5rem;
+}
+
+.dropzone {
+  display: block;
+  border: 1px dashed var(--rule-strong);
+  padding-block: 0.85rem;
+  padding-inline: 0.6rem;
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+  text-align: center;
+  cursor: pointer;
+}
+
+.dropzone:hover {
+  border-color: var(--ink-soft);
+}
+
+.dropzone input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  opacity: 0;
+}
+
+.dropzone[data-status='error'] {
+  border-color: var(--danger);
+  border-style: solid;
+}
+
+.error {
+  color: var(--danger);
+  font-size: var(--step--1);
+}
+
+/* ─── Recto: conversation ──────────────────────────────────────────────── */
+
+.recto {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-block-size: 0;
+}
+
+.recto__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-block: 1.5rem 0.75rem;
+  padding-inline: clamp(1rem, 4vw, 2.5rem);
+  border-block-end: 1px solid var(--rule);
+}
+
+.recto__title h2 {
+  font-family: var(--serif);
+  font-size: var(--step-2);
+  font-weight: 400;
+}
+
+.recto__meta {
+  font-size: var(--step--2);
+  color: var(--ink-faint);
+}
+
+.recto__threads {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: var(--step--1);
+}
+
+.recto__threads select {
+  max-inline-size: 14rem;
+}
+
+.transcript {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding-block: 1.5rem 2rem;
+  padding-inline: clamp(1rem, 4vw, 2.5rem);
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.opening {
+  max-inline-size: var(--measure);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.opening__lead {
+  font-family: var(--serif);
+  font-size: var(--step-1);
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.starter {
+  font-size: var(--step--1);
+  border-block-end: 1px solid var(--rule-strong);
+  padding-block-end: 0.15rem;
+  text-align: start;
+  color: var(--ink-soft);
+}
+
+.starter:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+/* ─── A turn ───────────────────────────────────────────────────────────── */
+
+.turn {
+  max-inline-size: var(--measure);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.question {
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ink-soft);
+  padding-inline-start: 0.85rem;
+  border-inline-start: 2px solid var(--rule-strong);
+  text-wrap: pretty;
+}
+
+.answer {
+  font-family: var(--serif);
+  font-size: var(--step-1);
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+.answer--pending .thinking {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+.answer__cursor {
+  display: inline-block;
+  inline-size: 0.45em;
+  block-size: 1em;
+  vertical-align: text-bottom;
+  margin-inline-start: 0.1em;
+  background: var(--accent);
+  animation: blink 1.1s steps(2, start) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.cite-ref {
+  font-family: var(--sans);
+  font-size: 0.72em;
+  font-weight: 600;
+  vertical-align: super;
+  color: var(--accent);
+  padding-inline: 0.05em;
+}
+
+.cite-ref:hover {
+  text-decoration: underline;
+}
+
+/* ─── Citations ────────────────────────────────────────────────────────── */
+
+.citations {
+  border-block-start: 1px solid var(--rule);
+  padding-block-start: 0.4rem;
+}
+
+.citations__toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: var(--step--2);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.citations__caret {
+  flex: none;
+  transition: rotate 0.18s ease;
+}
+
+/* Mirrored, not re-pathed: the caret must point along the inline axis. */
+[dir='rtl'] .citations__caret {
+  scale: -1 1;
+}
+
+.citations[data-open='true'] .citations__caret {
+  rotate: 90deg;
+}
+
+.citations__count {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+.citations__region {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.2s ease;
+}
+
+.citations[data-open='true'] .citations__region {
+  grid-template-rows: 1fr;
+}
+
+.citations__inner {
+  overflow: hidden;
+}
+
+.citations__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding-block: 0.75rem 0.25rem;
+  counter-reset: cite;
+}
+
+.citations__list li {
+  counter-increment: cite;
+  padding-inline-start: 1.9rem;
+  position: relative;
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+
+.citations__list li::before {
+  content: '[' counter(cite) ']';
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block-start: 0;
+  font-size: var(--step--2);
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.citations__list li[data-highlight] {
+  background: var(--accent-wash);
+}
+
+.cite-source {
+  display: flex;
+  gap: 0.4rem;
+  font-size: var(--step--2);
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+
+.cite-doc {
+  font-weight: 600;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-inline-size: 18rem;
+}
+
+.cite-page {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ─── Composer ─────────────────────────────────────────────────────────── */
+
+.composer {
+  display: flex;
+  gap: 0.5rem;
+  padding-block: 0.85rem;
+  padding-inline: clamp(1rem, 4vw, 2.5rem);
+  border-block-start: 1px solid var(--rule-strong);
+  background: var(--paper);
+  position: sticky;
+  inset-block-end: 0;
+}
+
+.composer input {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  max-inline-size: var(--measure);
+}
+
+.composer button[type='submit'] {
+  flex: none;
+  border: 1px solid var(--ink);
+  padding-block: 0.4rem;
+  padding-inline: 1rem;
+  font-size: var(--step--1);
+}
+
+.composer button[type='submit']:disabled {
+  border-color: var(--rule-strong);
+  color: var(--ink-faint);
+  cursor: not-allowed;
+}
+
+/* ─── Colophon ─────────────────────────────────────────────────────────── */
+
+.colophon {
+  border-block-start: 1px solid var(--rule);
+  padding-block: 0.6rem;
+  padding-inline: clamp(1rem, 4vw, 2.5rem);
+  font-size: var(--step--2);
+  color: var(--ink-faint);
+  min-block-size: 2.5rem;
+}
+
+.link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ─── The AuthGate, before anything of ours renders ────────────────────── */
+
+.auth-gate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  min-block-size: 100dvh;
+  color: var(--ink-soft);
+}
+
+/* ─── Narrow: the book closes to a single page ─────────────────────────── */
+
+@media (max-width: 60rem) {
+  .spread {
+    grid-template-columns: minmax(0, 1fr);
+    /* Sign of the off-screen offset, flipped for RTL. This is the one place
+       direction cannot be inferred from a logical property, because `translate`
+       has no logical form. */
+    --drawer-hidden: -100%;
+  }
+
+  .spread[data-dir='rtl'] {
+    --drawer-hidden: 100%;
+  }
+
+  .spread__gutter {
+    display: none;
+  }
+
+  .spread__recto {
+    border-inline-end: 0;
+    grid-column: 1;
+    padding-block-start: 2.75rem;
+  }
+
+  .spread__verso {
+    position: fixed;
+    z-index: 2;
+    inset-block: 0;
+    inset-inline-start: 0;
+    inline-size: min(90vw, 21rem);
+    max-block-size: 100dvh;
+    border-inline-start: 0;
+    border-inline-end: 3px double var(--rule-strong);
+    translate: var(--drawer-hidden) 0;
+    transition: translate 0.22s ease;
+  }
+
+  .spread[data-drawer='open'] .spread__verso {
+    translate: 0 0;
+  }
+
+  .spread__drawer-toggle {
+    display: block;
+    position: fixed;
+    z-index: 3;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    padding-block: 0.5rem;
+    padding-inline: clamp(1rem, 4vw, 2.5rem);
+    font-size: var(--step--2);
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    background: var(--paper);
+    border-block-end: 1px solid var(--rule);
+    inline-size: 100%;
+    text-align: start;
+  }
+
+  .spread[data-drawer='open'] .spread__scrim {
+    display: block;
+    position: fixed;
+    z-index: 1;
+    inset: 0;
+    inline-size: 100%;
+    background: rgb(0 0 0 / 0.35);
+  }
+
+  .recto__head {
+    padding-block-start: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

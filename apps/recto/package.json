@@ -1,0 +1,16 @@
+{
+  "name": "@labs/recto",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@labs/doc-core": "*",
+    "@labs/platform": "*",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  }
+}
