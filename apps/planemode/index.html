@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>PlaneMode — an AI that runs with the network off</title>
+    <meta
+      name="description"
+      content="A small language model that downloads once and then runs entirely in your browser on WebGPU. No server, no account, no network."
+    />
+    <meta name="theme-color" content="#101014" />
+    <!-- Root-relative on purpose: Vite prefixes `base` onto these at build,
+         which yields /planemode/… Hard-coding the prefix here would double it. -->
+    <link rel="icon" href="/icon-192.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="PlaneMode" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
