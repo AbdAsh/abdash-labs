@@ -1,0 +1,16 @@
+{
+  "name": "@labs/critiq",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@labs/platform": "*",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.3"
+  }
+}
