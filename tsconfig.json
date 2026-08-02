@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    // `node` on top of the base list: tests/rls reads process.env, and
+    // scripts/ runs under Node.
+    "types": ["vitest/globals", "node"]
+  },
+  // Apps are typechecked by their own tsconfig via `npm run typecheck -w apps/<app>`;
+  // this root project covers the shared packages and the cross-app RLS suite.
+  "include": ["packages/*/src", "tests"]
+}

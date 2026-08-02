@@ -1,0 +1,23 @@
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.*
+!.env.example
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+
+# Supabase local
+.supabase/
+
+# Browser verification artifacts
+.playwright-mcp/
+
+# Deploy
+.vercel
+.wrangler
