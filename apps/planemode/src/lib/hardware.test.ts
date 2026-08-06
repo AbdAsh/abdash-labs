@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { detectCapability, MID_TIER_MIN_MEMORY_GB, MID_TIER_MIN_BUFFER_BYTES } from './hardware'
+import {
+  detectCapability,
+  fitsInFreeSpace,
+  MID_TIER_MIN_MEMORY_GB,
+  MID_TIER_MIN_BUFFER_BYTES,
+  SPACE_HEADROOM_BYTES,
+} from './hardware'
 
 afterEach(() => {
   vi.unstubAllGlobals()
@@ -10,11 +16,17 @@ afterEach(() => {
 function stubNavigator(options: {
   gpu?: unknown
   deviceMemory?: unknown
+  storage?: unknown
 } = {}) {
   const nav: Record<string, unknown> = {}
   if ('gpu' in options) nav.gpu = options.gpu
   if ('deviceMemory' in options) nav.deviceMemory = options.deviceMemory
+  if ('storage' in options) nav.storage = options.storage
   vi.stubGlobal('navigator', nav)
+}
+
+function estimating(usage: number, quota: number) {
+  return { estimate: async () => ({ usage, quota }) }
 }
 
 function adapterYielding(adapter: unknown) {
@@ -151,5 +163,77 @@ describe('detectCapability — tier recommendation', () => {
   it('exposes its thresholds so the UI can explain them', () => {
     expect(MID_TIER_MIN_MEMORY_GB).toBe(8)
     expect(MID_TIER_MIN_BUFFER_BYTES).toBeGreaterThan(0)
+  })
+})
+
+describe('detectCapability — free space', () => {
+  it('reports what the browser will still let this origin store', async () => {
+    stubNavigator({ gpu: adapterYielding({}), deviceMemory: 8, storage: estimating(1e9, 21e9) })
+
+    await expect(detectCapability()).resolves.toMatchObject({ freeBytes: 20e9 })
+  })
+
+  it('reports null rather than zero when the browser will not estimate', async () => {
+    stubNavigator({ gpu: adapterYielding({}), deviceMemory: 8 })
+
+    await expect(detectCapability()).resolves.toMatchObject({ freeBytes: null })
+  })
+
+  it('reports null when the estimate throws', async () => {
+    stubNavigator({
+      gpu: adapterYielding({}),
+      deviceMemory: 8,
+      storage: {
+        estimate: async () => {
+          throw new Error('SecurityError')
+        },
+      },
+    })
+
+    await expect(detectCapability()).resolves.toMatchObject({ freeBytes: null })
+  })
+
+  it('never reports negative headroom on an over-quota origin', async () => {
+    stubNavigator({ gpu: adapterYielding({}), deviceMemory: 8, storage: estimating(9e9, 8e9) })
+
+    await expect(detectCapability()).resolves.toMatchObject({ freeBytes: 0 })
+  })
+
+  it('still reports free space on the unsupported path, where the panel shows it', async () => {
+    stubNavigator({ deviceMemory: 8, storage: estimating(0, 5e9) })
+
+    await expect(detectCapability()).resolves.toMatchObject({ webgpu: false, freeBytes: 5e9 })
+  })
+})
+
+// A visitor with 1.5 GB free being asked to wait for a 1.8 GB download is the
+// worst first run this app can produce: twenty minutes, then a failure. The
+// verdict is what lets the landing page say so before the button is pressed.
+describe('fitsInFreeSpace', () => {
+  const MODEL = 1_816_930_956
+
+  it('says too-small when the weights alone will not fit', () => {
+    expect(fitsInFreeSpace(MODEL, 1_500_000_000)).toBe('too-small')
+  })
+
+  it('says tight when the weights fit but the overhead will not', () => {
+    expect(fitsInFreeSpace(MODEL, MODEL + 1)).toBe('tight')
+    expect(fitsInFreeSpace(MODEL, MODEL + SPACE_HEADROOM_BYTES - 1)).toBe('tight')
+  })
+
+  it('says fits once there is room for the weights and the working overhead', () => {
+    expect(fitsInFreeSpace(MODEL, MODEL + SPACE_HEADROOM_BYTES)).toBe('fits')
+    expect(fitsInFreeSpace(MODEL, 50_000_000_000)).toBe('fits')
+  })
+
+  // Guessing on the browser's behalf is how someone waits out a download that
+  // was never going to fit.
+  it('says unknown rather than guessing when the browser will not estimate', () => {
+    expect(fitsInFreeSpace(MODEL, null)).toBe('unknown')
+    expect(fitsInFreeSpace(MODEL, Number.NaN)).toBe('unknown')
+  })
+
+  it('treats a completely full origin as too-small', () => {
+    expect(fitsInFreeSpace(MODEL, 0)).toBe('too-small')
   })
 })

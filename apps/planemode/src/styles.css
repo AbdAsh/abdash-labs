@@ -91,9 +91,34 @@ button:disabled {
   border-color: var(--accent);
 }
 
+.firstrun__resume {
+  background: var(--panel);
+  border-left: 3px solid var(--warn);
+  padding: 0.75rem 1rem;
+  border-radius: 0 0.4rem 0.4rem 0;
+  font-size: 0.95rem;
+}
+
+.firstrun__space {
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 0;
+}
+
+.firstrun__blocked {
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.92rem;
+}
+
 .firstrun__smallprint,
 .unsupported__footnote,
+.unsupported__pending,
 .app__disclaimer,
+.failed__detail,
 .storage__note {
   color: var(--muted);
   font-size: 0.85rem;
@@ -129,7 +154,9 @@ button:disabled {
 }
 
 .picker__option input {
-  grid-row: 1 / span 4;
+  /* Spans however many rows the option grew to — the space warning and the
+     "already downloaded" flag both add one conditionally. */
+  grid-row: 1 / -1;
   align-self: start;
   margin-top: 0.35rem;
 }
@@ -146,9 +173,23 @@ button:disabled {
   color: var(--accent);
 }
 
+.picker__flag--cached {
+  color: var(--accent);
+}
+
 .picker__size {
   color: var(--warn);
   font-variant-numeric: tabular-nums;
+}
+
+.picker__size--blocked {
+  color: var(--danger);
+  text-decoration: line-through;
+}
+
+.picker__warning {
+  color: var(--danger);
+  font-size: 0.85rem;
 }
 
 .picker__blurb {
@@ -157,6 +198,47 @@ button:disabled {
 }
 
 /* Download ----------------------------------------------------------- */
+
+.download__cached {
+  background: var(--panel);
+  border-left: 3px solid var(--accent);
+  padding: 0.75rem 1rem;
+  border-radius: 0 0.4rem 0.4rem 0;
+  font-size: 0.92rem;
+}
+
+/* Three stages run back to back and WebLLM restarts its fraction for each, so
+   the list is what stops one bar from appearing to fill up three times. */
+.download__stages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0.6rem;
+  font-size: 0.8rem;
+}
+
+.download__stage {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.15rem 0.65rem;
+  color: var(--muted);
+}
+
+.download__stage.is-done {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.download__stage.is-now {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.download__warming {
+  margin-top: 1rem;
+}
 
 .download__bar {
   height: 0.6rem;
@@ -249,6 +331,24 @@ button:disabled {
 
 .app__error {
   color: var(--danger);
+}
+
+.app__retry {
+  margin-left: 0.6rem;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.85rem;
+  border-color: var(--danger);
+}
+
+/* Blocked and failed ------------------------------------------------- */
+
+.blocked h1,
+.failed h1 {
+  margin-bottom: 0.75rem;
+}
+
+.failed .storage__actions {
+  margin-top: 1.25rem;
 }
 
 .app__notice {

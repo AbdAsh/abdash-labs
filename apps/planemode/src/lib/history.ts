@@ -39,6 +39,12 @@ function db(): Promise<IDBPDatabase> {
         store.createIndex('updatedAt', 'updatedAt')
       }
     },
+  }).catch((error: unknown) => {
+    // A rejected promise cached here would poison every later call for the
+    // lifetime of the page — one transient failure and history never works
+    // again. Clearing it lets the next attempt genuinely retry.
+    dbPromise = null
+    throw error
   })
   return dbPromise
 }
@@ -63,10 +69,6 @@ export async function saveConversation(conversation: Conversation): Promise<void
 export async function listConversations(): Promise<Conversation[]> {
   const all = (await (await db()).getAll(STORE_CONVERSATIONS)) as Conversation[]
   return all.sort((a, b) => b.updatedAt - a.updatedAt)
-}
-
-export async function deleteConversation(id: string): Promise<void> {
-  await (await db()).delete(STORE_CONVERSATIONS, id)
 }
 
 export async function exportAll(): Promise<Blob> {
@@ -128,7 +130,11 @@ export async function wipeModelWeights(): Promise<void> {
  * leaving two gigabytes on disk.
  */
 export async function wipeAll(): Promise<void> {
+  // Weights first, deliberately. If the conversation store cannot be opened at
+  // all — another tab mid-upgrade, a browser that has revoked IndexedDB — the
+  // gigabytes are already gone by the time this throws, rather than being left
+  // behind by a failure in the kilobytes.
+  await wipeModelWeights()
   const database = await db()
   await database.clear(STORE_CONVERSATIONS)
-  await wipeModelWeights()
 }

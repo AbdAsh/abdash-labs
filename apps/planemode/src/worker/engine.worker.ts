@@ -1,6 +1,18 @@
 /// <reference lib="webworker" />
-import { CreateMLCEngine, type MLCEngineInterface, type InitProgressReport } from '@mlc-ai/web-llm'
-import type { ChatMessage, EngineEvent, WorkerCommand } from '../lib/engine-protocol'
+import {
+  CreateMLCEngine,
+  hasModelInCache,
+  type MLCEngineInterface,
+  type InitProgressReport,
+} from '@mlc-ai/web-llm'
+import {
+  describeEngineError,
+  isFatal,
+  parseLoadProgress,
+  type ChatMessage,
+  type EngineEvent,
+  type WorkerCommand,
+} from '../lib/engine-protocol'
 
 /**
  * The WebLLM engine, kept off the UI thread.
@@ -13,6 +25,7 @@ import type { ChatMessage, EngineEvent, WorkerCommand } from '../lib/engine-prot
 let engine: MLCEngineInterface | null = null
 let loadedModelId: string | null = null
 let abort: AbortController | null = null
+let loading = false
 
 function post(event: EngineEvent): void {
   ;(self as unknown as DedicatedWorkerGlobalScope).postMessage(event)
@@ -22,24 +35,50 @@ function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
 
+/**
+ * Answers "is this model already on disk?" without loading anything.
+ *
+ * This is what turns a return visit from "Download 0.70 GB and start" — which
+ * would be a lie — into a straight load from cache. A model whose cache is only
+ * partly written answers false, which is correct: it still needs the network.
+ */
+async function probe(modelIds: string[]): Promise<void> {
+  const cached: string[] = []
+  for (const modelId of modelIds) {
+    try {
+      if (await hasModelInCache(modelId)) cached.push(modelId)
+    } catch {
+      // A missing or half-written cache manifest throws. Absent, then.
+    }
+  }
+  post({ type: 'cached', modelIds: cached })
+}
+
 async function load(modelId: string): Promise<void> {
   if (loadedModelId === modelId && engine) {
     post({ type: 'ready' })
     return
   }
+  if (loading) {
+    post({ type: 'error', message: 'A model is already loading.' })
+    return
+  }
 
+  loading = true
   try {
+    // A half-initialised engine from a previous failed attempt holds GPU memory
+    // the new one needs, so it goes first.
+    if (engine) {
+      await engine.unload().catch(() => undefined)
+      engine = null
+      loadedModelId = null
+    }
+
     engine = await CreateMLCEngine(modelId, {
       initProgressCallback: (report: InitProgressReport) => {
-        // WebLLM reports progress as a 0..1 fraction plus a human sentence.
-        // Both are forwarded: the fraction drives the bar, the sentence
-        // explains which of the several phases is running.
-        post({
-          type: 'download',
-          loaded: Math.max(0, Math.min(1, report.progress)),
-          total: 1,
-          text: report.text,
-        })
+        // WebLLM restarts its 0..1 fraction for each stage of the load, so the
+        // sentence is parsed into a named stage rather than driving one bar.
+        post({ type: 'progress', progress: parseLoadProgress(report.text, report.progress) })
       },
     })
     loadedModelId = modelId
@@ -48,6 +87,8 @@ async function load(modelId: string): Promise<void> {
     engine = null
     loadedModelId = null
     post({ type: 'error', message: messageOf(error) })
+  } finally {
+    loading = false
   }
 }
 
@@ -82,7 +123,11 @@ function trimToContext(
   return { kept: [...system, ...kept], dropped: rest.length - kept.length }
 }
 
-async function generate(messages: ChatMessage[], contextWindow: number): Promise<void> {
+async function generate(
+  messages: ChatMessage[],
+  contextWindow: number,
+  maxTokens?: number,
+): Promise<void> {
   if (!engine) {
     post({ type: 'error', message: 'No model is loaded yet.' })
     return
@@ -98,6 +143,7 @@ async function generate(messages: ChatMessage[], contextWindow: number): Promise
     const stream = await engine.chat.completions.create({
       messages: kept as never,
       stream: true,
+      ...(maxTokens ? { max_tokens: maxTokens } : {}),
     })
 
     for await (const chunk of stream) {
@@ -109,7 +155,15 @@ async function generate(messages: ChatMessage[], contextWindow: number): Promise
     if (signal.aborted) await engine.interruptGenerate()
     post({ type: 'done' })
   } catch (error) {
-    post({ type: 'error', message: messageOf(error) })
+    const message = messageOf(error)
+    // A lost device or an out-of-memory kill leaves the engine unusable, and
+    // pretending otherwise means every later message fails the same way. Drop it
+    // so the next attempt is a genuine reload rather than a replay of the crash.
+    if (isFatal(describeEngineError(message).kind)) {
+      engine = null
+      loadedModelId = null
+    }
+    post({ type: 'error', message })
   } finally {
     abort = null
   }
@@ -118,11 +172,14 @@ async function generate(messages: ChatMessage[], contextWindow: number): Promise
 self.onmessage = (event: MessageEvent<WorkerCommand>) => {
   const command = event.data
   switch (command.type) {
+    case 'probe':
+      void probe(command.modelIds)
+      break
     case 'load':
       void load(command.modelId)
       break
     case 'generate':
-      void generate(command.messages, command.contextWindow)
+      void generate(command.messages, command.contextWindow, command.maxTokens)
       break
     case 'stop':
       abort?.abort()

@@ -26,6 +26,8 @@ interface PendingGeneration {
   startedOffline: boolean
   /** The reconnect count at the moment this generation started. */
   epoch: number
+  /** Tokens actually produced. A stop at token zero proves nothing. */
+  tokens: number
 }
 
 export class OfflineTracker {
@@ -62,22 +64,36 @@ export class OfflineTracker {
   }
 
   recordGenerationStarted(): void {
-    this.#pending = { startedOffline: this.#offline, epoch: this.#onlineEpoch }
+    this.#pending = { startedOffline: this.#offline, epoch: this.#onlineEpoch, tokens: 0 }
+  }
+
+  /** Every token the model actually produced, counted against the generation
+   *  that is currently in flight. */
+  recordToken(): void {
+    if (this.#pending) this.#pending.tokens += 1
   }
 
   /**
-   * The only thing that can flip `verified`, and only when the generation was
-   * offline end to end: offline when it started, offline when it finished, with
-   * no reconnect in between. A generation that was never announced falls back
-   * to "offline right now", which is the strongest claim available.
+   * The only thing that can flip `verified`, and it has to clear every hurdle:
+   * a generation this tracker was told about, which started offline, produced
+   * at least one real token, saw no reconnect in flight, and was still offline
+   * when it finished.
+   *
+   * There is no fallback branch on purpose. An earlier version treated a
+   * completion it had never seen the start of as good enough, which meant a
+   * stray or duplicated `done` could earn the badge on its own. The badge is
+   * the whole demo; it does not get to be optimistic.
    */
   recordGenerationComplete(): void {
     const pending = this.#pending
     this.#pending = null
 
-    const offlineThroughout =
-      pending === null || (pending.startedOffline && pending.epoch === this.#onlineEpoch)
-    if (this.#verified || !this.#offline || !offlineThroughout) return
+    if (this.#verified) return
+    if (!pending) return
+    if (!pending.startedOffline) return
+    if (pending.epoch !== this.#onlineEpoch) return
+    if (pending.tokens === 0) return
+    if (!this.#offline) return
 
     this.#verified = true
     this.#publish()

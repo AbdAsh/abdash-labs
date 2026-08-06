@@ -10,8 +10,56 @@
 export interface Capability {
   webgpu: boolean
   approxMemoryGB: number | null
+  /** Storage the browser will still let this origin use, or null if it won't say. */
+  freeBytes: number | null
   recommended: 'small' | 'mid' | null
   reason?: string
+}
+
+/**
+ * How much slack to leave beyond the weights themselves.
+ *
+ * WebLLM writes the shards, then reads them back to build GPU buffers, and the
+ * browser keeps its own overhead on top. A download that fills the quota to the
+ * last byte fails at 99%, which is the single worst place for it to fail.
+ */
+export const SPACE_HEADROOM_BYTES = 300_000_000
+
+export type SpaceVerdict = 'fits' | 'tight' | 'too-small' | 'unknown'
+
+/**
+ * Whether a model of this size can land on this device.
+ *
+ * `unknown` is a real answer, not a failure: several browsers refuse to
+ * estimate, and guessing on their behalf is how you get someone waiting twenty
+ * minutes for a download that was never going to fit.
+ */
+export function fitsInFreeSpace(approxBytes: number, freeBytes: number | null): SpaceVerdict {
+  if (freeBytes === null || !Number.isFinite(freeBytes)) return 'unknown'
+  if (freeBytes < approxBytes) return 'too-small'
+  if (freeBytes < approxBytes + SPACE_HEADROOM_BYTES) return 'tight'
+  return 'fits'
+}
+
+/**
+ * What `navigator.storage.estimate()` says is left for this origin.
+ *
+ * Chrome derives the quota from actual free disk, so this tracks a nearly-full
+ * disk rather than an abstract allowance. Deliberately its own small call
+ * rather than a reach into lib/history.ts: this answers "will it fit", that one
+ * answers "what is already here", and hardware detection should not need an
+ * IndexedDB module to run.
+ */
+async function readFreeBytes(): Promise<number | null> {
+  const storage = (globalThis as { navigator?: { storage?: StorageManager } }).navigator?.storage
+  if (typeof storage?.estimate !== 'function') return null
+  try {
+    const { usage, quota } = await storage.estimate()
+    if (typeof quota !== 'number' || !Number.isFinite(quota)) return null
+    return Math.max(0, quota - (typeof usage === 'number' && Number.isFinite(usage) ? usage : 0))
+  } catch {
+    return null
+  }
 }
 
 /** `navigator.deviceMemory` is capped at 8 by the spec, so 8 is "the most this
@@ -58,11 +106,13 @@ function adapterCanHoldMidTier(adapter: AdapterLike): boolean {
 export async function detectCapability(): Promise<Capability> {
   const nav = currentNavigator()
   const approxMemoryGB = readApproxMemoryGB(nav)
+  const freeBytes = await readFreeBytes()
 
   if (!nav?.gpu) {
     return {
       webgpu: false,
       approxMemoryGB,
+      freeBytes,
       recommended: null,
       reason:
         'This browser does not support WebGPU, so a model cannot run on this device. ' +
@@ -79,6 +129,7 @@ export async function detectCapability(): Promise<Capability> {
     return {
       webgpu: false,
       approxMemoryGB,
+      freeBytes,
       recommended: null,
       reason:
         `This browser has WebGPU, but opening a GPU adapter failed (${detail}). ` +
@@ -91,6 +142,7 @@ export async function detectCapability(): Promise<Capability> {
     return {
       webgpu: false,
       approxMemoryGB,
+      freeBytes,
       recommended: null,
       reason:
         'This browser has WebGPU, but it offered no GPU adapter. That normally means ' +
@@ -103,6 +155,7 @@ export async function detectCapability(): Promise<Capability> {
     return {
       webgpu: true,
       approxMemoryGB: null,
+      freeBytes,
       recommended: 'small',
       reason:
         'This browser does not report how much memory the device has, so PlaneMode is ' +
@@ -117,6 +170,7 @@ export async function detectCapability(): Promise<Capability> {
       return {
         webgpu: true,
         approxMemoryGB,
+        freeBytes,
         recommended: 'small',
         reason:
           `This device reports about ${approxMemoryGB} GB of memory, but the GPU will ` +
@@ -127,6 +181,7 @@ export async function detectCapability(): Promise<Capability> {
     return {
       webgpu: true,
       approxMemoryGB,
+      freeBytes,
       recommended: 'mid',
       reason:
         `This device reports about ${approxMemoryGB} GB of memory, which is enough for ` +
@@ -138,6 +193,7 @@ export async function detectCapability(): Promise<Capability> {
   return {
     webgpu: true,
     approxMemoryGB,
+    freeBytes,
     recommended: 'small',
     reason:
       `This device reports about ${approxMemoryGB} GB of memory, so PlaneMode recommends ` +

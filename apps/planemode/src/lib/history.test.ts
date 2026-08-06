@@ -45,17 +45,28 @@ async function existingDatabaseNames(): Promise<string[]> {
 }
 
 /** Creates a database the way WebLLM's IndexedDB cache backend would. */
-function createDatabase(name: string): Promise<void> {
+function createDatabase(name: string, version = 1): Promise<void> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(name, 1)
+    const request = indexedDB.open(name, version)
     request.onupgradeneeded = () => {
-      request.result.createObjectStore('urls')
+      if (!request.result.objectStoreNames.contains('urls')) {
+        request.result.createObjectStore('urls')
+      }
     }
     request.onsuccess = () => {
       request.result.close()
       resolve()
     }
     request.onerror = () => reject(request.error)
+  })
+}
+
+function deleteDatabaseByName(name: string): Promise<void> {
+  return new Promise((resolve) => {
+    const request = indexedDB.deleteDatabase(name)
+    request.onsuccess = () => resolve()
+    request.onerror = () => resolve()
+    request.onblocked = () => resolve()
   })
 }
 
@@ -105,6 +116,22 @@ describe('conversation round-trip', () => {
   })
 
   it('returns an empty list on a fresh origin', async () => {
+    await expect(listConversations()).resolves.toEqual([])
+  })
+
+  // The connection promise is memoised, and the open fails *asynchronously* —
+  // the request resolves, then fires `error`. Caching that rejected promise
+  // means one transient failure kills history for the rest of the page's life.
+  //
+  // The failure staged here is a real one: a visitor whose service worker
+  // handed them an older build after a newer one had already upgraded the
+  // database gets a VersionError on every open until the newer DB is gone.
+  it('retries after a failed open instead of caching the failure forever', async () => {
+    await createDatabase(DB_NAME, 2)
+
+    await expect(listConversations()).rejects.toThrow()
+
+    await deleteDatabaseByName(DB_NAME)
     await expect(listConversations()).resolves.toEqual([])
   })
 })

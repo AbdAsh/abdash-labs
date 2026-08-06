@@ -70,3 +70,57 @@ export function formatBytes(bytes: number): string {
   if (bytes >= 1_000_000) return `${Math.round(bytes / 1_000_000)} MB`
   return `${Math.round(bytes / 1000)} kB`
 }
+
+/**
+ * Which tier this browser last committed to.
+ *
+ * Written the moment a download starts, not when it finishes, so a tab closed
+ * at 60% still leaves a trace. On the next visit that trace is the difference
+ * between "Download 1.82 GB and start" — a lie, most of it is already on disk —
+ * and "you started this before; it picks up where it stopped".
+ *
+ * localStorage throws outright in some privacy modes, so every access is
+ * wrapped. Forgetting the tier is never fatal; it just costs a landing page.
+ */
+export const TIER_MEMORY_KEY = 'planemode.tier'
+
+interface StorageLike {
+  getItem: (key: string) => string | null
+  setItem: (key: string, value: string) => void
+  removeItem: (key: string) => void
+}
+
+function store(): StorageLike | undefined {
+  try {
+    return (globalThis as { localStorage?: StorageLike }).localStorage ?? undefined
+  } catch {
+    return undefined
+  }
+}
+
+export function rememberedTier(): TierId | null {
+  try {
+    const raw = store()?.getItem(TIER_MEMORY_KEY)
+    // Validated against TIERS rather than cast: a stale id from an older build
+    // would otherwise be handed to tierById, which throws.
+    return TIERS.some((tier) => tier.id === raw) ? (raw as TierId) : null
+  } catch {
+    return null
+  }
+}
+
+export function rememberTier(id: TierId): void {
+  try {
+    store()?.setItem(TIER_MEMORY_KEY, id)
+  } catch {
+    // A full or disabled localStorage costs a landing page, nothing more.
+  }
+}
+
+export function forgetTier(): void {
+  try {
+    store()?.removeItem(TIER_MEMORY_KEY)
+  } catch {
+    // As above.
+  }
+}

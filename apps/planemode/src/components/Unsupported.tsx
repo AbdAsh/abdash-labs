@@ -5,8 +5,16 @@ import type { Capability } from '../lib/hardware'
  *
  * A visitor whose browser has no WebGPU should still see the product rather
  * than a dead page, so this explains the reason in plain language, lists what
- * does work, and links a recording of the app running.
+ * does work, and shows a recording of the app running.
  */
+
+/**
+ * Set this once the airplane test has been recorded and the file is in
+ * `public/`. Left null deliberately: a `<video>` pointing at a 404 renders an
+ * empty black rectangle with a dead play button, which on the one screen a
+ * visitor sees when nothing else works is worse than an honest sentence.
+ */
+const DEMO_VIDEO: { src: string; poster: string } | null = null
 export function Unsupported({ capability }: { capability: Capability }) {
   return (
     <main className="unsupported">
@@ -39,15 +47,22 @@ export function Unsupported({ capability }: { capability: Capability }) {
           Thirty seconds: the app loads, the network is switched off, and it keeps answering. The
           Wi-Fi indicator is visible throughout.
         </p>
-        <video
-          className="unsupported__demo"
-          controls
-          preload="none"
-          poster="/planemode/demo-poster.png"
-          src="/planemode/airplane-test.mp4"
-        >
-          Your browser cannot play the recording.
-        </video>
+        {DEMO_VIDEO ? (
+          <video
+            className="unsupported__demo"
+            controls
+            preload="none"
+            poster={DEMO_VIDEO.poster}
+            src={DEMO_VIDEO.src}
+          >
+            Your browser cannot play the recording.
+          </video>
+        ) : (
+          <p className="unsupported__pending">
+            The recording is made on real hardware with the Wi-Fi genuinely off, so it lands with
+            the first deploy rather than before it.
+          </p>
+        )}
       </section>
 
       <p className="unsupported__footnote">
