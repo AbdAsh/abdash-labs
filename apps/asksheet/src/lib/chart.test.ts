@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MAX_CHART_ROWS, referencedFields, rowsToRecords, toChartSpec } from './chart'
+import { derivedFields, MAX_CHART_ROWS, referencedFields, rowsToRecords, toChartSpec } from './chart'
 import type { QueryResult } from './types'
 
 const result: QueryResult = {
@@ -98,5 +98,76 @@ describe('toChartSpec', () => {
 
   it('returns null for a spec that references nothing at all', () => {
     expect(toChartSpec({ mark: 'point' }, result)).toBeNull()
+  })
+})
+
+/**
+ * The field check exists so a chart of blanks never replaces a good table. But it
+ * was matching `field` against the SQL result columns alone, and Vega-Lite
+ * transforms invent columns: `{"calculate": …, "as": "share"}` followed by
+ * `{"y": {"field": "share"}}` is a valid, common spec that looked exactly like a
+ * hallucinated column. Every such chart was silently dropped.
+ */
+describe('derivedFields', () => {
+  it('collects a calculate transform output', () => {
+    const spec = {
+      transform: [{ calculate: 'datum.revenue / 1000', as: 'k_revenue' }],
+      mark: 'bar',
+      encoding: { y: { field: 'k_revenue' } },
+    }
+    expect([...derivedFields(spec)]).toContain('k_revenue')
+  })
+
+  it('collects nested aggregate and window outputs', () => {
+    const spec = {
+      transform: [
+        { aggregate: [{ op: 'sum', field: 'revenue', as: 'total' }], groupby: ['month'] },
+        { window: [{ op: 'rank', as: 'position' }] },
+      ],
+    }
+    const found = derivedFields(spec)
+    expect(found.has('total')).toBe(true)
+    expect(found.has('position')).toBe(true)
+  })
+
+  it('knows the names a fold invents when `as` is omitted', () => {
+    const found = derivedFields({ transform: [{ fold: ['revenue'] }] })
+    expect(found.has('key')).toBe(true)
+    expect(found.has('value')).toBe(true)
+  })
+
+  it('collects an array-valued `as`', () => {
+    const found = derivedFields({ transform: [{ fold: ['a'], as: ['name', 'amount'] }] })
+    expect(found.has('name')).toBe(true)
+    expect(found.has('amount')).toBe(true)
+  })
+})
+
+describe('toChartSpec — transform-derived fields', () => {
+  it('keeps a chart whose field comes from a calculate transform', () => {
+    const spec = {
+      transform: [{ calculate: 'datum.revenue * 2', as: 'doubled' }],
+      mark: 'bar',
+      encoding: { x: { field: 'month' }, y: { field: 'doubled' } },
+    }
+    expect(toChartSpec(spec, result)).not.toBeNull()
+  })
+
+  it('still rejects a field that is neither a column nor a transform output', () => {
+    const spec = {
+      transform: [{ calculate: 'datum.revenue * 2', as: 'doubled' }],
+      mark: 'bar',
+      encoding: { x: { field: 'month' }, y: { field: 'invented' } },
+    }
+    expect(toChartSpec(spec, result)).toBeNull()
+  })
+
+  it('skips the field check for a pivot, whose output names come from the data', () => {
+    const spec = {
+      transform: [{ pivot: 'month', value: 'revenue' }],
+      mark: 'bar',
+      encoding: { x: { field: '2025-03' } },
+    }
+    expect(toChartSpec(spec, result)).not.toBeNull()
   })
 })

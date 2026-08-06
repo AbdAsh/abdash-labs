@@ -50,6 +50,13 @@ export function AnswerCard({ question, answer }: { question: string; answer: Ans
 
       <Chart spec={answer.chart} result={result} title={question} />
 
+      {result.rows.length === 0 && (
+        <p className="empty">
+          No rows matched. The query below ran without error — the sheet simply has nothing that
+          fits it. Widen the question, or check the schema for the column you meant.
+        </p>
+      )}
+
       <div className="table-scroll">
         <table className="result">
           <thead>

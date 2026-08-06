@@ -25,9 +25,24 @@ export function SchemaChips({
 
   const current = columns.find((column) => column.name === editing)
 
+  // DuckDB names columns `column0…columnN` when its sniffer decides the file has
+  // no header row. Worth saying out loud: the column names are the one part of
+  // the schema that goes to the planner, so the user should know theirs are
+  // placeholders — and that their first row is data, not a heading.
+  const headerless =
+    columns.length > 0 && columns.every((column) => /^column\d+$/.test(column.name))
+
   return (
     <section className="panel" aria-labelledby="schema-heading">
       <h2 id="schema-heading">Schema — click a column to change its type</h2>
+
+      {headerless && (
+        <div className="notice notice-warn" role="status">
+          This file appears to have no header row, so the columns are named{' '}
+          <code>column0</code> onwards and the first line is being treated as data. Questions will
+          work, but they will be easier to write against a file with a named header.
+        </div>
+      )}
 
       <ul className="chips">
         {columns.map((column) => (

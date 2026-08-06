@@ -13,11 +13,70 @@ export const DEFAULT_TIMEOUT_MS = 10_000
 /** Rows kept for display. A pathological cross join must not freeze the tab. */
 export const MAX_RESULT_ROWS = 5_000
 
+/**
+ * The largest file we will try to load.
+ *
+ * There is no server to hand a big file to, which is the point of the product and
+ * also its ceiling: the bytes are copied into the JS heap, copied again into the
+ * WASM heap, and then materialised as a columnar table beside them. WebAssembly
+ * is 32-bit, so the whole budget is a couple of gigabytes shared with the page.
+ * A 200 MB CSV does not fail politely at any of those steps — it takes the tab
+ * down. Refusing it with a sentence is strictly better than an unexplained crash.
+ */
+export const MAX_FILE_BYTES = 100 * 1024 * 1024
+
 export class QueryTimeoutError extends Error {
   constructor(timeoutMs: number) {
     super(`The query took longer than ${Math.round(timeoutMs / 1000)}s and was cancelled.`)
     this.name = 'QueryTimeoutError'
   }
+}
+
+export class FileTooLargeError extends Error {
+  constructor(bytes: number) {
+    const mb = (n: number) => Math.round(n / (1024 * 1024))
+    super(
+      `That file is about ${mb(bytes)} MB. AskSheet loads the whole sheet into this browser tab, ` +
+        `so it stops at ${mb(MAX_FILE_BYTES)} MB — beyond that the tab runs out of memory and dies ` +
+        'without an explanation. Filter the export, drop unused columns, or split it and try again.',
+    )
+    this.name = 'FileTooLargeError'
+  }
+}
+
+export class EngineUnavailableError extends Error {
+  constructor(cause: unknown) {
+    super(
+      'The DuckDB engine could not start. It is downloaded from jsDelivr on first use, so this ' +
+        'is usually an offline tab, a blocked CDN, or a content blocker. Reload with the network ' +
+        `available. (${cause instanceof Error ? cause.message : String(cause)})`,
+    )
+    this.name = 'EngineUnavailableError'
+  }
+}
+
+/**
+ * Why this browser cannot run AskSheet, or null when it can.
+ *
+ * Checked before the dropzone is offered rather than after a file is dropped: the
+ * whole application is a WASM database, so "your browser is too old" is a
+ * different conversation from "your CSV is malformed", and running the feature
+ * detection late makes the first look like the second.
+ */
+export function unsupportedReason(): string | null {
+  if (typeof WebAssembly === 'undefined' || typeof WebAssembly.instantiate !== 'function') {
+    return 'This browser has no WebAssembly support, and AskSheet is a WebAssembly database. Recent Chrome, Edge, Firefox or Safari will work.'
+  }
+  if (typeof Worker === 'undefined') {
+    return 'This browser blocks Web Workers, which is where the database runs. Check for a content blocker, or try a different browser.'
+  }
+  if (typeof Blob === 'undefined' || typeof URL?.createObjectURL !== 'function') {
+    return 'This browser cannot create the object URL the database worker is loaded from. Try recent Chrome, Edge, Firefox or Safari.'
+  }
+  if (typeof BigInt === 'undefined') {
+    return 'This browser has no BigInt support, which DuckDB needs for 64-bit columns. Try recent Chrome, Edge, Firefox or Safari.'
+  }
+  return null
 }
 
 let db: duckdb.AsyncDuckDB | null = null
@@ -39,21 +98,30 @@ export async function initDuck(): Promise<void> {
   if (db) return
   if (booting) return booting
 
+  const reason = unsupportedReason()
+  if (reason) throw new Error(reason)
+
   booting = (async () => {
-    const bundle = await duckdb.selectBundle(duckdb.getJsDelivrBundles())
-    const shim = URL.createObjectURL(
-      new Blob([`importScripts("${bundle.mainWorker!}");`], { type: 'text/javascript' }),
-    )
     try {
-      const worker = new Worker(shim)
-      const instance = new duckdb.AsyncDuckDB(
-        new duckdb.ConsoleLogger(duckdb.LogLevel.WARNING),
-        worker,
+      const bundle = await duckdb.selectBundle(duckdb.getJsDelivrBundles())
+      const shim = URL.createObjectURL(
+        new Blob([`importScripts("${bundle.mainWorker!}");`], { type: 'text/javascript' }),
       )
-      await instance.instantiate(bundle.mainModule, bundle.pthreadWorker)
-      db = instance
-    } finally {
-      URL.revokeObjectURL(shim)
+      try {
+        const worker = new Worker(shim)
+        const instance = new duckdb.AsyncDuckDB(
+          new duckdb.ConsoleLogger(duckdb.LogLevel.WARNING),
+          worker,
+        )
+        await instance.instantiate(bundle.mainModule, bundle.pthreadWorker)
+        db = instance
+      } finally {
+        URL.revokeObjectURL(shim)
+      }
+    } catch (error) {
+      // A CDN fetch that fails reads as "this file could not be read" everywhere
+      // downstream, which sends the user off to fix a CSV that is perfectly fine.
+      throw error instanceof EngineUnavailableError ? error : new EngineUnavailableError(error)
     }
   })()
 
@@ -62,6 +130,12 @@ export async function initDuck(): Promise<void> {
   } finally {
     booting = null
   }
+}
+
+/** True once the engine is up. The first load pays for a WASM download; the UI
+ *  says so rather than showing the same spinner for one second and for twenty. */
+export function isEngineReady(): boolean {
+  return db !== null
 }
 
 /** Tears the database down. Used between tests and when the user loads a new file. */
@@ -100,15 +174,43 @@ function normalize(value: unknown): unknown {
   return value
 }
 
+/**
+ * Prepares a statement for the row-cap wrapper.
+ *
+ * Two things the planner does routinely used to defeat it. A trailing semicolon
+ * is legal — `assertSingleSelect` allows exactly one — but inside
+ * `select * from (…) limit N` it is a parser error, so a perfectly good query
+ * died and burned the repair round-trip. And a leading `-- comment`, which models
+ * emit constantly, made the statement look unwrappable, so the LIMIT was never
+ * pushed down and DuckDB materialised the entire result before JavaScript trimmed
+ * it. Both are stripped here rather than in the validator, which is deliberately
+ * about safety and not about shape.
+ */
+function stripForWrapping(sql: string): string {
+  let out = sql.trim()
+  // Leading comments and blank lines, repeatedly: `-- a\n/* b */\nselect …`.
+  for (;;) {
+    const before = out
+    out = out.replace(/^--[^\n]*\n?/, '').replace(/^\/\*[\s\S]*?\*\//, '').trimStart()
+    if (out === before) break
+  }
+  return out.replace(/;\s*$/, '').trimEnd()
+}
+
 /** True for statements a `select * from (...) limit N` wrapper can safely enclose. */
 function isWrappable(sql: string): boolean {
-  return /^\s*(select|with)\b/i.test(sql)
+  return /^(select|with)\b/i.test(sql)
 }
 
 export async function registerCsv(
   file: File | string,
   tableName = 'data',
 ): Promise<ColumnInfo[]> {
+  if (typeof file !== 'string' && file.size > MAX_FILE_BYTES) {
+    // Before initDuck: there is no point downloading 10 MB of engine to refuse.
+    throw new FileTooLargeError(file.size)
+  }
+
   await initDuck()
   const instance = requireDb()
   const virtualPath = `${tableName}.csv`
@@ -161,7 +263,9 @@ export async function runQuery(
   const instance = requireDb()
   const conn = await instance.connect()
 
-  const capped = isWrappable(sql) && maxRows > 0 ? `select * from (\n${sql}\n) limit ${maxRows + 1}` : sql
+  const bare = stripForWrapping(sql)
+  const capped =
+    isWrappable(bare) && maxRows > 0 ? `select * from (\n${bare}\n) limit ${maxRows + 1}` : sql
 
   let timer: ReturnType<typeof setTimeout> | undefined
   const started = performance.now()

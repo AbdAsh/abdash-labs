@@ -1,4 +1,4 @@
-import { buildProfile, redactProfile } from './profile'
+import { buildProfile, disclosedTokens, redactProfile, redactSqlError } from './profile'
 import { getPlanner, getQueryRunner } from './runtime'
 import type {
   Answer,
@@ -30,10 +30,8 @@ export class AskFailedError extends Error {
   /** Every statement attempted, in order. */
   readonly attempts: string[]
 
-  constructor(first: Error, second: Error, attempts: string[]) {
-    super(
-      `The query failed: ${first.message} — the corrected query also failed: ${second.message}`,
-    )
+  constructor(message: string, attempts: string[]) {
+    super(message)
     this.name = 'AskFailedError'
     this.attempts = attempts
     this.sql = attempts[attempts.length - 1] ?? ''
@@ -110,12 +108,33 @@ export async function ask(
   const firstOutcome = await attempt(deps, first, attempts)
   if (firstOutcome.ok) return toAnswer(first, firstOutcome.result, false)
 
-  const second = await deps.requestPlan({
-    ...base,
-    repair: { sql: first.sql, error: firstOutcome.error.message },
-  })
+  // The error text is the other half of the privacy boundary. DuckDB names the
+  // offending cell in a conversion error, and a failed cast is the commonest
+  // reason we are here at all — so the raw message must not be what goes out.
+  // See `redactSqlError`; the full message is still what the user sees below.
+  const error = redactSqlError(
+    firstOutcome.error.message,
+    disclosedTokens(profile, first.sql),
+  )
+
+  let second: PlanResponse
+  try {
+    second = await deps.requestPlan({ ...base, repair: { sql: first.sql, error } })
+  } catch (thrown) {
+    // The planner became unreachable (quota, network) between the two attempts.
+    // Surfacing only that would throw away the SQL that actually failed, which is
+    // the part the user can act on.
+    throw new AskFailedError(
+      `The query failed — ${firstOutcome.error.message} — and the retry could not be planned: ${asError(thrown).message}`,
+      attempts,
+    )
+  }
+
   const secondOutcome = await attempt(deps, second, attempts)
   if (secondOutcome.ok) return toAnswer(second, secondOutcome.result, true)
 
-  throw new AskFailedError(firstOutcome.error, secondOutcome.error, attempts)
+  throw new AskFailedError(
+    `The query failed: ${firstOutcome.error.message} — the corrected query also failed: ${secondOutcome.error.message}`,
+    attempts,
+  )
 }

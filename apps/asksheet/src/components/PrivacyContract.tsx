@@ -23,10 +23,15 @@ export function PrivacyContract({
         <dt>sent</dt>
         <dd>
           Column names, inferred types, the row count, and up to {MAX_SAMPLES} example values per
-          column — plus your question.
+          column — chosen by hash, so they are neither the first rows nor the smallest values.
+          Plus your question, and the SQL of earlier questions in this conversation.
         </dd>
         <dt>never sent</dt>
-        <dd>Your rows. The file is parsed and queried by DuckDB-WASM inside this browser tab.</dd>
+        <dd>
+          Your rows. The file is parsed and queried by DuckDB-WASM inside this browser tab. When a
+          query fails, DuckDB names the offending cell in its error — that error is stripped back
+          to its diagnosis before any of it is used to ask for a corrected query.
+        </dd>
         <dt>verify</dt>
         <dd>
           Open DevTools → Network and ask something. The only request is{' '}
@@ -46,7 +51,7 @@ export function PrivacyContract({
           <span className="hint">
             {locked
               ? 'Locked while a question is in flight.'
-              : 'Schema only. Answers get a little worse; the payload gets a little smaller.'}
+              : 'Schema only. Answers get a little worse; the payload gets a little smaller. Turning it on clears the conversation, because earlier SQL can hold values from your sheet.'}
           </span>
         </span>
       </label>

@@ -1,10 +1,15 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   buildProfile,
+  disclosedTokens,
+  MAX_ERROR_LENGTH,
   MAX_SAMPLED_COLUMNS,
   MAX_SAMPLE_LENGTH,
   MAX_SAMPLES,
   redactProfile,
+  redactSqlError,
+  SAMPLE_SCAN_ROWS,
+  SAMPLE_TIMEOUT_MS,
 } from './profile'
 import type { QueryResult } from './types'
 
@@ -96,6 +101,135 @@ describe('redactProfile', () => {
   })
 })
 
+/**
+ * The second privacy boundary, and the one that was open.
+ *
+ * Every message below is real output from the bundled DuckDB, captured by running
+ * the query against a table containing those cells. `error.message` used to be
+ * forwarded verbatim on the repair round-trip, so a failed cast shipped the exact
+ * cell the contract says never leaves — inside a payload whose shape and key count
+ * were precisely as promised, which is why no existing test noticed.
+ */
+describe('redactSqlError', () => {
+  const profile = redactProfile(
+    {
+      table: 'data',
+      rowCount: 2,
+      columns: [
+        { name: 'patient', type: 'VARCHAR', samples: [] },
+        { name: 'ssn', type: 'VARCHAR', samples: [] },
+        { name: 'note', type: 'VARCHAR', samples: [] },
+        { name: 'amount', type: 'VARCHAR', samples: [] },
+      ],
+    },
+    true,
+  )
+  const allowed = disclosedTokens(profile, 'select cast(ssn as integer) from data')
+
+  it('strips the cell value out of a conversion error', () => {
+    const real =
+      "Conversion Error: Could not convert string '111-22-3333' to INT32 when casting from source column ssn\n\nLINE 2: select cast(ssn as integer) from data\n               ^"
+    const out = redactSqlError(real, allowed)
+    expect(out).not.toContain('111-22-3333')
+    // …while keeping every part the planner needs to write a working retry.
+    expect(out).toMatch(/conversion error/i)
+    expect(out).toContain('INT32')
+    expect(out).toContain('ssn')
+  })
+
+  it('strips a cell value DuckDB echoes on its own line under a caret', () => {
+    const real =
+      'Invalid Input Error: Could not parse string "severe migraine" according to format specifier "%Y-%m-%d"\nsevere migraine\n^\nError: Expected a number'
+    const out = redactSqlError(real, allowed)
+    expect(out).not.toContain('severe migraine')
+    expect(out).toMatch(/invalid input error/i)
+  })
+
+  it('strips a date cell out of an invalid-format error', () => {
+    const real =
+      'Conversion Error: invalid date field format: "Alice Kowalski", expected format is (YYYY-MM-DD) when casting from source column patient'
+    const out = redactSqlError(real, allowed)
+    expect(out).not.toContain('Alice Kowalski')
+    expect(out).toContain('patient')
+    expect(out).toContain('YYYY-MM-DD')
+  })
+
+  it('keeps column names, because the planner cannot repair a query without them', () => {
+    const real =
+      'Binder Error: Referenced column "nosuchcol" not found in FROM clause!\nCandidate bindings: "note", "amount"'
+    const out = redactSqlError(real, allowed)
+    expect(out).toContain('note')
+    expect(out).toContain('amount')
+    expect(out).toMatch(/binder error/i)
+  })
+
+  it('allowlists rather than denylists — an unrecognised quoted token is assumed to be a cell', () => {
+    const out = redactSqlError(`Some Error: value 'wholly-unexpected-shape' is bad`, allowed)
+    expect(out).not.toContain('wholly-unexpected-shape')
+  })
+
+  it('drops the SQL echo, which is already being sent as repair.sql', () => {
+    const out = redactSqlError(
+      'Binder Error: something\n\nLINE 2: select secret_literal from data\n               ^',
+      allowed,
+    )
+    expect(out).not.toContain('secret_literal')
+  })
+
+  it('scrubs an unquoted numeric cell, which conversion errors also produce', () => {
+    const out = redactSqlError(
+      'Conversion Error: Type INT64 with value 987654321098 can\'t be cast to INT32',
+      allowed,
+    )
+    expect(out).not.toContain('987654321098')
+    // Type names glued to their digits are not values and must survive.
+    expect(out).toContain('INT64')
+    expect(out).toContain('INT32')
+  })
+
+  it('does not mangle digits inside an allowlisted column name', () => {
+    const named = redactProfile(
+      { table: 'data', rowCount: 1, columns: [{ name: 'q1 2024 revenue', type: 'DOUBLE', samples: [] }] },
+      true,
+    )
+    const out = redactSqlError(
+      'Binder Error: Referenced column "q1 2024 revenue" not found',
+      disclosedTokens(named),
+    )
+    expect(out).toContain('q1 2024 revenue')
+  })
+
+  it('caps the length, because an essay is a place for a value to hide', () => {
+    const out = redactSqlError(`Binder Error: ${'padding text '.repeat(200)}`, allowed)
+    expect(out.length).toBeLessThanOrEqual(MAX_ERROR_LENGTH)
+  })
+
+  it('fails closed on an empty or non-string message', () => {
+    expect(redactSqlError('', allowed)).toMatch(/without an error message/i)
+    expect(redactSqlError(undefined, allowed)).toMatch(/without an error message/i)
+    expect(redactSqlError({ toString: () => "'secret'" }, allowed)).not.toContain('secret')
+  })
+
+  it('redacts everything when no vocabulary is supplied at all', () => {
+    const out = redactSqlError('Binder Error: column "patient" not found')
+    expect(out).not.toContain('patient')
+  })
+})
+
+describe('disclosedTokens', () => {
+  it('covers the table, the column names and the identifiers in the SQL being repaired', () => {
+    const profile = redactProfile(
+      { table: 'sheet', rowCount: 1, columns: [{ name: 'amount', type: 'DOUBLE', samples: [] }] },
+      true,
+    )
+    const tokens = disclosedTokens(profile, 'select try_cast(amount as int) from sheet')
+    expect(tokens.has('sheet')).toBe(true)
+    expect(tokens.has('amount')).toBe(true)
+    expect(tokens.has('try_cast')).toBe(true)
+    expect(tokens.has('never_mentioned')).toBe(false)
+  })
+})
+
 /** A stub DuckDB that records every statement it is asked to run. */
 function fakeRunner(responses: Record<string, QueryResult>) {
   const seen: string[] = []
@@ -159,7 +293,23 @@ describe('buildProfile', () => {
     expect(p.columns[0]!.samples).toHaveLength(MAX_SAMPLES)
   })
 
-  it('sorts each column independently so samples cannot be re-assembled into rows', async () => {
+  /**
+   * The ordering of the sample query is load-bearing twice over, and this pins
+   * both halves.
+   *
+   * *Unordered* is the original leak: insertion order makes the k-th sample of
+   * every column belong to the same source row, so records reconstruct.
+   *
+   * *Ordered by value* — `order by 1`, the first fix — breaks that alignment but
+   * substitutes a different disclosure: the five lowest salaries, the five
+   * earliest dates, the alphabetically first five customers. "Up to five example
+   * values" is not a promise to hand over the extremes of every distribution.
+   *
+   * Hashing is uncorrelated between columns (alignment stays broken) and
+   * uncorrelated with the values (no order statistic escapes), so the assertion
+   * is both "there is an ORDER BY" and "it is not the ordinal one".
+   */
+  it('orders samples by a hash, not by insertion order and not by value', async () => {
     const { run, seen } = fakeRunner({
       'describe ': describeResult,
       'count(*)': result(['n'], [[42]]),
@@ -168,7 +318,39 @@ describe('buildProfile', () => {
     await buildProfile('data', false, run)
     const sampleQueries = seen.filter((sql) => sql.includes('distinct'))
     expect(sampleQueries.length).toBeGreaterThan(0)
-    expect(sampleQueries.every((sql) => sql.includes('order by 1'))).toBe(true)
+    for (const sql of sampleQueries) {
+      const normalised = sql.replace(/\s+/g, ' ').toLowerCase()
+      // Never insertion order.
+      expect(normalised).toContain('order by')
+      // Never value order: `order by 1` and `order by v` both leak the minima.
+      expect(normalised).not.toMatch(/order by (1|v)\b/)
+      expect(normalised).toContain('order by hash(')
+    }
+  })
+
+  it('bounds the rows a sample query may scan, so profiling a huge sheet still finishes', async () => {
+    const { run, seen } = fakeRunner({
+      'describe ': describeResult,
+      'count(*)': result(['n'], [[9_000_000]]),
+      'select distinct': result(['v'], [['2025-01']]),
+    })
+    await buildProfile('data', false, run)
+    const sampleQueries = seen.filter((sql) => sql.includes('distinct'))
+    expect(sampleQueries.length).toBeGreaterThan(0)
+    expect(sampleQueries.every((sql) => sql.includes(`limit ${SAMPLE_SCAN_ROWS}`))).toBe(true)
+  })
+
+  it('gives sample queries their own shorter timeout rather than the full query budget', async () => {
+    const timeouts: (number | undefined)[] = []
+    const run = vi.fn(async (sql: string, timeoutMs?: number): Promise<QueryResult> => {
+      if (sql.includes('describe ')) return describeResult
+      if (sql.includes('count(*)')) return result(['n'], [[42]])
+      timeouts.push(timeoutMs)
+      return result(['v'], [['x']])
+    })
+    await buildProfile('data', false, run)
+    expect(timeouts.length).toBeGreaterThan(0)
+    expect(timeouts.every((ms) => ms === SAMPLE_TIMEOUT_MS)).toBe(true)
   })
 
   it('quotes identifiers so a hostile column name cannot break out of the sample query', async () => {

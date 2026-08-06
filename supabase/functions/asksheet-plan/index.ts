@@ -2,6 +2,7 @@ import { getCaller } from '../_shared/auth.ts'
 import { errorResponse, jsonResponse, preflight } from '../_shared/cors.ts'
 import { chatJSON, type Message } from '../_shared/openrouter.ts'
 import { consumeQuota } from '../_shared/quota.ts'
+import { disclosedTokens, redactSqlError } from './redact.ts'
 
 /**
  * asksheet-plan — the only server call AskSheet makes.
@@ -14,6 +15,10 @@ import { consumeQuota } from '../_shared/quota.ts'
  * redacts (see `src/lib/profile.ts`), but a server that trusts a client's promise
  * about a privacy boundary is not enforcing one — a tampered or stale client must
  * not be able to turn this endpoint into a data sink.
+ *
+ * That applies to *both* things a request carries from the sheet: the profile,
+ * and — less obviously — the DuckDB error text on a repair round-trip, which
+ * quotes the offending cell verbatim. Both are rebuilt here from an allowlist.
  */
 
 /** Nothing legitimate comes close. 40 columns × 5 short samples is a few KB. */
@@ -63,6 +68,11 @@ class BadRequestError extends Error {
 
 class PayloadTooLargeError extends Error {
   status = 413
+}
+
+/** The model provider failed. 502, not the 500 an unclassified throw would give. */
+class UpstreamError extends Error {
+  status = 502
 }
 
 function text(value: unknown, max: number): string {
@@ -132,20 +142,29 @@ function parseBody(raw: string): PlanBody {
     })
     .filter((turn) => turn.question !== '' && turn.sql !== '')
 
+  const profile = sanitizeProfile(body.profile)
+
   const repairInput = body.repair
-  const repair =
+  const repairSql =
     typeof repairInput === 'object' && repairInput !== null
-      ? {
-          sql: text((repairInput as Record<string, unknown>).sql, 4000),
-          error: text((repairInput as Record<string, unknown>).error, 1000),
+      ? text((repairInput as Record<string, unknown>).sql, 4000)
+      : ''
+  const repair =
+    repairSql === ''
+      ? undefined
+      : {
+          sql: repairSql,
+          error: redactSqlError(
+            text((repairInput as Record<string, unknown>).error, 4000),
+            disclosedTokens(profile, repairSql),
+          ),
         }
-      : undefined
 
   return {
-    profile: sanitizeProfile(body.profile),
+    profile,
     history,
     question,
-    ...(repair && repair.sql !== '' ? { repair } : {}),
+    ...(repair ? { repair } : {}),
   }
 }
 
@@ -251,10 +270,28 @@ Deno.serve(async (req: Request) => {
       { role: 'user', content: userPrompt(body) },
     ]
 
-    const output = await chatJSON<PlanOutput>(messages, SCHEMA, Deno.env.get('MODEL_CHEAP'))
+    let output: PlanOutput
+    try {
+      output = await chatJSON<PlanOutput>(messages, SCHEMA, Deno.env.get('MODEL_CHEAP'))
+    } catch (upstream) {
+      // The shared client throws `OpenRouter <status>: <raw body>`, which reaches
+      // the browser verbatim as a 500. Neither half of that helps: the status is
+      // wrong, and a provider's raw body is not something to hand to a user.
+      const detail = upstream instanceof Error ? upstream.message : String(upstream)
+      const rateLimited = /OpenRouter 429|rate limit/i.test(detail)
+      throw new UpstreamError(
+        rateLimited
+          ? 'The planning model is rate-limited right now. Wait a moment and ask again — your sheet has not moved.'
+          : 'The planning model could not be reached. Wait a moment and ask again — your sheet has not moved.',
+      )
+    }
 
     const sql = cleanSql(typeof output?.sql === 'string' ? output.sql : '')
-    if (sql === '') throw new Error('The planner returned no SQL.')
+    if (sql === '') {
+      throw new UpstreamError(
+        'The planner answered without any SQL. Rephrasing the question usually fixes it.',
+      )
+    }
 
     return jsonResponse({
       sql,

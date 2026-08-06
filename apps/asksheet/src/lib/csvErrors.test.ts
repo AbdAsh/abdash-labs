@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { describeCsvProblem, describeLoadFailure, type CsvPreflight } from './csvErrors'
+import {
+  describeCsvProblem,
+  describeLoadFailure,
+  describeQueryFailure,
+  type CsvPreflight,
+} from './csvErrors'
+// Imported as the real classes rather than as `{ name: 'QueryTimeoutError' }`:
+// the passthrough is keyed on `error.name`, so a rename should break this test.
+import { FileTooLargeError, QueryTimeoutError } from './duck'
 
 const clean: CsvPreflight = {
   issues: [],
@@ -95,7 +103,7 @@ describe('describeLoadFailure', () => {
     ['Value with unterminated quote found at line 12', /stray " character/],
     ['Error when sniffing file', /re-export it as a standard csv/i],
     ['Conversion Error: Could not convert string "n/a" to DOUBLE', /did not match its column/i],
-    ['RuntimeError: Out of Memory', /too large to load in the browser/i],
+    ['RuntimeError: Out of Memory', /more memory than the tab has/i],
   ]
 
   for (const [raw, expected] of cases) {
@@ -110,5 +118,43 @@ describe('describeLoadFailure', () => {
 
   it('copes with a thrown non-Error', () => {
     expect(describeLoadFailure('plain string')).toContain('plain string')
+  })
+})
+
+describe('describeQueryFailure', () => {
+  const cases: [string, RegExp][] = [
+    ['Binder Error: Referenced column "x" not found in FROM clause!', /column this sheet does not have/i],
+    ['Catalog Error: Table with name foo does not exist', /column this sheet does not have/i],
+    ["Conversion Error: Could not convert string 'n/a' to INT32", /set its type/i],
+    ['Parser Error: syntax error at or near ";"', /could not parse/i],
+    ['Binder Error: No function matches the given name', /rejected/i],
+    ['RuntimeError: Out of Memory', /summary or a top-N/i],
+  ]
+
+  for (const [raw, expected] of cases) {
+    it(`suggests a next step for: ${raw.slice(0, 34)}…`, () => {
+      expect(describeQueryFailure(new Error(raw))).toMatch(expected)
+    })
+  }
+
+  it('never returns the bare DuckDB text as the headline', () => {
+    const headline = describeQueryFailure(new Error('Binder Error: Referenced column "x" not found'))
+    expect(headline).not.toContain('Binder Error')
+  })
+
+  it('has a fallback for an error it does not recognise', () => {
+    expect(describeQueryFailure(new Error('???'))).toMatch(/could not be answered/i)
+  })
+
+  /**
+   * AskSheet's own errors were written to be read. Passing them through the
+   * pattern matcher would replace a specific, actionable sentence with a generic
+   * one — the timeout would become "that question could not be answered".
+   */
+  it('passes through an error that is already a sentence', () => {
+    const timeout = new QueryTimeoutError(10_000)
+    expect(describeQueryFailure(timeout)).toBe(timeout.message)
+    const big = new FileTooLargeError(200 * 1024 * 1024)
+    expect(describeLoadFailure(big)).toBe(big.message)
   })
 })

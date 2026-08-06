@@ -6,6 +6,8 @@ import { Worker as NodeWorker } from 'node:worker_threads'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import {
   attachDuck,
+  FileTooLargeError,
+  MAX_FILE_BYTES,
   MAX_RESULT_ROWS,
   overrideColumnType,
   QueryTimeoutError,
@@ -15,7 +17,7 @@ import {
 } from './duck'
 import { preflightCsv } from './csv'
 import { findSample } from '../samples'
-import { buildProfile } from './profile'
+import { buildProfile, disclosedTokens, MAX_SAMPLES, redactSqlError } from './profile'
 
 /**
  * A real DuckDB, on real bytes.
@@ -302,5 +304,82 @@ describe('duck', () => {
     await registerCsv('"we""ird",b\n1,2\n', 'quoted')
     const profile = await buildProfile('quoted', false, runQuery)
     expect(profile.columns.map((c) => c.name)).toContain('we"ird')
+  })
+
+  /**
+   * The sibling of the row-reconstruction test above, guarding the *second* thing
+   * the sample ordering has to avoid.
+   *
+   * `order by 1` broke the row alignment but replaced it with an order statistic:
+   * the five lowest values of every column. For a salary or a date column that is
+   * a more sensitive disclosure than five arbitrary values, and "up to five
+   * example values" does not describe it. Hashing avoids both.
+   */
+  it('does not emit the five smallest values of a column', async () => {
+    const csv = findSample('saas-revenue')!.csv
+    await registerCsv(csv, 'revenue')
+    const profile = await buildProfile('revenue', false, runQuery)
+
+    const month = profile.columns.find((c) => c.name === 'month')!
+    expect(month.samples.length).toBe(5)
+
+    const lines = csv.trim().split('\n').slice(1)
+    const distinct = [...new Set(lines.map((line) => line.split(',')[0]!))].sort()
+    expect(distinct.length).toBeGreaterThan(MAX_SAMPLES)
+
+    // Not the bottom of the distribution (`order by 1`) and not the top
+    // (`order by 1 desc`). An individual extreme may still be picked — hashing
+    // promises that the choice is uncorrelated with value order, not that the
+    // minimum is withheld — but the *set* of extremes must not be what is sent.
+    const sorted = [...month.samples].sort()
+    expect(sorted).not.toEqual(distinct.slice(0, MAX_SAMPLES))
+    expect(sorted).not.toEqual(distinct.slice(-MAX_SAMPLES))
+  })
+
+  /**
+   * The leak this revision was sent to find, proved against the real engine
+   * rather than against a hand-written error string.
+   */
+  it('produces a repair error, from a real conversion failure, with no cell in it', async () => {
+    const csv = 'patient,ssn,amount\nA. Kowalski,111-22-3333,not-a-number\nB. Tran,444-55-6666,120\n'
+    await registerCsv(csv, 'clinical')
+    const profile = await buildProfile('clinical', true, runQuery)
+    const sql = 'select cast(ssn as integer) as n from clinical'
+
+    const thrown = await runQuery(sql).then(
+      () => null,
+      (error: unknown) => error as Error,
+    )
+    expect(thrown).not.toBeNull()
+    // What DuckDB actually said, before anything touched it.
+    expect(thrown!.message).toContain('111-22-3333')
+
+    const outbound = redactSqlError(thrown!.message, disclosedTokens(profile, sql))
+    expect(outbound).not.toContain('111-22-3333')
+    expect(outbound).not.toContain('444-55-6666')
+    expect(outbound).not.toContain('Kowalski')
+    // And it is still worth sending.
+    expect(outbound).toMatch(/conversion error/i)
+    expect(outbound).toContain('ssn')
+  })
+
+  it('runs a statement the planner terminated with a semicolon', async () => {
+    await registerCsv(CSV, 'data')
+    // Legal per assertSingleSelect, and a parser error inside the row-cap wrapper
+    // until it was stripped — so a good query died and burned the repair retry.
+    const result = await runQuery('select month from data;')
+    expect(result.rows.length).toBe(6)
+  })
+
+  it('still pushes the row cap down through a leading comment', async () => {
+    const commented = await runQuery('-- rank them\nselect i from range(0, 9000) t(i)', 20_000, 100)
+    expect(commented.rows).toHaveLength(100)
+    expect(commented.truncated).toBe(true)
+  })
+
+  it('refuses an oversized file before downloading an engine to refuse it with', async () => {
+    const huge = { size: MAX_FILE_BYTES + 1, name: 'huge.csv' } as unknown as File
+    await expect(registerCsv(huge, 'huge')).rejects.toBeInstanceOf(FileTooLargeError)
+    await expect(registerCsv(huge, 'huge')).rejects.toThrow(/MB/)
   })
 })

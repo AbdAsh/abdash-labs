@@ -1,10 +1,15 @@
 /**
- * Turns a CSV parse into a sentence a person can act on.
+ * Turns a parse or engine failure into a sentence a person can act on.
  *
  * "A malformed CSV fails with a helpful message rather than a blank screen" is a
  * stated success criterion, and DuckDB's own errors ("Value with unterminated
  * quote found at line 0") do not clear that bar. PapaParse runs first purely to
  * produce this diagnosis; DuckDB still does the real load.
+ *
+ * The same standard applies after the file is in: `describeQueryFailure` turns a
+ * binder or conversion error into the next thing to try, because a user staring
+ * at "Binder Error: Referenced column …" has been told what happened and not what
+ * to do about it.
  */
 
 export interface CsvIssue {
@@ -114,20 +119,76 @@ export function describeCsvProblem(preflight: CsvPreflight): string | null {
   return null
 }
 
+/**
+ * Errors AskSheet raises itself already read as sentences — they were written to
+ * be shown. Re-describing them would only make them worse.
+ */
+const ALREADY_ACTIONABLE = new Set([
+  'QueryTimeoutError',
+  'FileTooLargeError',
+  'EngineUnavailableError',
+  'UnsafeSqlError',
+  'UnsupportedTypeError',
+  'PlanQuotaError',
+  'PlanRequestError',
+])
+
+function ownMessage(error: unknown): string | null {
+  return error instanceof Error && ALREADY_ACTIONABLE.has(error.name) ? error.message : null
+}
+
+function raw(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
 /** Formats whatever DuckDB threw during load, when the preflight found nothing. */
 export function describeLoadFailure(error: unknown): string {
-  const raw = error instanceof Error ? error.message : String(error)
-  if (/unterminated quote/i.test(raw)) {
+  const own = ownMessage(error)
+  if (own) return own
+
+  const text = raw(error)
+  if (/unterminated quote/i.test(text)) {
     return 'A quoted value is never closed somewhere in this file. Check for a stray " character.'
   }
-  if (/sniffing file|could not detect/i.test(raw)) {
+  if (/sniffing file|could not detect/i.test(text)) {
     return 'The structure of this file could not be detected. Re-export it as a standard CSV with one header row.'
   }
-  if (/conversion error|could not convert/i.test(raw)) {
-    return `A value did not match its column's inferred type. ${raw}`
+  if (/conversion error|could not convert/i.test(text)) {
+    return `A value did not match its column's inferred type. ${text}`
   }
-  if (/out of memory|allocation failure/i.test(raw)) {
-    return 'This file is too large to load in the browser. Try a smaller extract.'
+  if (/out of memory|allocation failure|failed to allocate/i.test(text)) {
+    return 'This file needed more memory than the tab has. Nothing was uploaded — try a smaller extract, or drop columns you do not need.'
   }
-  return `This file could not be read: ${raw}`
+  return `This file could not be read: ${text}`
+}
+
+/**
+ * One sentence for a query that failed, actionable where the failure is one the
+ * user can do something about.
+ *
+ * The raw DuckDB text is still shown underneath, because "every answer shows its
+ * work" has to hold for the answers that did not arrive either. This is the
+ * headline, not a replacement.
+ */
+export function describeQueryFailure(error: unknown): string {
+  const own = ownMessage(error)
+  if (own) return own
+
+  const text = raw(error)
+  if (/out of memory|allocation failure|failed to allocate/i.test(text)) {
+    return 'That query needed more memory than this tab has. Ask for a summary or a top-N rather than every row, and it should fit.'
+  }
+  if (/referenced column|not found in FROM clause|catalog error/i.test(text)) {
+    return 'The planner wrote SQL against a column this sheet does not have. Rephrasing the question using the column names in the schema above usually fixes it.'
+  }
+  if (/conversion error|could not convert|could not parse|invalid input/i.test(text)) {
+    return 'A value would not convert to the type the query needed — text in a number column, most often. Click that column in the schema above and set its type, then ask again.'
+  }
+  if (/parser error|syntax error/i.test(text)) {
+    return 'The planner produced SQL DuckDB could not parse. Asking the same thing in fewer clauses usually gets a simpler query.'
+  }
+  if (/binder error|no function matches/i.test(text)) {
+    return 'The planner used the columns in a way DuckDB rejected. Naming the column you mean in the question usually resolves it.'
+  }
+  return 'That question could not be answered against this sheet.'
 }

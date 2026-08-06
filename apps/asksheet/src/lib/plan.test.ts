@@ -134,6 +134,64 @@ describe('ask — one-shot repair', () => {
     expect(requests[1]!.repair?.error).toMatch(/drop/i)
   })
 
+  /**
+   * The leak this pass was sent to find.
+   *
+   * DuckDB names the offending cell in a conversion error, and the system prompt
+   * tells the planner to cast text that holds numbers — so a failed cast is the
+   * single likeliest reason a repair happens at all. `repair.error` was the raw
+   * message. Shape correct, key count correct, contents a row value.
+   */
+  it('never forwards a cell value that DuckDB quoted in its error message', async () => {
+    const secret = '111-22-3333'
+    const runQuery = vi.fn(async (sql: string): Promise<QueryResult> => {
+      if (sql.includes('cast')) {
+        throw new Error(
+          `Conversion Error: Could not convert string '${secret}' to INT32 when casting from source column revenue_usd\n\nLINE 2: select cast(revenue_usd as integer) from data\n               ^`,
+        )
+      }
+      return okResult
+    })
+    const { deps, requests } = harness(
+      [plan('select cast(revenue_usd as integer) from data'), plan(VALID)],
+      runQuery,
+    )
+
+    await ask('q', 'data', false, { deps })
+    expect(requests).toHaveLength(2)
+    expect(JSON.stringify(requests)).not.toContain(secret)
+    // The diagnosis still travels, or the repair round-trip is worthless.
+    expect(requests[1]!.repair?.error).toMatch(/conversion error/i)
+    expect(requests[1]!.repair?.error).toContain('revenue_usd')
+  })
+
+  it('never forwards a cell value DuckDB echoed on its own line', async () => {
+    const secret = 'severe migraine'
+    const runQuery = vi.fn(async (): Promise<QueryResult> => {
+      throw new Error(
+        `Invalid Input Error: Could not parse string "${secret}" according to format specifier "%Y-%m-%d"\n${secret}\n^\nError: Expected a number`,
+      )
+    })
+    const { deps, requests } = harness([plan('select strptime(month, \'%Y-%m-%d\') from data'), plan(VALID)], runQuery)
+
+    await ask('q', 'data', false, { deps }).catch(() => undefined)
+    expect(JSON.stringify(requests)).not.toContain(secret)
+  })
+
+  it('keeps the full error locally even though the redacted one goes out', async () => {
+    const secret = '111-22-3333'
+    const runQuery = vi.fn(async (): Promise<QueryResult> => {
+      throw new Error(`Conversion Error: Could not convert string '${secret}' to INT32`)
+    })
+    const { deps, requests } = harness([plan(VALID), plan(VALID)], runQuery)
+
+    const failure = (await ask('q', 'data', false, { deps }).catch((e: unknown) => e)) as AskFailedError
+    // The user is shown what actually happened — it is their own data, on their
+    // own screen. Only the copy that crosses the network is redacted.
+    expect(failure.message).toContain(secret)
+    expect(JSON.stringify(requests)).not.toContain(secret)
+  })
+
   it('profiles once, not twice, across the repair', async () => {
     const { deps } = harness([plan(INVALID_SQL), plan(VALID)])
     await ask('q', 'data', false, { deps })
@@ -183,6 +241,27 @@ describe('ask — persistent failure is surfaced honestly', () => {
     const { deps } = harness([new Error('OpenRouter 429: quota')])
     await expect(ask('q', 'data', false, { deps })).rejects.toThrow(/429/)
     expect(deps.requestPlan).toHaveBeenCalledTimes(1)
+  })
+
+  /**
+   * Hitting the quota wall between the two attempts used to throw away the SQL
+   * that actually failed, so the user was told "daily limit reached" and never
+   * shown the query — the one thing they could have acted on.
+   */
+  it('keeps the first attempt when the retry cannot even be planned', async () => {
+    const runQuery = vi.fn(async (): Promise<QueryResult> => {
+      throw new Error('Binder Error: FIRST FAILURE')
+    })
+    const { deps } = harness(
+      [plan('select a from data'), new Error('Daily limit reached for asksheet:plans.')],
+      runQuery,
+    )
+
+    const failure = (await ask('q', 'data', false, { deps }).catch((e: unknown) => e)) as AskFailedError
+    expect(failure).toBeInstanceOf(AskFailedError)
+    expect(failure.attempts).toEqual(['select a from data'])
+    expect(failure.message).toContain('FIRST FAILURE')
+    expect(failure.message).toMatch(/daily limit/i)
   })
 
   it('fails loudly when the planner returns no SQL at all', async () => {
