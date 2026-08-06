@@ -33,6 +33,27 @@ export class SsrfError extends Error {
   }
 }
 
+/**
+ * The URL was safe to fetch and we fetched it; it just is not a web page.
+ *
+ * Kept distinct from `SsrfError` because the two mean opposite things to the
+ * person who submitted the URL. "Refusing to fetch this URL" on a PDF reads as
+ * an accusation and tells them nothing about what to do instead, and a caller
+ * cannot tell a blocked address from a spreadsheet if both arrive as the same
+ * class with the same prefix.
+ */
+export class UnsupportedContentError extends Error {
+  readonly status = 415
+  constructor(readonly contentType: string) {
+    super(
+      `Critiq reviews web pages, and this URL returned ${
+        contentType || 'no content type'
+      }. Try the HTML page that links to it.`,
+    )
+    this.name = 'UnsupportedContentError'
+  }
+}
+
 /** Maximum number of redirects followed. Each one is fully revalidated. */
 export const MAX_REDIRECTS = 3
 
@@ -475,9 +496,7 @@ export async function guardedFetchWith(
     const contentType = (rawContentType.split(';')[0] ?? '').trim()
     if (contentTypes !== 'any' && !contentTypes.some((p) => contentType.startsWith(p))) {
       await discard(res)
-      throw new SsrfError(
-        `expected HTML but the server sent ${contentType || 'no content type'}`,
-      )
+      throw new UnsupportedContentError(contentType)
     }
 
     const { text, truncated } = await readCapped(res, maxBytes, charsetOf(rawContentType))

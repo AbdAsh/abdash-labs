@@ -52,6 +52,58 @@ export const DIMENSIONS: Dimension[] = [
 
 export const SEVERITIES: Severity[] = ['critical', 'high', 'medium', 'low']
 
+/**
+ * Every deterministic check, with the sentence to show when it *passes*.
+ *
+ * This list is the single source of truth for three things that were previously
+ * three separate copies of the same knowledge:
+ *
+ *  - the "what we verified" list a clean report shows, which is the only way a
+ *    reader can tell an empty report from a broken tool;
+ *  - the id set `mergeFindings` uses to refuse an LLM finding that claims a
+ *    mechanical result the check engine already measured and cleared;
+ *  - the coverage assertion in the test suite.
+ */
+export const CHECK_CATALOGUE: readonly { id: string; dimension: Dimension; passed: string }[] = [
+  { id: 'http-status-error', dimension: 'crawlability', passed: 'The page returns a success status' },
+  { id: 'noindex-present', dimension: 'crawlability', passed: 'Nothing tells search engines to skip this page' },
+  { id: 'robots-blocked', dimension: 'crawlability', passed: 'robots.txt allows this page to be crawled' },
+  { id: 'canonical-missing', dimension: 'crawlability', passed: 'A canonical URL is declared' },
+  { id: 'canonical-mismatch', dimension: 'crawlability', passed: 'The canonical URL points at this page' },
+  { id: 'sitemap-missing', dimension: 'crawlability', passed: 'A sitemap was found' },
+  { id: 'redirect-chain', dimension: 'crawlability', passed: 'The URL resolves without a redirect chain' },
+  { id: 'title-missing', dimension: 'metadata', passed: 'The page has a title' },
+  { id: 'title-length', dimension: 'metadata', passed: 'The title fits a search result without truncation' },
+  { id: 'description-missing', dimension: 'metadata', passed: 'The page has a meta description' },
+  { id: 'description-length', dimension: 'metadata', passed: 'The meta description is a usable length' },
+  { id: 'js-only-content', dimension: 'content', passed: 'The content is present without running JavaScript' },
+  { id: 'thin-content', dimension: 'content', passed: 'The page carries enough body text to cover a topic' },
+  { id: 'h1-missing', dimension: 'structure', passed: 'The page has an H1' },
+  { id: 'h1-multiple', dimension: 'structure', passed: 'There is exactly one H1' },
+  { id: 'heading-skip', dimension: 'structure', passed: 'The heading outline descends one level at a time' },
+  { id: 'lang-missing', dimension: 'structure', passed: 'The page declares its language' },
+  { id: 'viewport-missing', dimension: 'structure', passed: 'A viewport is declared for mobile rendering' },
+  { id: 'img-alt-missing', dimension: 'structure', passed: 'Every image carries an alt attribute' },
+  { id: 'jsonld-invalid', dimension: 'structured-data', passed: 'Every JSON-LD block parses' },
+  { id: 'jsonld-missing', dimension: 'structured-data', passed: 'The page publishes JSON-LD structured data' },
+  { id: 'generic-anchor-text', dimension: 'links', passed: 'Anchor text describes where links go' },
+  { id: 'no-extractable-answers', dimension: 'answer-engine', passed: 'The content is shaped so a passage can be quoted' },
+]
+
+/** Every id `runChecks` can emit. Nothing else is a mechanical result. */
+export const CHECK_IDS: ReadonlySet<string> = new Set(CHECK_CATALOGUE.map((c) => c.id))
+
+/** The outcome of a deterministic pass: what failed, and what was cleared. */
+export interface CheckResult {
+  findings: Finding[]
+  /**
+   * Ids that were applicable to this page and did not fire. Deliberately not
+   * "every id minus the failures": claiming `canonical-mismatch` passed on a
+   * page with no canonical would be a report of a check that never ran.
+   */
+  passed: string[]
+}
+
 // Thresholds, gathered so they can be argued with in one place.
 const TITLE_MIN = 25
 const TITLE_MAX = 65
@@ -87,19 +139,62 @@ const GENERIC_ANCHORS = new Set([
   'download',
 ])
 
+/** The findings only. See `review` when you also need what was cleared. */
 export function runChecks(
   digest: Digest,
   robots: string | null,
   sitemap: string | null,
 ): Finding[] {
+  return review(digest, robots, sitemap).findings
+}
+
+export function review(
+  digest: Digest,
+  robots: string | null,
+  sitemap: string | null,
+): CheckResult {
   // Callers hand us partial digests in tests, and a real page can be missing
   // almost anything. A check that throws produces no report at all, which is
   // worse than any finding it could have made.
   const d = normalise(digest)
   const out: Finding[] = []
-  const add = (f: Omit<Finding, 'source'>) => out.push({ ...f, source: 'check' })
+
+  // A check is "evaluated" when this page gave it something to decide about.
+  // `title-length` on a page with no title was never run, and reporting it as
+  // passed would be the report lying about its own coverage.
+  const evaluated = new Set<string>()
+  const ran = (...ids: string[]) => {
+    for (const id of ids) evaluated.add(id)
+  }
+  const add = (f: Omit<Finding, 'source'>) => {
+    evaluated.add(f.id)
+    out.push({ ...f, source: 'check' })
+  }
 
   // ---- crawlability --------------------------------------------------------
+
+  // A 4xx or 5xx body is not the page; everything below it is measuring an
+  // error document. Reviewing one silently is the worst thing this tool could
+  // do, because the report looks ordinary and is entirely about the wrong page.
+  if (d.status > 0) {
+    ran('http-status-error')
+    if (d.status >= 400) {
+      add({
+        id: 'http-status-error',
+        dimension: 'crawlability',
+        severity: 'critical',
+        title: `The page returns HTTP ${d.status}`,
+        evidence: `${d.finalUrl} responded ${d.status}${
+          d.redirects.length > 0 ? ` after ${d.redirects.length} redirect(s)` : ''
+        }`,
+        fix: d.status >= 500
+          ? 'Fix the server error. Nothing else in this report matters until the page returns 200 — ' +
+            'and everything below was measured against an error page, not your content.'
+          : 'Restore the page or redirect the URL to its replacement. Everything below was measured ' +
+            'against an error page, not your content.',
+      })
+    }
+  }
 
   const noindexSource = [
     d.robotsMeta && ['meta name="robots"', d.robotsMeta] as const,
@@ -107,6 +202,7 @@ export function runChecks(
     d.xRobotsTag && ['X-Robots-Tag header', d.xRobotsTag] as const,
   ].find((pair) => pair && /\b(noindex|none)\b/i.test(pair[1]))
 
+  ran('noindex-present')
   if (noindexSource) {
     add({
       id: 'noindex-present',
@@ -121,7 +217,11 @@ export function runChecks(
     })
   }
 
+  // Only claimed as checked when robots.txt was actually read. A site that
+  // serves an HTML error page at /robots.txt has not been cleared for crawling;
+  // we simply do not know.
   if (robots) {
+    ran('robots-blocked')
     const rule = matchedRobotsRule(robots, pathOf(d.finalUrl))
     if (rule && !rule.allow) {
       add({
@@ -138,19 +238,35 @@ export function runChecks(
     }
   }
 
+  ran('canonical-missing')
   if (d.canonical === null) {
+    // A missing canonical only *costs* something when there is a duplicate to
+    // consolidate. On a clean, parameter-free URL a search engine
+    // self-canonicalises and nothing is lost, so flagging it at medium on every
+    // ordinary page is how a checklist turns into noise.
+    const duplicable = queryOf(d.finalUrl) !== '' || d.redirects.length > 0
     add({
       id: 'canonical-missing',
       dimension: 'crawlability',
-      severity: 'medium',
+      severity: duplicable ? 'medium' : 'low',
       title: 'No canonical URL is declared',
-      evidence: `No <link rel="canonical"> in the head of ${d.finalUrl}`,
-      fix:
-        'Declare the canonical URL so parameter and tracking variants of this page consolidate ' +
-        'their signals instead of competing with each other.',
+      evidence: duplicable
+        ? `No <link rel="canonical"> in the head, and this URL has variants: ${
+          queryOf(d.finalUrl) !== '' ? `it carries the query "${queryOf(d.finalUrl)}"` : ''
+        }${
+          queryOf(d.finalUrl) !== '' && d.redirects.length > 0 ? ' and ' : ''
+        }${d.redirects.length > 0 ? `it was reached through ${d.redirects.length} redirect(s)` : ''}`
+        : `No <link rel="canonical"> in the head of ${d.finalUrl}`,
+      fix: duplicable
+        ? 'Declare the canonical URL. This page is reachable by more than one address, so without ' +
+          'one those variants compete with each other instead of consolidating.'
+        : 'Declare the canonical URL. Nothing is currently splitting this page\'s signals, so this ' +
+          'is insurance rather than a repair — worth doing before the first tracking parameter ' +
+          'shows up in a campaign.',
       code: `<link rel="canonical" href="${d.finalUrl}">`,
     })
   } else {
+    ran('canonical-mismatch')
     const declared = normaliseForCompare(d.canonical)
     const actual = normaliseForCompare(d.finalUrl)
     if (declared !== null && actual !== null && declared !== actual) {
@@ -174,28 +290,43 @@ export function runChecks(
   }
 
   const declaresSitemap = robots !== null && /^\s*sitemap\s*:/im.test(robots)
+  ran('sitemap-missing')
   if (!hasContent(sitemap) && !declaresSitemap) {
     add({
       id: 'sitemap-missing',
       dimension: 'crawlability',
-      severity: 'medium',
+      // Soft on purpose. We probed the conventional locations and read
+      // robots.txt; a sitemap published somewhere else and submitted directly
+      // in Search Console is invisible to us and perfectly valid.
+      severity: 'low',
       title: 'No sitemap was found',
-      evidence: `${originOf(d.finalUrl) ?? 'the origin'}/sitemap.xml returned nothing usable, ` +
-        `and robots.txt declares no Sitemap: line`,
+      evidence: [
+        `${originOf(d.finalUrl) ?? 'the origin'}/sitemap.xml and /sitemap_index.xml returned ` +
+        `nothing that parses as a sitemap`,
+        robots === null
+          ? 'robots.txt could not be read, so any Sitemap: line it may declare is unknown'
+          : 'robots.txt declares no Sitemap: line',
+      ].join(', and '),
       fix:
         'Publish a sitemap.xml and reference it from robots.txt. It is the cheapest way to tell a ' +
-        'crawler which URLs exist and when they last changed.',
+        'crawler which URLs exist and when they last changed. If you already have one somewhere ' +
+        'else, add the Sitemap: line so it is discoverable without Search Console.',
       code: `Sitemap: ${originOf(d.finalUrl) ?? 'https://example.com'}/sitemap.xml`,
     })
   }
 
-  if (d.redirects.length >= 2) {
+  // A bare http→https upgrade is one hop nobody should be scolded for: it is
+  // what a correctly configured site does when someone types the address.
+  const chain = [d.url, ...d.redirects]
+  const costly = d.redirects.filter((to, i) => !isSchemeUpgrade(chain[i] ?? '', to))
+  ran('redirect-chain')
+  if (costly.length >= 2) {
     add({
       id: 'redirect-chain',
       dimension: 'crawlability',
-      severity: d.redirects.length >= 3 ? 'high' : 'medium',
+      severity: costly.length >= 3 ? 'high' : 'medium',
       title: `The URL redirects ${d.redirects.length} times before resolving`,
-      evidence: [d.url, ...d.redirects].join('\n  → '),
+      evidence: chain.join('\n  → '),
       fix:
         'Collapse the chain to a single redirect. Each hop costs crawl budget and latency, and ' +
         'some crawlers stop following after a handful.',
@@ -204,6 +335,7 @@ export function runChecks(
 
   // ---- metadata ------------------------------------------------------------
 
+  ran('title-missing')
   if (!hasContent(d.title)) {
     add({
       id: 'title-missing',
@@ -217,6 +349,7 @@ export function runChecks(
       code: '<title>Specific, distinct page title</title>',
     })
   } else {
+    ran('title-length')
     const length = (d.title as string).trim().length
     if (length < TITLE_MIN || length > TITLE_MAX) {
       add({
@@ -236,6 +369,7 @@ export function runChecks(
     }
   }
 
+  ran('description-missing')
   if (!hasContent(d.description)) {
     add({
       id: 'description-missing',
@@ -249,6 +383,7 @@ export function runChecks(
       code: '<meta name="description" content="One or two sentences that make the case for this page.">',
     })
   } else {
+    ran('description-length')
     const length = (d.description as string).trim().length
     if (length < DESCRIPTION_MIN || length > DESCRIPTION_MAX) {
       add({
@@ -272,6 +407,7 @@ export function runChecks(
     d.textHtmlRatio < JS_ONLY_RATIO &&
     d.scriptCount >= 1
 
+  ran('js-only-content')
   if (jsOnly) {
     add({
       id: 'js-only-content',
@@ -280,32 +416,43 @@ export function runChecks(
       title: 'The page has almost no content without JavaScript',
       // The three numbers together are the argument. Script count alone proves
       // nothing — every modern site loads scripts.
-      evidence:
-        `The raw HTML contains ${d.wordCount} words and ${d.scriptCount} scripts, with a ` +
+      evidence: `The raw HTML contains ${d.wordCount} words and ${d.scriptCount} scripts, with a ` +
         `text-to-HTML ratio of ${(d.textHtmlRatio * 100).toFixed(1)}%. The response is a shell ` +
-        `that renders client-side.`,
+        `that renders client-side.` +
+        (d.truncated
+          ? ` (The response exceeded the size cap and was read only as far as ${d.htmlLength} ` +
+            `bytes — which is itself the finding: that much markup carrying that little text.)`
+          : ''),
       fix:
         'Server-render or pre-render this page. Crawlers that do not execute JavaScript — and every ' +
         'AI answer engine that fetches raw HTML — see an empty document, so the page cannot rank or ' +
         'be cited on content it does not contain.',
     })
-  } else if (d.wordCount < THIN_WORDS) {
-    add({
-      id: 'thin-content',
-      dimension: 'content',
-      severity: d.wordCount < VERY_THIN_WORDS ? 'high' : 'medium',
-      title: `Only ${d.wordCount} words of body text`,
-      evidence:
-        `${d.wordCount} words, text-to-HTML ratio ${(d.textHtmlRatio * 100).toFixed(1)}%`,
-      fix:
-        'Add substance that answers the question this page targets. Word count is not a ranking ' +
-        'factor on its own, but a page this short rarely covers a topic better than the pages above it.',
-    })
+  } else if (!d.truncated) {
+    // Skipped entirely when the body was cut off at the size cap: `wordCount`
+    // is then a floor, not a measurement, so "only 240 words" would be a claim
+    // about the part we read, published as a claim about the page. Not fired,
+    // and not reported as cleared either.
+    ran('thin-content')
+    if (d.wordCount < THIN_WORDS) {
+      add({
+        id: 'thin-content',
+        dimension: 'content',
+        severity: d.wordCount < VERY_THIN_WORDS ? 'high' : 'medium',
+        title: `Only ${d.wordCount} words of body text`,
+        evidence: `${d.wordCount} words, text-to-HTML ratio ${(d.textHtmlRatio * 100).toFixed(1)}%`,
+        fix:
+          'Add substance that answers the question this page targets. Word count is not a ranking ' +
+          'factor on its own, but a page this short rarely covers a topic better than the pages ' +
+          'above it.',
+      })
+    }
   }
 
   // ---- structure -----------------------------------------------------------
 
   const h1s = d.headings.filter((h) => h.level === 1)
+  ran('h1-missing')
   if (h1s.length === 0) {
     add({
       id: 'h1-missing',
@@ -320,19 +467,24 @@ export function runChecks(
         'and the anchor for the rest of the outline.',
       code: '<h1>What this page is about</h1>',
     })
-  } else if (h1s.length > 1) {
-    add({
-      id: 'h1-multiple',
-      dimension: 'structure',
-      severity: 'low',
-      title: `The page has ${h1s.length} H1 headings`,
-      evidence: h1s.map((h) => `<h1>${h.text}</h1>`).join('\n'),
-      fix:
-        'Keep one H1 and demote the rest to H2. Several competing top-level headings blur what the ' +
-        'page is primarily about.',
-    })
+  } else {
+    ran('h1-multiple')
+    if (h1s.length > 1) {
+      add({
+        id: 'h1-multiple',
+        dimension: 'structure',
+        severity: 'low',
+        title: `The page has ${h1s.length} H1 headings`,
+        evidence: h1s.map((h) => `<h1>${h.text}</h1>`).join('\n'),
+        fix:
+          'Keep one H1 and demote the rest to H2. Several competing top-level headings blur what ' +
+          'the page is primarily about.',
+      })
+    }
   }
 
+  // Needs at least two headings before there is an outline to have a gap in.
+  if (d.headings.length >= 2) ran('heading-skip')
   const skip = firstHeadingSkip(d.headings)
   if (skip) {
     add({
@@ -348,6 +500,7 @@ export function runChecks(
     })
   }
 
+  ran('lang-missing')
   if (!hasContent(d.lang)) {
     add({
       id: 'lang-missing',
@@ -360,6 +513,7 @@ export function runChecks(
     })
   }
 
+  ran('viewport-missing')
   if (!hasContent(d.viewport)) {
     add({
       id: 'viewport-missing',
@@ -375,12 +529,16 @@ export function runChecks(
   }
 
   const missingAlt = d.images.filter((i) => i.alt === null)
+  if (d.images.length > 0) ran('img-alt-missing')
   if (d.images.length > 0 && missingAlt.length > 0) {
     const share = missingAlt.length / d.images.length
     add({
       id: 'img-alt-missing',
       dimension: 'structure',
-      severity: share > 0.3 ? 'high' : 'medium',
+      // Banded by scale as well as share. One un-described tracking pixel among
+      // thirty properly-labelled images is worth a line in the report, not the
+      // same severity as a gallery with no alt text at all.
+      severity: share > 0.5 ? 'high' : (share > 0.2 || missingAlt.length >= 5) ? 'medium' : 'low',
       title: `${missingAlt.length} of ${d.images.length} images have no alt attribute`,
       evidence: missingAlt.slice(0, 4).map((i) => `<img src="${i.src}">`).join('\n'),
       fix:
@@ -392,40 +550,54 @@ export function runChecks(
 
   // ---- structured data -----------------------------------------------------
 
+  // Only meaningful when there is a block to parse.
   const invalid = d.jsonLd.filter((b) => !b.valid)
-  if (invalid.length > 0) {
-    add({
-      id: 'jsonld-invalid',
-      dimension: 'structured-data',
-      severity: 'high',
-      title: invalid.length === 1
-        ? 'A JSON-LD block does not parse'
-        : `${invalid.length} JSON-LD blocks do not parse`,
-      evidence: (invalid[0]?.raw ?? '').slice(0, 400),
-      fix:
-        'Fix the JSON syntax. A block that does not parse is ignored entirely, so the page gets no ' +
-        'credit for structured data it believes it has.',
-    })
-  } else if (d.jsonLd.length === 0) {
-    add({
-      id: 'jsonld-missing',
-      dimension: 'structured-data',
-      severity: 'medium',
-      title: 'No JSON-LD structured data',
-      evidence: 'No <script type="application/ld+json"> on the page',
-      fix:
-        'Add schema.org markup describing what this page is — Article, Product, FAQPage, Recipe. ' +
-        'It is the most direct way to tell both search engines and answer engines what your ' +
-        'entities are and how they relate.',
-      code:
-        '<script type="application/ld+json">\n{"@context":"https://schema.org","@type":"Article",' +
-        '"headline":"…","author":{"@type":"Person","name":"…"},"datePublished":"…"}\n</script>',
-    })
+  if (d.jsonLd.length > 0) {
+    ran('jsonld-invalid')
+    if (invalid.length > 0) {
+      add({
+        id: 'jsonld-invalid',
+        dimension: 'structured-data',
+        severity: 'high',
+        title: invalid.length === 1
+          ? 'A JSON-LD block does not parse'
+          : `${invalid.length} JSON-LD blocks do not parse`,
+        evidence: (invalid[0]?.raw ?? '').slice(0, 400),
+        fix:
+          'Fix the JSON syntax. A block that does not parse is ignored entirely, so the page gets ' +
+          'no credit for structured data it believes it has.',
+      })
+    }
+  }
+
+  // Skipped on a shell page: it has no content to describe yet, and
+  // `js-only-content` already said the only thing worth saying. Everywhere else
+  // it is real but soft — structured data buys rich-result eligibility, not
+  // rankings, and a great many well-built pages ship without it.
+  if (!jsOnly) {
+    ran('jsonld-missing')
+    if (d.jsonLd.length === 0) {
+      add({
+        id: 'jsonld-missing',
+        dimension: 'structured-data',
+        severity: 'low',
+        title: 'No JSON-LD structured data',
+        evidence: 'No <script type="application/ld+json"> on the page',
+        fix:
+          'Add schema.org markup describing what this page is — Article, Product, FAQPage, Recipe. ' +
+          'It is the most direct way to tell both search engines and answer engines what your ' +
+          'entities are and how they relate.',
+        code:
+          '<script type="application/ld+json">\n{"@context":"https://schema.org","@type":"Article",' +
+          '"headline":"…","author":{"@type":"Person","name":"…"},"datePublished":"…"}\n</script>',
+      })
+    }
   }
 
   // ---- links ---------------------------------------------------------------
 
   const generic = d.links.filter((l) => GENERIC_ANCHORS.has(l.text.trim().toLowerCase()))
+  if (d.links.length > 0) ran('generic-anchor-text')
   if (generic.length >= GENERIC_ANCHOR_MIN) {
     add({
       id: 'generic-anchor-text',
@@ -441,26 +613,30 @@ export function runChecks(
 
   // ---- answer-engine readiness --------------------------------------------
 
-  if (
-    d.wordCount >= ANSWERABLE_MIN_WORDS &&
-    d.listItems < 3 && d.tables === 0 && d.questionHeadings === 0
-  ) {
-    add({
-      id: 'no-extractable-answers',
-      dimension: 'answer-engine',
-      severity: 'medium',
-      title: 'Nothing on this page is shaped like an extractable answer',
-      evidence:
-        `${d.wordCount} words across ${d.paragraphs} paragraphs, with ${d.listItems} list items, ` +
-        `${d.tables} tables and no question-form headings`,
-      fix:
-        'Add headings phrased as the questions readers actually ask, and answer each one immediately ' +
-        'below in a self-contained sentence or two. An answer engine quotes passages it can lift ' +
-        'without surrounding context; prose that only makes sense in sequence gives it nothing to cite.',
-    })
+  // Content-scoped counts, never the document-wide ones. Every site has a nav
+  // built out of `<li>`, so `d.listItems` is dominated by the menu: keyed on it,
+  // this check could not fire on any page with navigation, which is all of them.
+  if (d.wordCount >= ANSWERABLE_MIN_WORDS) {
+    ran('no-extractable-answers')
+    if (d.mainListItems < 3 && d.mainTables === 0 && d.questionHeadings === 0) {
+      add({
+        id: 'no-extractable-answers',
+        dimension: 'answer-engine',
+        severity: 'medium',
+        title: 'Nothing on this page is shaped like an extractable answer',
+        evidence: `${d.wordCount} words across ${d.mainParagraphs} paragraphs of content, with ` +
+          `${d.mainListItems} list items and ${d.mainTables} tables outside the navigation, and ` +
+          `no question-form headings`,
+        fix:
+          'Add headings phrased as the questions readers actually ask, and answer each one ' +
+          'immediately below in a self-contained sentence or two. An answer engine quotes passages ' +
+          'it can lift without surrounding context; prose that only makes sense in sequence gives ' +
+          'it nothing to cite.',
+      })
+    }
   }
 
-  return out
+  return { findings: out, passed: [...evaluated].filter((id) => !out.some((f) => f.id === id)) }
 }
 
 // ---------------------------------------------------------------------------
@@ -597,6 +773,26 @@ function originOf(url: string): string | null {
   }
 }
 
+function queryOf(url: string): string {
+  try {
+    return new URL(url).search
+  } catch {
+    return ''
+  }
+}
+
+/** True when the only thing the redirect changed was http → https. */
+function isSchemeUpgrade(from: string, to: string): boolean {
+  try {
+    const a = new URL(from)
+    const b = new URL(to)
+    if (a.protocol !== 'http:' || b.protocol !== 'https:') return false
+    return a.host === b.host && a.pathname === b.pathname && a.search === b.search
+  } catch {
+    return false
+  }
+}
+
 /**
  * Canonical comparison form: origin plus path plus query, with the fragment and
  * a trailing slash dropped. A trailing slash or a `#section` is not a canonical
@@ -645,10 +841,16 @@ function normalise(d: Digest | null | undefined): Digest {
     listItems: source.listItems ?? 0,
     tables: source.tables ?? 0,
     paragraphs: source.paragraphs ?? 0,
+    // Fall back to the document-wide counts when a caller (a test, or a report
+    // stored before these fields existed) supplies only those.
+    mainListItems: source.mainListItems ?? source.listItems ?? 0,
+    mainTables: source.mainTables ?? source.tables ?? 0,
+    mainParagraphs: source.mainParagraphs ?? source.paragraphs ?? 0,
     questionHeadings: source.questionHeadings ?? 0,
     noscriptTextLength: source.noscriptTextLength ?? 0,
     internalLinks: source.internalLinks ?? 0,
     externalLinks: source.externalLinks ?? 0,
+    truncated: source.truncated === true,
     mainText: source.mainText ?? '',
   }
 }

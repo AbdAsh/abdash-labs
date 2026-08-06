@@ -12,7 +12,7 @@
  * because a prompt is a request and the merge is a guarantee.
  */
 import { chatJSON, type Message } from '../_shared/openrouter.ts'
-import { DIMENSIONS, type Finding, SEVERITIES } from './checks.ts'
+import { CHECK_CATALOGUE, DIMENSIONS, type Finding, SEVERITIES } from './checks.ts'
 import type { Digest } from './digest.ts'
 
 /** Bounded so one page cannot turn into an unreadable wall or a huge bill. */
@@ -108,15 +108,18 @@ function buildPrompt(d: Digest, checkIds: string[]): string {
     jsonLdTypes: d.jsonLd.flatMap((b) => b.types).slice(0, MAX_JSONLD_TYPES),
     counts: {
       words: d.wordCount,
-      paragraphs: d.paragraphs,
-      lists: d.lists,
-      listItems: d.listItems,
-      tables: d.tables,
+      // Content-scoped, so a navigation menu does not read as page structure.
+      contentParagraphs: d.mainParagraphs,
+      contentListItems: d.mainListItems,
+      contentTables: d.mainTables,
       questionHeadings: d.questionHeadings,
       images: d.images.length,
       internalLinks: d.internalLinks,
       externalLinks: d.externalLinks,
     },
+    ...(d.truncated
+      ? { note: 'The response hit the size cap; the text below is the start of the page, not all of it.' }
+      : {}),
     internalLinkSample: d.links
       .filter((l) => l.internal && l.text !== '')
       .slice(0, MAX_LINKS)
@@ -127,12 +130,22 @@ function buildPrompt(d: Digest, checkIds: string[]): string {
       .map((l) => `${l.text} → ${l.href}`),
   }
 
+  const cleared = CHECK_CATALOGUE.map((c) => c.id).filter((id) => !checkIds.includes(id))
+
   return [
     'PAGE STRUCTURE (JSON):',
     JSON.stringify(structure, null, 2),
     '',
     'CHECKS THAT ALREADY FIRED — do not restate any of these:',
     checkIds.length > 0 ? checkIds.join(', ') : '(none)',
+    '',
+    // Telling the model what was measured and found *fine* is the half that was
+    // missing. Without it there is nothing stopping "your title is too long" on
+    // a page whose title the rule engine measured at 48 characters — a claim
+    // that is not judgment at all, but a measurement with the wrong answer.
+    'SUBJECTS THE RULE ENGINE MEASURED AND FOUND ACCEPTABLE — do not contradict these',
+    'on the mechanics; you may still judge whether the content is any good:',
+    cleared.length > 0 ? cleared.join(', ') : '(none)',
     '',
     'EXTRACTED PAGE TEXT:',
     d.mainText.trim() === '' ? '(the page returned no readable text)' : d.mainText,

@@ -66,17 +66,31 @@ export interface Digest {
   textHtmlRatio: number
   scriptCount: number
 
-  // Structure signals the answer-engine dimension reads.
   htmlLength: number
   textLength: number
+  /** Document-wide counts, chrome included. Descriptive, not diagnostic. */
   lists: number
   listItems: number
   tables: number
   paragraphs: number
+  /**
+   * The same counts with navigation, header and footer excluded.
+   *
+   * Every real site has a nav built from `<li>`, so a document-wide list-item
+   * count says nothing about whether the *content* is structured — it says the
+   * page has a menu. Any check that reasons about how extractable the content
+   * is must read these, never the document-wide pair.
+   */
+  mainListItems: number
+  mainTables: number
+  mainParagraphs: number
   questionHeadings: number
   noscriptTextLength: number
   internalLinks: number
   externalLinks: number
+
+  /** True when the response hit the byte cap, so every count below is a floor. */
+  truncated: boolean
 
   /** Leading content text, capped, for the judge. */
   mainText: string
@@ -89,6 +103,7 @@ export interface DigestMeta {
   redirects?: string[]
   elapsedMs?: number
   headers?: Headers | Record<string, string> | null
+  truncated?: boolean
 }
 
 const MAIN_TEXT_CHARS = 6000
@@ -105,6 +120,9 @@ const EXECUTABLE_SCRIPT_TYPES = new Set([
 
 /** Elements whose text is never page content. */
 const NON_CONTENT = ['script', 'style', 'noscript', 'template', 'svg', 'iframe', 'object', 'embed']
+
+/** Site furniture. Its lists and paragraphs belong to the site, not to the page. */
+const CHROME = ['nav', 'header', 'footer', '[role="navigation"]', '[role="banner"]']
 
 const QUESTION_OPENERS =
   /^(what|why|how|when|where|who|whom|whose|which|can|could|should|would|will|do|does|did|is|are|was|were|has|have|am)\b/i
@@ -218,6 +236,18 @@ export function buildDigest(html: string, meta: DigestMeta): Digest {
 
   // ---- text ----------------------------------------------------------------
   const mainRoot = pick(doc, ['main', 'article', '[role="main"]', '#content', '.content'])
+
+  // Content-only counts. With a content root we measure inside it; without one
+  // we subtract the chrome, which is the same intent done less precisely.
+  const withoutChrome = (selector: string, total: number): number =>
+    mainRoot
+      ? all(mainRoot, selector).length
+      : Math.max(0, total - all(doc, CHROME.map((c) => `${c} ${selector}`).join(', ')).length)
+
+  const mainListItems = withoutChrome('li', listItems)
+  const mainTables = withoutChrome('table', tables)
+  const mainParagraphs = withoutChrome('p', paragraphs)
+
   strip(doc)
 
   const bodyText = squash(doc.body?.textContent ?? doc.documentElement?.textContent ?? '')
@@ -257,6 +287,9 @@ export function buildDigest(html: string, meta: DigestMeta): Digest {
     listItems,
     tables,
     paragraphs,
+    mainListItems,
+    mainTables,
+    mainParagraphs,
     questionHeadings,
     noscriptTextLength,
     internalLinks,
@@ -308,10 +341,14 @@ function emptyDigest(html: string, meta: DigestMeta, finalUrl: string): Digest {
     listItems: 0,
     tables: 0,
     paragraphs: 0,
+    mainListItems: 0,
+    mainTables: 0,
+    mainParagraphs: 0,
     questionHeadings: 0,
     noscriptTextLength: 0,
     internalLinks: 0,
     externalLinks: 0,
+    truncated: meta.truncated === true,
     mainText: '',
   }
 }

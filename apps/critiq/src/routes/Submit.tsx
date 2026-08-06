@@ -1,30 +1,32 @@
-import { type FormEvent, useCallback, useEffect, useState } from 'react'
+import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { linkGitHub, quotaFor, useSession, usedToday } from '@labs/platform'
-import { listMyReports, requestReview } from '../lib/api'
-import { displayUrl, formatDate, gradeTone, normaliseUrlInput, quotaLabel } from '../lib/format'
+import { listMyReports, requestReview, ReviewError } from '../lib/api'
+import {
+  displayUrl,
+  elapsedLabel,
+  formatDate,
+  gradeTone,
+  normalizeUrlInput,
+  quotaLabel,
+  stageAt,
+} from '../lib/format'
+import { ErrorPanel } from '../components/ErrorPanel'
 import { reportPath } from '../lib/router'
 import type { ReportSummary } from '../lib/types'
 
-/**
- * The stages a review actually goes through. It is one HTTP request, so these
- * are advertised as indicative rather than live — a fake progress bar that
- * claims to know where the server is would be the wrong kind of polish.
- */
-const STAGES = [
-  { at: 0, label: 'Fetching the page' },
-  { at: 3500, label: 'Parsing and running checks' },
-  { at: 7000, label: 'Asking the model for judgment' },
-]
+/** Matches the Edge Function's own 15 s page budget, plus room for the model. */
+const EXPECTED_MS = 25_000
 
 export function Submit({ navigate }: { navigate: (path: string) => void }) {
   const { session } = useSession()
   const [url, setUrl] = useState('')
   const [running, setRunning] = useState(false)
-  const [stage, setStage] = useState(0)
-  const [error, setError] = useState<string | null>(null)
+  const [elapsed, setElapsed] = useState(0)
+  const [error, setError] = useState<ReviewError | null>(null)
   const [limit, setLimit] = useState(0)
   const [used, setUsed] = useState(0)
   const [recent, setRecent] = useState<ReportSummary[]>([])
+  const lastAttempt = useRef('')
 
   const refresh = useCallback(async () => {
     const [nextLimit, nextUsed, reports] = await Promise.all([
@@ -41,37 +43,47 @@ export function Submit({ navigate }: { navigate: (path: string) => void }) {
     if (session) void refresh()
   }, [session, refresh])
 
+  // A real clock rather than a chain of timeouts. The stage labels are derived
+  // from it, so what the page claims and what it has actually waited can never
+  // drift apart.
   useEffect(() => {
     if (!running) {
-      setStage(0)
+      setElapsed(0)
       return
     }
-    const timers = STAGES.map((s, i) => setTimeout(() => setStage(i), s.at))
-    return () => timers.forEach(clearTimeout)
+    const started = Date.now()
+    const tick = setInterval(() => setElapsed(Date.now() - started), 250)
+    return () => clearInterval(tick)
   }, [running])
 
-  const submit = async (event: FormEvent) => {
-    event.preventDefault()
-    const target = normaliseUrlInput(url)
-    if (target === '') {
-      setError('Enter a URL to review.')
-      return
-    }
-
+  const run = useCallback(async (target: string) => {
+    lastAttempt.current = target
     setRunning(true)
     setError(null)
     try {
       const result = await requestReview(target)
       navigate(reportPath(result.slug))
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      setError(e instanceof ReviewError ? e : new ReviewError(String(e)))
       void refresh()
     } finally {
       setRunning(false)
     }
+  }, [navigate, refresh])
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault()
+    const target = normalizeUrlInput(url)
+    if (target === '') {
+      setError(new ReviewError('Enter a URL to review.', 400))
+      return
+    }
+    void run(target)
   }
 
   const exhausted = limit > 0 && used >= limit
+  const stage = stageAt(elapsed)
+  const progress = Math.min(100, Math.round((elapsed / EXPECTED_MS) * 100))
 
   return (
     <div className="stack">
@@ -121,29 +133,45 @@ export function Submit({ navigate }: { navigate: (path: string) => void }) {
 
         {running && (
           <div className="progress" aria-live="polite">
-            <span className="spinner" aria-hidden="true" />
-            <span>{STAGES[stage]?.label}…</span>
-            <span className="progress__note">
-              One request, one round trip — these stages are indicative timings, not live progress.
-            </span>
+            <div className="progress__bar">
+              <div className="progress__fill" style={{ width: `${progress}%` }} />
+            </div>
+            <p className="progress__stage">
+              <span className="spinner" aria-hidden="true" />
+              <span>{stage.label}…</span>
+              <span className="progress__clock">{elapsedLabel(elapsed)}</span>
+            </p>
+            <p className="progress__note">
+              These are the real phases in the real order, but the timings are typical rather than
+              live: a review is one request, so the page cannot see which phase the server is in.
+              Most finish inside 20 seconds; the page fetch itself gives up at 15.
+            </p>
           </div>
         )}
 
-        {error && <p className="error" role="alert">{error}</p>}
+        {error && (
+          <div className="panel-inset">
+            <ErrorPanel
+              error={{ status: error.status, message: error.message }}
+              onRetry={lastAttempt.current ? () => void run(lastAttempt.current) : undefined}
+            />
+          </div>
+        )}
       </section>
 
       <section className="panel panel--quiet">
         <h2 className="subtitle">What it checks</h2>
         <ul className="bullets">
           <li>
-            <strong>Deterministic first.</strong> Twenty-two mechanical checks decide anything
-            measurable — tag lengths, heading structure, robots rules, JSON-LD validity. Those are
-            labelled <em>measured</em>.
+            <strong>Deterministic first.</strong> Twenty-three mechanical checks decide anything
+            measurable — tag lengths, heading structure, robots rules, JSON-LD validity, HTTP
+            status. Those are labelled <em>measured</em>, and the report lists the ones that
+            passed as well as the ones that did not.
           </li>
           <li>
             <strong>The model only judges.</strong> Is the title specific, does the body answer the
             intent, could an answer engine quote you. Labelled <em>judged</em>, and never allowed to
-            restate a measurement.
+            restate a measurement — including one the checks already took and cleared.
           </li>
           <li>
             <strong>No JavaScript is executed.</strong> That is the point: a page with no content in
@@ -167,7 +195,10 @@ export function Submit({ navigate }: { navigate: (path: string) => void }) {
                     navigate(reportPath(report.slug))
                   }}
                 >
-                  <span className={`dot dot--${gradeTone(report.grades?.overall)}`} aria-hidden="true" />
+                  <span
+                    className={`dot dot--${gradeTone(report.grades?.overall)}`}
+                    aria-hidden="true"
+                  />
                   <span className="reports__url">{displayUrl(report.url)}</span>
                   <span className="reports__grade">{report.grades?.overall ?? '—'}</span>
                   <span className="reports__date">{formatDate(report.created_at)}</span>

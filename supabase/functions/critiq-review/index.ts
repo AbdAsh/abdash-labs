@@ -3,20 +3,27 @@
  *
  * The order below is load-bearing and deliberate:
  *
- *   preflight → getCaller → cache lookup by (url, today) → consumeQuota on a
- *   cache MISS only → assertPublicUrl → guardedFetch → robots.txt + sitemap.xml
- *   → buildDigest → runChecks → judge → mergeFindings → gradeDimensions → insert
+ *   preflight → getCaller → cache lookup by (url, today) → assertPublicUrl →
+ *   consumeQuota on a cache MISS only → guardedFetch → robots.txt + sitemap
+ *   → buildDigest → review → judge → mergeFindings → gradeDimensions → insert
  *
- * Checking the cache before consuming quota is what makes resubmitting the same
- * page genuinely free, as the spec promises — reversing those two would charge a
- * user for a report we already have, on a tier that allows one review a day.
+ * Two orderings here are decisions rather than habit:
+ *
+ *  - **Cache before quota.** Resubmitting the same page is genuinely free, as
+ *    the spec promises. Reversing these would charge a user for a report we
+ *    already have, on a tier that allows one review a day.
+ *  - **Guard before quota.** `assertPublicUrl` is pure and opens no socket, so
+ *    a refused URL costs us nothing — charging a review for a typo like
+ *    `localhost` would spend someone's whole day on a request that never left
+ *    the box. This does not weaken the guard: it still runs again, per hop,
+ *    inside `guardedFetch`.
  */
 import { errorResponse, jsonResponse, preflight } from '../_shared/cors.ts'
 import { callerClient, getCaller } from '../_shared/auth.ts'
 import { consumeQuota } from '../_shared/quota.ts'
 import { assertPublicUrl, guardedFetch } from './ssrf.ts'
 import { buildDigest } from './digest.ts'
-import { type Finding, runChecks } from './checks.ts'
+import { type Finding, review } from './checks.ts'
 import { judge } from './judge.ts'
 import { gradeDimensions, gradeOverall, mergeFindings } from './merge.ts'
 
@@ -24,6 +31,13 @@ const PAGE_MAX_BYTES = 2 * 1024 * 1024
 const PAGE_TIMEOUT_MS = 15_000
 const SIDECAR_MAX_BYTES = 512 * 1024
 const SIDECAR_TIMEOUT_MS = 8_000
+
+/**
+ * Where sitemaps actually live. `/sitemap_index.xml` is the Yoast default and
+ * therefore an enormous slice of the web; probing only `/sitemap.xml` and then
+ * announcing "no sitemap was found" is a claim the tool has not earned.
+ */
+const SITEMAP_PATHS = ['/sitemap.xml', '/sitemap_index.xml']
 
 // No 0/O/1/I/l: a slug goes in a URL a human may retype.
 const SLUG_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789'
@@ -48,12 +62,12 @@ Deno.serve(async (req) => {
     const cached = await todaysReport(db, caller.userId, url)
     if (cached) return jsonResponse({ ...cached, cached: true })
 
+    // Free, synchronous, opens no socket — so it happens before anything is
+    // charged. The guard runs again inside guardedFetch on every hop.
+    assertPublicUrl(rawUrl)
+
     // --- from here the run costs a review ----------------------------------
     await consumeQuota(caller.jwt, 'critiq', 'reviews', 1)
-
-    // The guard runs again inside guardedFetch on every hop; this call rejects
-    // an obviously unsafe URL before a socket is ever opened.
-    assertPublicUrl(rawUrl)
 
     const page = await guardedFetch(rawUrl, {
       maxBytes: PAGE_MAX_BYTES,
@@ -68,7 +82,7 @@ Deno.serve(async (req) => {
     const [robots, sitemap] = origin
       ? await Promise.all([
         sidecar(`${origin}/robots.txt`, isRobotsTxt),
-        sidecar(`${origin}/sitemap.xml`, isSitemapXml),
+        firstSitemap(origin),
       ])
       : [null, null]
 
@@ -79,9 +93,10 @@ Deno.serve(async (req) => {
       redirects: page.redirects,
       elapsedMs: page.elapsedMs,
       headers: page.headers,
+      truncated: page.truncated,
     })
 
-    const checks = runChecks(digest, robots, sitemap)
+    const { findings: checks, passed } = review(digest, robots, sitemap)
 
     // A model outage degrades the report to its deterministic half rather than
     // failing the run and charging the user for nothing.
@@ -110,16 +125,19 @@ Deno.serve(async (req) => {
       findings,
       digest: {
         ...storedDigest,
-        truncated: page.truncated,
         contentType: page.contentType,
         robotsFound: robots !== null,
         sitemapFound: sitemap !== null,
+        // What the deterministic engine cleared. Without it a clean report is
+        // indistinguishable from a broken one: the reader sees no findings and
+        // has no way to know whether anything ran.
+        passed,
         judgeError,
       },
     })
     if (error) throw error
 
-    return jsonResponse({ slug, url, grades, findings, cached: false, judgeError })
+    return jsonResponse({ slug, url, grades, findings, passed, cached: false, judgeError })
   } catch (e) {
     return errorResponse(e)
   }
@@ -211,7 +229,20 @@ async function sidecar(url: string, looksRight: (text: string) => boolean): Prom
   }
 }
 
+/** The first conventional sitemap location that answers with a real sitemap. */
+async function firstSitemap(origin: string): Promise<string | null> {
+  for (const path of SITEMAP_PATHS) {
+    const found = await sidecar(`${origin}${path}`, isSitemapXml)
+    if (found !== null) return found
+  }
+  return null
+}
+
 function isRobotsTxt(text: string): boolean {
+  // A site that answers /robots.txt with an HTML error page has not told us
+  // anything, and treating that page as robots syntax would let a stray
+  // "Disallow:" in the copy fabricate a critical finding.
+  if (/^\s*<(!doctype|html)\b/i.test(text.trim())) return false
   return /^\s*(user-agent|sitemap|allow|disallow)\s*:/im.test(text)
 }
 

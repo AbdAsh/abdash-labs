@@ -30,6 +30,8 @@ export interface ReviewResponse {
   url: string
   grades: Grades
   findings: Finding[]
+  /** Ids of the checks that applied to this page and did not fire. */
+  passed?: string[]
   cached: boolean
   judgeError?: string | null
 }

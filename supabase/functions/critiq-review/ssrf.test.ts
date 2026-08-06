@@ -21,6 +21,7 @@ import {
   isBlockedAddress,
   MAX_REDIRECTS,
   SsrfError,
+  UnsupportedContentError,
   type GuardedFetchDeps,
 } from './ssrf.ts'
 
@@ -445,9 +446,27 @@ Deno.test('guardedFetch rejects a non-HTML content type by default', async () =>
   )
   const err = (await assertRejects(
     () => guardedFetchWith(h.deps, 'https://example.com/x.pdf'),
-    SsrfError,
+    UnsupportedContentError,
   )) as Error
   assertStringIncludes(err.message, 'application/pdf')
+  // A PDF is not an attack. Reporting it as one would tell the submitter their
+  // URL was refused for safety, which is both wrong and unactionable.
+  assertEquals(err instanceof SsrfError, false)
+  assertEquals((err as UnsupportedContentError).status, 415)
+})
+
+Deno.test('a redirect chain that ends at a non-HTML document says so, and does not say "refusing"', async () => {
+  const h = harness((url) =>
+    url.pathname === '/report'
+      ? redirectTo('https://example.com/report.pdf')
+      : new Response('%PDF-1.7', { headers: { 'content-type': 'application/pdf' } })
+  )
+  const err = (await assertRejects(
+    () => guardedFetchWith(h.deps, 'https://example.com/report'),
+    UnsupportedContentError,
+  )) as Error
+  assertStringIncludes(err.message, 'Critiq reviews web pages')
+  assertEquals(err.message.includes('Refusing'), false)
 })
 
 Deno.test('guardedFetch accepts other content types when asked to', async () => {

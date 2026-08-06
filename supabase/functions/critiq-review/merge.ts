@@ -12,7 +12,14 @@
  * catches "Title is too long" against "The page title exceeds recommended
  * length".
  */
-import { DIMENSIONS, type Dimension, type Finding, SEVERITIES, type Severity } from './checks.ts'
+import {
+  CHECK_IDS,
+  DIMENSIONS,
+  type Dimension,
+  type Finding,
+  SEVERITIES,
+  type Severity,
+} from './checks.ts'
 
 const SEVERITY_WEIGHT: Record<Severity, number> = {
   critical: 3,
@@ -100,12 +107,22 @@ export function mergeFindings(checks: Finding[], llm: Finding[]): Finding[] {
   const seenIds = new Set<string>()
   const tokensByDimension = new Map<Dimension, Set<string>[]>()
 
+  const fired = new Set((checks ?? []).map((c) => normaliseId(c?.id ?? '')))
+
   const consider = (finding: Finding, source: 'check' | 'llm'): void => {
     const clean = sanitise(finding, source)
     if (clean === null) return
 
     const id = normaliseId(clean.id)
     if (seenIds.has(id)) return
+
+    // The model reaching for a *known check id that did not fire* is the
+    // sharper half of "checks win". Suppressing only the ids that fired stops
+    // duplicates; it does nothing about `title-length` arriving from the model
+    // on a page whose title the rule engine measured and cleared. That is not a
+    // judgment the model is entitled to — it is a measurement, already taken,
+    // with the opposite answer.
+    if (source === 'llm' && CHECK_IDS.has(id) && !fired.has(id)) return
 
     const tokens = titleTokens(clean.title)
     const siblings = tokensByDimension.get(clean.dimension) ?? []

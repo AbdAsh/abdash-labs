@@ -44,6 +44,42 @@ Deno.test('id matching survives the punctuation the model chooses', () => {
   assertEquals(merged[0]?.source, 'check')
 })
 
+// ---------------------------------------------------------------------------
+// Checks win on subjects that did NOT fire, too
+// ---------------------------------------------------------------------------
+
+Deno.test('the model may not claim a mechanical result the checks measured and cleared', () => {
+  // The sharper half of "checks win". Suppressing only the ids that fired stops
+  // duplicates and nothing else: on a page whose title the rule engine measured
+  // at 48 characters and passed, `title-length` from the model is not judgment,
+  // it is a measurement with the wrong answer — published as fact, in the
+  // reader's face, under a severity the model chose for itself.
+  const merged = mergeFindings(
+    [check({ id: 'h1-missing', dimension: 'structure' })],
+    [llm({ id: 'title-length', severity: 'high', title: 'Your title is far too long' })],
+  )
+  assertEquals(merged.map((x) => x.id), ['h1-missing'])
+})
+
+Deno.test('the suppression covers every documented check id, however the model spells it', () => {
+  for (const id of ['title_length', 'JSONLD-MISSING', 'no extractable answers', 'http-status-error']) {
+    assertEquals(mergeFindings([], [llm({ id, dimension: 'content' })]), [])
+  }
+})
+
+Deno.test('a judgment the rule engine has no opinion about survives', () => {
+  // The model is only barred from the mechanics. Everything it is actually for
+  // — intent, specificity, citability — has no check id and passes through.
+  const merged = mergeFindings(
+    [check({ id: 'title-length' })],
+    [
+      llm({ id: 'intent-mismatch', dimension: 'content', title: 'The body never answers the query' }),
+      llm({ id: 'entity-ambiguity', dimension: 'answer-engine', title: 'Claims are attributed to "we"' }),
+    ],
+  )
+  assertEquals(merged.map((x) => x.id).sort(), ['entity-ambiguity', 'intent-mismatch', 'title-length'])
+})
+
 Deno.test('a finding is never relabelled by whatever the model claims to be', () => {
   const merged = mergeFindings(
     [],

@@ -1,8 +1,13 @@
-import { useState } from 'react'
 import { SOURCE_LABELS } from '../lib/format'
+import { evidenceAddsSomething } from '../lib/evidence'
+import { findingToMarkdown } from '../lib/markdown'
+import { CopyButton } from './CopyButton'
+import { Evidence } from './Evidence'
 import type { Finding } from '../lib/types'
 
 export function FindingCard({ finding }: { finding: Finding }) {
+  const showEvidence = evidenceAddsSomething(finding.evidence, finding.title)
+
   return (
     <article className={`finding finding--${finding.severity}`}>
       <header className="finding__head">
@@ -13,10 +18,10 @@ export function FindingCard({ finding }: { finding: Finding }) {
         <h3 className="finding__title">{finding.title}</h3>
       </header>
 
-      {finding.evidence && (
+      {showEvidence && (
         <div className="finding__block">
           <span className="finding__label">Evidence</span>
-          <pre className="finding__evidence">{finding.evidence}</pre>
+          <Evidence evidence={finding.evidence} />
         </div>
       )}
 
@@ -27,37 +32,22 @@ export function FindingCard({ finding }: { finding: Finding }) {
         </div>
       )}
 
-      {finding.code && <CopyableCode code={finding.code} />}
+      {finding.code && (
+        <div className="finding__block">
+          <div className="finding__codehead">
+            <span className="finding__label">Suggested markup</span>
+            <CopyButton text={finding.code} label="Copy markup" />
+          </div>
+          <pre className="finding__code">{finding.code}</pre>
+        </div>
+      )}
 
       <footer className="finding__foot">
         <code className="finding__id">{finding.id}</code>
+        {/* The report is where you read the problem; it is almost never where
+            you fix it. This is the finding as markdown, ready for a ticket. */}
+        <CopyButton text={findingToMarkdown(finding)} label="Copy finding" />
       </footer>
     </article>
-  )
-}
-
-function CopyableCode({ code }: { code: string }) {
-  const [copied, setCopied] = useState(false)
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(code)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      setCopied(false)
-    }
-  }
-
-  return (
-    <div className="finding__block">
-      <div className="finding__codehead">
-        <span className="finding__label">Suggested markup</span>
-        <button type="button" className="button button--ghost" onClick={copy}>
-          {copied ? 'Copied' : 'Copy'}
-        </button>
-      </div>
-      <pre className="finding__code">{code}</pre>
-    </div>
   )
 }
