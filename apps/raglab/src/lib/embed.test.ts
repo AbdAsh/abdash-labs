@@ -91,4 +91,26 @@ describe('createEmbedder', () => {
     const embed = createEmbedder(async () => ({ vectors: [[1]], runId: 'r' }))
     await expect(embed(['a', 'b'], 'text-embedding-3-small')).rejects.toThrow(/misaligned/i)
   })
+
+  it('refuses a response with more vectors than the batch, not just fewer', async () => {
+    // An extra vector shifts nothing on its own, but it means the proxy and the
+    // client disagree about the batch, and every score after that point is a
+    // guess about which text produced which vector.
+    const embed = createEmbedder(async () => ({ vectors: [[1], [2], [3]], runId: 'r' }))
+    await expect(embed(['a', 'b'], 'text-embedding-3-small')).rejects.toThrow(/misaligned/i)
+  })
+
+  // A run over a hundred-page document is fifteen or twenty batches. If the
+  // fourteenth fails, `out` holds thirteen batches of real vectors and a tail of
+  // holes; returning it would score most of the document against `undefined`.
+  it('rejects outright when a batch fails partway through, never a holed array', async () => {
+    let call = 0
+    const embed = createEmbedder(async (body) => {
+      if (++call === 3) throw new EmbedError('502 Bad Gateway', 502)
+      return { vectors: body.texts.map((t) => [t.length]), runId: 'run-1' }
+    })
+    const texts = Array.from({ length: 450 }, (_, i) => 'x'.repeat(i + 1))
+    await expect(embed(texts, 'text-embedding-3-small')).rejects.toThrow(/502/)
+    expect(call).toBe(3)
+  })
 })

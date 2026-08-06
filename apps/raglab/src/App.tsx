@@ -1,14 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { joinPages } from './lib/chunkers'
 import {
+  BenchmarkFailure,
   MAX_CONFIGS,
-  expandMatrix,
+  matrixState,
   runBenchmark,
   type ConfigResult,
   type MatrixSelection,
 } from './lib/engine'
 import type { Question } from './lib/metrics'
-import { loadPermalink, permalinkUrl, saveRun } from './lib/persist'
+import { loadPermalink, permalinkUrl, saveRun, type ExperimentRecord } from './lib/persist'
 import { readyToRun } from './lib/questions'
 import { SAMPLE_DOC, SAMPLE_QUESTIONS } from './samples/founding-documents'
 import { CacheControls } from './components/CacheControls'
@@ -44,6 +45,14 @@ const DEFAULT_SELECTION: MatrixSelection = {
   ks: [5],
 }
 
+type Shared =
+  | { state: 'none' }
+  | { state: 'loading'; slug: string }
+  | { state: 'missing'; slug: string }
+  | { state: 'loaded'; slug: string; experiment: ExperimentRecord }
+
+const message = (e: unknown) => (e instanceof Error ? e.message : String(e))
+
 export function App() {
   const [doc, setDoc] = useState<Doc>(SAMPLE)
   const [questions, setQuestions] = useState<Question[]>(SAMPLE_QUESTIONS)
@@ -51,44 +60,53 @@ export function App() {
   const [results, setResults] = useState<ConfigResult[]>([])
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const [localOnly, setLocalOnly] = useState(false)
   const [permalink, setPermalink] = useState<string | null>(null)
   const [loadingDoc, setLoadingDoc] = useState(false)
   const [elapsed, setElapsed] = useState<number | null>(null)
+  const [shared, setShared] = useState<Shared>(() => {
+    const slug = new URLSearchParams(window.location.search).get('run')
+    return slug ? { state: 'loading', slug } : { state: 'none' }
+  })
+  const abort = useRef<AbortController | null>(null)
 
   const status = useMemo(() => readyToRun(doc.text, questions), [doc.text, questions])
-  const configCount = useMemo(() => {
-    try {
-      return expandMatrix(selection).length
-    } catch {
-      return 0
-    }
-  }, [selection])
+  const matrix = useMemo(() => matrixState(selection), [selection])
+  const configCount = matrix.configs.length
 
   // A shared permalink renders read-only: the visitor sees someone else's
   // benchmark exactly as it was scored, without a session or a document.
   useEffect(() => {
-    const slug = new URLSearchParams(window.location.search).get('run')
-    if (!slug) return
+    if (shared.state !== 'loading') return
+    const { slug } = shared
     void (async () => {
       try {
         const loaded = await loadPermalink(slug)
         if (!loaded) {
-          setError(`No benchmark found at ${slug}.`)
+          setShared({ state: 'missing', slug })
           return
         }
-        setDoc({
-          name: loaded.experiment.doc_name,
-          text: '',
-          fingerprint: loaded.experiment.doc_fingerprint,
-        })
         setQuestions(loaded.experiment.questions)
         setResults(loaded.runs[0]?.results ?? [])
         setPermalink(permalinkUrl(slug))
+        setShared({ state: 'loaded', slug, experiment: loaded.experiment })
       } catch (e) {
-        setError(e instanceof Error ? e.message : String(e))
+        setError(message(e))
+        setShared({ state: 'missing', slug })
       }
     })()
+  }, [shared])
+
+  const startOver = useCallback(() => {
+    window.history.replaceState(null, '', window.location.pathname)
+    setShared({ state: 'none' })
+    setDoc(SAMPLE)
+    setQuestions(SAMPLE_QUESTIONS)
+    setResults([])
+    setPermalink(null)
+    setError(null)
+    setNotice(null)
   }, [])
 
   const onUpload = useCallback(async (file: File) => {
@@ -103,11 +121,15 @@ export function App() {
         throw new Error('No selectable text in that file. Scanned PDFs need OCR first.')
       }
       setDoc({ name: file.name, text, fingerprint, pageStarts })
+      // Gold spans are offsets into a specific text. Carrying them across an
+      // upload would point them at whatever now happens to sit at those indices —
+      // a benchmark that runs cleanly and scores the wrong passages.
       setQuestions([])
       setResults([])
       setPermalink(null)
+      setNotice(null)
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      setError(message(e))
     } finally {
       setLoadingDoc(false)
     }
@@ -115,42 +137,117 @@ export function App() {
 
   const run = useCallback(async () => {
     setError(null)
+    setNotice(null)
     setResults([])
     setPermalink(null)
     setElapsed(null)
     const startedAt = performance.now()
+    const controller = new AbortController()
+    abort.current = controller
 
+    let out: ConfigResult[]
     try {
-      const configs = expandMatrix(selection)
-      setProgress({ done: 0, total: configs.length })
-
-      const out = await runBenchmark(
+      setProgress({ done: 0, total: matrix.configs.length })
+      out = await runBenchmark(
         doc.text,
         questions,
-        configs,
+        matrix.configs,
         (done, total) => setProgress({ done, total }),
-        { fingerprint: doc.fingerprint, pageStarts: doc.pageStarts },
+        { fingerprint: doc.fingerprint, pageStarts: doc.pageStarts, signal: controller.signal },
       )
       setResults(out)
       setElapsed(performance.now() - startedAt)
-
-      if (!localOnly) {
-        const { slug } = await saveRun({
-          docName: doc.name,
-          docFingerprint: doc.fingerprint,
-          questions,
-          results: out,
-        })
-        setPermalink(permalinkUrl(slug))
-      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      setError(message(e))
+      if (e instanceof BenchmarkFailure && e.completed.length > 0) {
+        // The finished configurations are real measurements and were paid for.
+        // They are shown, and deliberately not saved: a permalink missing a third
+        // of its matrix is the "comparison you did not ask for" that the config
+        // cap exists to prevent.
+        setResults(e.completed)
+        setNotice(
+          `${e.completed.length} of ${e.completed.length + e.remaining} configurations `
+          + 'finished. Their scores are valid and comparable with each other, but the run '
+          + 'is incomplete so it has not been saved.',
+        )
+      }
+      return
     } finally {
+      abort.current = null
       setProgress(null)
     }
-  }, [doc, questions, selection, localOnly])
+
+    if (localOnly) return
+    try {
+      const { slug } = await saveRun({
+        docName: doc.name,
+        docFingerprint: doc.fingerprint,
+        docText: doc.text,
+        questions,
+        results: out,
+      })
+      setPermalink(permalinkUrl(slug))
+    } catch (e) {
+      // The benchmark succeeded; only the permalink did not. Say which.
+      setNotice(`The scores below are complete. Saving the permalink failed: ${message(e)}`)
+    }
+  }, [doc, questions, matrix, localOnly])
 
   const running = progress !== null
+
+  if (shared.state === 'loading') {
+    return (
+      <main className="app">
+        <header className="app-header"><h1>RAG Lab</h1></header>
+        <section className="panel"><p className="dim">Loading shared benchmark…</p></section>
+      </main>
+    )
+  }
+
+  if (shared.state === 'loaded') {
+    const { experiment } = shared
+    return (
+      <main className="app">
+        <header className="app-header">
+          <h1>RAG Lab</h1>
+          <p className="tagline">
+            A shared benchmark. Someone else ran this; you are reading the result.
+          </p>
+        </header>
+
+        <section className="panel">
+          <h2>{experiment.doc_name}</h2>
+          <p className="doc-summary">
+            {experiment.questions.length} labelled questions ·{' '}
+            {results.length} configuration{results.length === 1 ? '' : 's'} ·
+            {' '}scored {new Date(experiment.created_at).toLocaleDateString()}
+          </p>
+          <p className="lede">
+            The document text is not part of a permalink — only its name, its
+            fingerprint, the question set with its gold passages, and the scores.
+            The diagnostics below work from those alone.
+          </p>
+          <button type="button" className="primary" onClick={startOver}>
+            Run your own benchmark
+          </button>
+        </section>
+
+        {results.length === 0 && (
+          <section className="panel">
+            <p className="warn">
+              This experiment was saved without a completed run. There is nothing to score.
+            </p>
+          </section>
+        )}
+
+        <Leaderboard results={results} />
+        <MetricChart results={results} />
+        <QuestionDrilldown questions={experiment.questions} results={results} />
+
+        <Footer />
+      </main>
+    )
+  }
 
   return (
     <main className="app">
@@ -163,7 +260,14 @@ export function App() {
         <CacheControls />
       </header>
 
+      {shared.state === 'missing' && (
+        <p className="error banner" role="alert">
+          No benchmark at <code>{shared.slug}</code>. The link may be mistyped, or the run
+          may have been deleted by whoever created it. Everything below is a fresh start.
+        </p>
+      )}
       {error && <p className="error banner" role="alert">{error}</p>}
+      {notice && <p className="warn banner" role="status">{notice}</p>}
 
       <section className="panel">
         <h2>1 · Document</h2>
@@ -184,6 +288,7 @@ export function App() {
             <input
               type="file"
               accept="application/pdf,text/plain"
+              disabled={loadingDoc || running}
               onChange={(e) => {
                 const file = e.target.files?.[0]
                 if (file) void onUpload(file)
@@ -196,9 +301,13 @@ export function App() {
           <strong>{doc.name}</strong>
           {doc.text.length > 0 && <> · {doc.text.length.toLocaleString()} characters</>}
           {doc.fingerprint === SAMPLE.fingerprint && (
-            <> · {SAMPLE_DOC.license}. 15 gold spans, hand-labelled.</>
+            <>
+              {' '}· {SAMPLE_DOC.source} · {SAMPLE_DOC.license}. 15 gold spans,
+              hand-labelled.
+            </>
           )}
         </p>
+        {loadingDoc && <p className="dim">Extracting text and fingerprinting…</p>}
       </section>
 
       {doc.text.length > 0 && (
@@ -208,8 +317,9 @@ export function App() {
       <ConfigMatrix
         selection={selection}
         onChange={setSelection}
+        matrix={matrix}
         text={doc.text}
-        questions={questions.map((q) => q.text)}
+        questions={questions}
       />
 
       <section className="panel run-panel">
@@ -218,42 +328,62 @@ export function App() {
           <input
             type="checkbox"
             checked={localOnly}
+            disabled={running}
             onChange={(e) => setLocalOnly(e.target.checked)}
           />
           <span>
             Local session only
             <em>
-              Skips persistence and produces no permalink. Saved runs are readable
-              by anyone with the link — the document name, question set and scores,
-              never the document itself unless you uploaded it.
+              Skips persistence and produces no permalink. A saved run is readable by
+              anyone with the link: the document name and fingerprint, the questions
+              with their gold passages, and the scores. The document text itself is
+              never uploaded.
             </em>
           </span>
         </label>
 
-        <button
-          type="button"
-          className="primary"
-          onClick={run}
-          disabled={running || !status.ok || configCount === 0 || doc.text.length === 0}
-        >
-          {running
-            ? `Running ${progress.done}/${progress.total}…`
-            : `Run ${configCount} configuration${configCount === 1 ? '' : 's'}`}
-        </button>
+        <div className="toolbar">
+          <button
+            type="button"
+            className="primary"
+            onClick={run}
+            disabled={running || !status.ok || configCount === 0 || doc.text.length === 0}
+          >
+            {running
+              ? `Running ${progress.done}/${progress.total}…`
+              : `Run ${configCount} configuration${configCount === 1 ? '' : 's'}`}
+          </button>
+          {running && (
+            <button type="button" className="secondary" onClick={() => abort.current?.abort()}>
+              Cancel — keep what finished
+            </button>
+          )}
+        </div>
 
         {running && (
-          <div
-            className="progress"
-            role="progressbar"
-            aria-valuenow={progress.done}
-            aria-valuemin={0}
-            aria-valuemax={progress.total}
-          >
-            <div style={{ width: `${(progress.done / progress.total) * 100}%` }} />
-          </div>
+          <>
+            <div
+              className="progress"
+              role="progressbar"
+              aria-valuenow={progress.done}
+              aria-valuemin={0}
+              aria-valuemax={progress.total}
+            >
+              <div style={{ width: `${(progress.done / progress.total) * 100}%` }} />
+            </div>
+            <p className="dim">
+              {progress.done === 0
+                ? 'Embedding the question set, then the first chunking. Nothing is cached yet '
+                  + 'on a first run, so this step is the slowest.'
+                : `Configuration ${progress.done + 1} of ${progress.total}.`}
+            </p>
+          </>
         )}
 
         {!status.ok && doc.text.length > 0 && <p className="warn">{status.reason}</p>}
+        {doc.text.length === 0 && (
+          <p className="warn">Pick the sample or upload a document first.</p>
+        )}
         {configCount === 0 && (
           <p className="warn">
             Pick at least one value in every row, and keep the total at or below {MAX_CONFIGS}.
@@ -268,22 +398,41 @@ export function App() {
             Permalink: <a href={permalink}>{permalink}</a>
           </p>
         )}
+        {results.length > 0 && !permalink && localOnly && (
+          <p className="dim">Local session only — nothing was saved and there is no link.</p>
+        )}
       </section>
+
+      {results.length === 0 && !running && (
+        <section className="panel">
+          <h2>Results</h2>
+          <p className="lede">
+            Nothing scored yet. A run produces a ranked leaderboard, a curve of MRR
+            against chunk size, and a per-question breakdown that names the reason each
+            configuration missed — a chunk too small to hold the answer, a chunker that
+            cut through it, or a ranking that buried it below k.
+          </p>
+        </section>
+      )}
 
       <Leaderboard results={results} />
       <MetricChart results={results} />
-      {doc.text.length > 0 && (
-        <QuestionDrilldown questions={questions} results={results} text={doc.text} />
-      )}
+      <QuestionDrilldown questions={questions} results={results} text={doc.text} />
 
-      <footer className="app-footer">
-        <p>
-          Embeddings are cached in this browser's IndexedDB and never written to the
-          database — a twelve-config run over a hundred-page document is about 11 MB
-          of vectors, and the database is 500 MB shared across seven apps. The
-          server stores configuration, questions, gold spans and scores. Nothing else.
-        </p>
-      </footer>
+      <Footer />
     </main>
+  )
+}
+
+function Footer() {
+  return (
+    <footer className="app-footer">
+      <p>
+        Embeddings are cached in this browser's IndexedDB and never written to the
+        database — a twelve-config run over a hundred-page document is about 11 MB
+        of vectors, and the database is 500 MB shared across seven apps. The
+        server stores configuration, questions, gold spans and scores. Nothing else.
+      </p>
+    </footer>
   )
 }

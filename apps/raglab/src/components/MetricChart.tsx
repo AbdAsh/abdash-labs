@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { CHUNKERS } from '../lib/chunkers'
+import { chunkerLabel } from '../lib/chunkers'
 import type { ConfigResult } from '../lib/engine'
 
 /**
@@ -23,7 +23,7 @@ export function MetricChart({ results }: { results: ConfigResult[] }) {
       size: r.config.size,
       mrr: Number(r.mrr.toFixed(4)),
       hitRate: Number(r.hitRate.toFixed(4)),
-      strategy: CHUNKERS.find((c) => c.id === r.config.chunker)?.label ?? r.config.chunker,
+      strategy: chunkerLabel(r.config.chunker),
       overlap: r.config.overlap,
       model: r.config.model,
     }))

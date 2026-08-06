@@ -51,6 +51,11 @@ export const CHUNKERS: { id: ChunkerId; label: string; blurb: string }[] = [
   },
 ]
 
+/** Display name for a chunker. One lookup, so the table, chart and errors agree. */
+export function chunkerLabel(id: ChunkerId | string): string {
+  return CHUNKERS.find((c) => c.id === id)?.label ?? id
+}
+
 /** Half-open character range. */
 interface Span {
   start: number

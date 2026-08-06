@@ -105,6 +105,27 @@ describe('span accounting', () => {
     }
   })
 
+  // Load-bearing far beyond chunking. `minChunkSizeToHit` tells a user, before
+  // they spend anything, that a 900-character answer cannot be hit at a chunk
+  // size of 400 — and that claim is only true because no chunker ever exceeds
+  // its size. A chunker that occasionally emitted an oversized window would make
+  // the app confidently declare reachable questions impossible.
+  it('never emits a chunk longer than the requested size', () => {
+    const documents = [text, prose, 'x'.repeat(250) + '.', 'One.\n\nTwo three four five six.']
+    for (const id of ALL) {
+      for (const document of documents) {
+        for (const size of [8, 20, 37, 60, 140, 400]) {
+          for (const overlap of [0, 1, Math.floor(size / 2), size - 1]) {
+            for (const c of chunkWith(id, document, { size, overlap })) {
+              expect(c.end - c.start).toBeLessThanOrEqual(size)
+              expect(c.content.length).toBeLessThanOrEqual(size)
+            }
+          }
+        }
+      }
+    }
+  })
+
   it('rejects parameters that cannot make progress', () => {
     expect(() => chunkWith('fixed', text, { size: 30, overlap: 30 })).toThrow(/overlap/i)
     expect(() => chunkWith('fixed', text, { size: 0, overlap: 0 })).toThrow(/size/i)

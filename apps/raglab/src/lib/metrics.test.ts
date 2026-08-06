@@ -3,8 +3,9 @@ import type { SpanChunk } from './chunkers'
 import {
   DEFAULT_THRESHOLD,
   aggregate,
-  hitAtK,
+  bestOverlap,
   isHit,
+  minChunkSizeToHit,
   overlapRatio,
   reciprocalRank,
 } from './metrics'
@@ -94,22 +95,53 @@ describe('isHit at the threshold boundary', () => {
   })
 })
 
-describe('hitAtK', () => {
-  const ranked = [chunk(0, 50), chunk(50, 100), chunk(150, 400), chunk(100, 200)]
-
-  it('is false when the hit sits outside the cutoff', () => {
-    expect(hitAtK(ranked, gold, 1)).toBe(false)
-    expect(hitAtK(ranked, gold, 2)).toBe(false)
+describe('bestOverlap', () => {
+  it('reports the most any single chunk covers, not the sum', () => {
+    // Two chunks each covering a different half must not add up to a hit: a hit
+    // means one retrieved chunk carried the answer, not that the answer exists
+    // somewhere in the union of everything retrieved.
+    expect(bestOverlap([chunk(100, 150), chunk(150, 200)], gold)).toBe(0.5)
   })
 
-  it('is true once the cutoff reaches the hit', () => {
-    expect(hitAtK(ranked, gold, 3)).toBe(true)
-    expect(hitAtK(ranked, gold, 10)).toBe(true)
+  it('is 0 when nothing touches the span', () => {
+    expect(bestOverlap([chunk(0, 100), chunk(200, 300)], gold)).toBe(0)
   })
 
-  it('is false for an empty ranking or a zero cutoff', () => {
-    expect(hitAtK([], gold, 5)).toBe(false)
-    expect(hitAtK(ranked, gold, 0)).toBe(false)
+  it('is 0 for an empty ranking', () => {
+    expect(bestOverlap([], gold)).toBe(0)
+  })
+})
+
+describe('minChunkSizeToHit', () => {
+  // The bound only means anything because no chunker ever emits a chunk larger
+  // than its size — asserted in chunkers.test.ts.
+  it('is half the gold length at the default threshold', () => {
+    expect(minChunkSizeToHit({ start: 0, end: 400 })).toBe(200)
+  })
+
+  it('rounds up when half the span is not a whole number', () => {
+    expect(minChunkSizeToHit({ start: 0, end: 401 })).toBe(201)
+    // 200 characters of a 401-character answer is 49.9%, under the threshold.
+    expect(isHit(chunk(0, 200), { start: 0, end: 401 })).toBe(false)
+    expect(isHit(chunk(0, 201), { start: 0, end: 401 })).toBe(true)
+  })
+
+  it('agrees with isHit at every threshold, despite float multiplication', () => {
+    // `0.7 * 100` is 70.00000000000001 in IEEE 754. Trusting that product would
+    // demand 71 characters for a span that 70 already covers, and the UI would
+    // tell a user a reachable question is impossible.
+    for (const threshold of [0.1, 0.3, 0.5, 0.7, 0.9, 1]) {
+      for (const length of [7, 10, 33, 100, 101, 250, 401]) {
+        const span = { start: 0, end: length }
+        const min = minChunkSizeToHit(span, threshold)
+        expect(isHit(chunk(0, min), span, threshold)).toBe(true)
+        if (min > 1) expect(isHit(chunk(0, min - 1), span, threshold)).toBe(false)
+      }
+    }
+  })
+
+  it('never returns zero, so no size can look sufficient for an empty span', () => {
+    expect(minChunkSizeToHit({ start: 5, end: 5 })).toBe(1)
   })
 })
 

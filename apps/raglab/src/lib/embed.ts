@@ -6,8 +6,8 @@ import type { Embedder } from './engine'
  */
 
 /** Matches the caps enforced server-side; exceeding them is a 400, not a truncation. */
-export const MAX_BATCH_TEXTS = 200
-export const MAX_BATCH_CHARS = 400_000
+const MAX_BATCH_TEXTS = 200
+const MAX_BATCH_CHARS = 400_000
 
 export interface EmbedRequest {
   texts: string[]
@@ -134,9 +134,4 @@ export function createEmbedder(transport: EmbedTransport = httpTransport): Embed
     }
     return out
   }
-}
-
-/** One-shot embedding outside a benchmark. Charges a full run of quota. */
-export async function embedTexts(texts: string[], model: string): Promise<number[][]> {
-  return createEmbedder()(texts, model)
 }

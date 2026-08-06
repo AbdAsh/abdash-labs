@@ -17,6 +17,15 @@ export interface Question {
   id: string
   text: string
   gold: GoldSpan
+  /**
+   * The gold passage itself, carried for display only and never read by scoring.
+   *
+   * A permalink is viewed without the document — the visitor has a slug, not a
+   * PDF — so without this the drill-down can name a question and not show the
+   * answer it was looking for, which is most of what makes the drill-down
+   * readable. Truncated on save; see `MAX_GOLD_TEXT` in `persist.ts`.
+   */
+  goldText?: string
 }
 
 /** A retrieved chunk counts as a hit once it covers half the gold answer. */
@@ -51,14 +60,36 @@ export function isHit(chunk: SpanChunk, gold: GoldSpan, threshold = DEFAULT_THRE
   return ratio >= threshold
 }
 
-/** Did any of the top `k` retrieved chunks hit? */
-export function hitAtK(
-  ranked: SpanChunk[],
-  gold: GoldSpan,
-  k: number,
-  threshold = DEFAULT_THRESHOLD,
-): boolean {
-  return ranked.slice(0, Math.max(0, k)).some((c) => isHit(c, gold, threshold))
+/** The most of the gold answer any one of these chunks manages to contain. */
+export function bestOverlap(chunks: SpanChunk[], gold: GoldSpan): number {
+  let best = 0
+  for (const c of chunks) {
+    const ratio = overlapRatio(c, gold)
+    if (ratio > best) best = ratio
+  }
+  return best
+}
+
+/**
+ * The smallest chunk size at which this gold span can be hit *at all*.
+ *
+ * Every chunker here emits chunks of at most `size` characters — asserted in
+ * `chunkers.test.ts` — and a hit needs one chunk covering `threshold` of the gold
+ * span. So when `size < threshold × goldLength` a hit is arithmetically
+ * impossible: no embedding model, no `k`, and no amount of overlap can produce
+ * one. Reporting that as a miss blames retrieval for what is really a mismatch
+ * between how the answer was labelled and how the document was cut, and sends the
+ * reader off tuning the wrong knob.
+ */
+export function minChunkSizeToHit(gold: GoldSpan, threshold = DEFAULT_THRESHOLD): number {
+  const goldLength = Math.max(0, gold.end - gold.start)
+  if (goldLength === 0) return 1
+  const ceiling = Math.ceil(threshold * goldLength)
+  // Float drift: `0.7 * 100` is 70.00000000000001, which would demand 71
+  // characters for a span that 70 already covers. Settle it with the same
+  // division `overlapRatio` performs rather than trusting the multiplication.
+  if (ceiling > 1 && (ceiling - 1) / goldLength >= threshold) return ceiling - 1
+  return Math.max(1, ceiling)
 }
 
 /**

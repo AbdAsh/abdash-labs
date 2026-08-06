@@ -33,7 +33,6 @@ function excerptAround(text: string, start: number, end: number, pad = 90) {
 export function QuestionBuilder({ text, questions, onChange }: Props) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [editing, setEditing] = useState<string | null>(null)
   const documentRef = useRef<HTMLPreElement>(null)
 
   const status = useMemo(() => readyToRun(text, questions), [text, questions])
@@ -90,9 +89,10 @@ export function QuestionBuilder({ text, questions, onChange }: Props) {
   }, [questions, text, onChange])
 
   const addBlank = () => {
-    const id = `q${Date.now().toString(36)}`
-    onChange([...questions, { id, text: '', gold: { start: 0, end: 0 } }])
-    setEditing(id)
+    onChange([
+      ...questions,
+      { id: `q${Date.now().toString(36)}`, text: '', gold: { start: 0, end: 0 } },
+    ])
   }
 
   return (
@@ -145,7 +145,7 @@ export function QuestionBuilder({ text, questions, onChange }: Props) {
                 <button
                   type="button"
                   className="secondary"
-                  onClick={() => { setEditing(q.id); captureSelection(q.id) }}
+                  onClick={() => captureSelection(q.id)}
                 >
                   Use selection
                 </button>
@@ -156,7 +156,6 @@ export function QuestionBuilder({ text, questions, onChange }: Props) {
                 >
                   Delete
                 </button>
-                {editing === q.id && <span className="dim">selecting…</span>}
               </div>
             </li>
           )

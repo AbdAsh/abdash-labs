@@ -3,13 +3,17 @@ import { SAMPLE_DOC, SAMPLE_QUESTIONS } from '../samples/founding-documents'
 import type { Question } from './metrics'
 import { MAX_RESULTS_BYTES, assertNoVectors } from './persist'
 import {
+  BenchmarkFailure,
   MAX_CONFIGS,
   MatrixTooLargeError,
   cosine,
   estimateTokens,
   expandMatrix,
-  rankChunks,
+  isUnreachable,
+  matrixState,
+  rankAll,
   runBenchmark,
+  unreachableQuestions,
   type Config,
   type Embedder,
 } from './engine'
@@ -151,6 +155,102 @@ describe('expandMatrix', () => {
       }),
     ).toThrow(/model/i)
   })
+
+  // A repeated value would spend one of the twelve slots on a duplicate row and
+  // give two leaderboard entries the same identity.
+  it('collapses a repeated value on an axis instead of duplicating a config', () => {
+    const configs = expandMatrix({
+      chunkers: ['fixed', 'fixed'],
+      sizes: [400, 400, 800],
+      overlaps: [0],
+      models: [SMALL],
+      ks: [3, 3],
+    })
+    expect(configs).toHaveLength(2)
+    expect(new Set(configs.map((c) => JSON.stringify(c))).size).toBe(2)
+  })
+
+  it('does not let duplicates push a legal selection over the cap', () => {
+    expect(() =>
+      expandMatrix({
+        chunkers: ['fixed', 'sentence-window', 'recursive', 'fixed'],
+        sizes: [400, 800, 400],
+        overlaps: [0, 80, 0],
+        models: [SMALL, SMALL],
+        ks: [5],
+      }),
+    ).not.toThrow()
+  })
+})
+
+describe('matrixState', () => {
+  it('reports the configs when the selection is legal', () => {
+    const state = matrixState({
+      chunkers: ['fixed'], sizes: [400], overlaps: [0], models: [SMALL], ks: [5],
+    })
+    expect(state).toEqual({ configs: [
+      { chunker: 'fixed', size: 400, overlap: 0, model: SMALL, k: 5 },
+    ], error: null, overBy: 0 })
+  })
+
+  it('reports how far over the cap the selection is', () => {
+    const state = matrixState({
+      chunkers: ['fixed', 'sentence-window', 'recursive'],
+      sizes: [400, 800],
+      overlaps: [0, 80],
+      models: [SMALL, LARGE],
+      ks: [5],
+    })
+    expect(state.configs).toEqual([])
+    expect(state.overBy).toBe(24 - MAX_CONFIGS)
+    expect(state.error).toMatch(/24/)
+  })
+
+  it('reports an empty axis as an error and not as an over-cap count', () => {
+    const state = matrixState({
+      chunkers: [], sizes: [400], overlaps: [0], models: [SMALL], ks: [5],
+    })
+    expect(state.error).toMatch(/chunker/i)
+    expect(state.overBy).toBe(0)
+  })
+})
+
+describe('unreachableQuestions', () => {
+  const long = { id: 'long', text: 'q', gold: { start: 0, end: 900 } }
+  const short = { id: 'short', text: 'q', gold: { start: 0, end: 100 } }
+  const at = (size: number): Config => ({ chunker: 'fixed', size, overlap: 0, model: SMALL, k: 5 })
+
+  // No chunker emits a chunk larger than its size, so a 400-character chunk
+  // cannot cover half of a 900-character answer. That zero is arithmetic, not
+  // retrieval, and reporting it as a miss sends the reader off tuning the model.
+  it('flags a gold span more than twice the chunk size', () => {
+    const [u] = unreachableQuestions([long, short], [at(400)])
+    expect(u!.questionId).toBe('long')
+    expect(u!.minSize).toBe(450)
+    expect(u!.blockedSizes).toEqual([400])
+  })
+
+  it('says nothing when the largest size in the matrix can reach it', () => {
+    expect(unreachableQuestions([long], [at(400), at(800)])[0]?.blockedSizes).toEqual([400])
+    expect(unreachableQuestions([long], [at(800), at(1600)])).toEqual([])
+  })
+
+  it('agrees with what the run actually scores', async () => {
+    const [tooSmall, bigEnough] = await runBenchmark(
+      doc,
+      [{ id: 'q1', text: 'What does the mitochondrion do?', gold: { start: 0, end: 120 } }],
+      [
+        { chunker: 'fixed', size: 40, overlap: 0, model: SMALL, k: 10 },
+        { chunker: 'fixed', size: 120, overlap: 0, model: SMALL, k: 10 },
+      ],
+      noProgress,
+      { embed: makeStubEmbedder(), cache: null },
+    )
+    expect(isUnreachable({ start: 0, end: 120 }, tooSmall!.config)).toBe(true)
+    expect(tooSmall!.perQuestion[0]!.firstHitRank).toBeNull()
+    expect(isUnreachable({ start: 0, end: 120 }, bigEnough!.config)).toBe(false)
+    expect(bigEnough!.perQuestion[0]!.firstHitRank).not.toBeNull()
+  })
 })
 
 describe('estimateTokens', () => {
@@ -218,7 +318,7 @@ describe('cosine', () => {
   })
 })
 
-describe('rankChunks', () => {
+describe('rankAll', () => {
   const chunks = [
     { content: 'a', page: 1, index: 0, start: 0, end: 1 },
     { content: 'b', page: 1, index: 1, start: 1, end: 2 },
@@ -227,16 +327,18 @@ describe('rankChunks', () => {
   const vectors = [[1, 0], [0, 1], [0.9, 0.1]]
 
   it('orders by descending similarity', () => {
-    expect(rankChunks(chunks, vectors, [1, 0], 3).map((c) => c.content)).toEqual(['a', 'c', 'b'])
+    expect(rankAll(chunks, vectors, [1, 0]).map((c) => c.content)).toEqual(['a', 'c', 'b'])
   })
 
-  it('truncates to k', () => {
-    expect(rankChunks(chunks, vectors, [1, 0], 2)).toHaveLength(2)
+  it('returns the whole list, not a cutoff', () => {
+    // The diagnostic view needs to know the answer ranked #14 of 60. Truncating
+    // here would make "past k" and "absent from the document" the same result.
+    expect(rankAll(chunks, vectors, [1, 0])).toHaveLength(chunks.length)
   })
 
   it('breaks ties by chunk index so the order is reproducible', () => {
     const tied = [[1, 0], [1, 0], [1, 0]]
-    expect(rankChunks(chunks, tied, [1, 0], 3).map((c) => c.index)).toEqual([0, 1, 2])
+    expect(rankAll(chunks, tied, [1, 0]).map((c) => c.index)).toEqual([0, 1, 2])
   })
 })
 
@@ -432,5 +534,240 @@ describe('runBenchmark', () => {
         { embed: makeStubEmbedder(), cache: null },
       ),
     ).rejects.toThrow(/gold/i)
+  })
+
+  // The out-of-range case above announces itself. This one does not: the offsets
+  // are still valid, they just point at a different sentence than the one that
+  // was labelled, and the run completes and scores a passage nobody chose.
+  it('refuses labels made against a different revision of the document', async () => {
+    const gold = { start: 0, end: 46 }
+    const labelled = { id: 'q1', text: 'x', gold, goldText: doc.slice(0, 46) }
+
+    // Same document: fine.
+    await expect(
+      runBenchmark(doc, [labelled], configs, noProgress, {
+        embed: makeStubEmbedder(), cache: null,
+      }),
+    ).resolves.toHaveLength(configs.length)
+
+    // Two words inserted near the top shift every offset after them.
+    const edited = doc.replace('The mitochondrion', 'In animal cells the mitochondrion')
+    await expect(
+      runBenchmark(edited, [labelled], configs, noProgress, {
+        embed: makeStubEmbedder(), cache: null,
+      }),
+    ).rejects.toThrow(/labelled against different text/i)
+  })
+
+  it('still runs labels that carry no passage, since old permalinks have none', async () => {
+    await expect(
+      runBenchmark(doc, questions, configs, noProgress, {
+        embed: makeStubEmbedder(), cache: null,
+      }),
+    ).resolves.toHaveLength(configs.length)
+  })
+})
+
+describe('diagnostic fields', () => {
+  const config = (k: number): Config => ({
+    chunker: 'fixed', size: 60, overlap: 0, model: SMALL, k,
+  })
+
+  it('reports where the answer ranked even when k threw it away', async () => {
+    // The stub knows no constitutional vocabulary, so every chunk scores the
+    // same and the ranking falls back to document order — a uniform embedding
+    // that finds every answer and buries most of them. Exactly the case where
+    // `rr` reports zero and the reason is the cutoff, not the retrieval.
+    const shape = { chunker: 'fixed' as const, size: 400, overlap: 0, model: SMALL }
+    const [deep, shallow] = await runBenchmark(
+      SAMPLE_DOC.text, SAMPLE_QUESTIONS,
+      [{ ...shape, k: 20 }, { ...shape, k: 1 }],
+      noProgress, { embed: makeStubEmbedder(), cache: null },
+    )
+
+    // Same chunking and same vectors, so the rank of the answer cannot depend on k.
+    for (let i = 0; i < SAMPLE_QUESTIONS.length; i++) {
+      expect(shallow!.perQuestion[i]!.firstHitRank).toBe(deep!.perQuestion[i]!.firstHitRank)
+    }
+
+    const cutOff = shallow!.perQuestion.filter(
+      (p) => !p.hit && p.firstHitRank !== null && p.firstHitRank > 1,
+    )
+    expect(cutOff.length).toBeGreaterThan(0)
+    // Every one of those would be a hit at a deep enough k, which is the whole
+    // point of recording the rank: the fix is a bigger k, not a better model.
+    for (const p of cutOff) expect(deep!.perQuestion.find((d) => d.questionId === p.questionId)!.hit)
+      .toBe(p.firstHitRank! <= 20)
+  })
+
+  it('keeps hit, rr and firstHitRank mutually consistent', async () => {
+    for (const k of [1, 3, 10]) {
+      const [r] = await runBenchmark(doc, questions, [config(k)], noProgress, {
+        embed: makeStubEmbedder(), cache: null,
+      })
+      for (const p of r!.perQuestion) {
+        expect(p.hit).toBe(p.rr > 0)
+        expect(p.hit).toBe(p.firstHitRank !== null && p.firstHitRank <= k)
+        if (p.hit) expect(p.rr).toBeCloseTo(1 / p.firstHitRank!)
+      }
+    }
+  })
+
+  it('separates "no chunk held the answer" from "the answer ranked low"', async () => {
+    // A gold span wider than any chunk can cover: no rank exists at all, and
+    // bestOverlap says how close the chunker came.
+    const gold = { start: 0, end: 260 }
+    const [r] = await runBenchmark(
+      doc, [{ id: 'wide', text: 'What does the mitochondrion do?', gold }],
+      [{ chunker: 'fixed', size: 60, overlap: 0, model: SMALL, k: 10 }],
+      noProgress, { embed: makeStubEmbedder(), cache: null },
+    )
+    const p = r!.perQuestion[0]!
+    expect(p.firstHitRank).toBeNull()
+    expect(p.bestOverlap).toBeGreaterThan(0)
+    expect(p.bestOverlap).toBeLessThan(0.5)
+  })
+})
+
+describe('runtime failures', () => {
+  const configs: Config[] = [
+    { chunker: 'fixed', size: 120, overlap: 0, model: SMALL, k: 2 },
+    { chunker: 'fixed', size: 240, overlap: 0, model: SMALL, k: 2 },
+    { chunker: 'recursive', size: 120, overlap: 0, model: SMALL, k: 2 },
+  ]
+
+  /** Wraps a good embedder and breaks on the nth call. */
+  function breakingAfter(n: number): Embedder {
+    const good = makeStubEmbedder()
+    let calls = 0
+    return async (texts, model) => {
+      if (++calls > n) throw new Error('502 from the embedding proxy')
+      return good(texts, model)
+    }
+  }
+
+  // Nine of twelve configurations completing is nine genuine measurements the
+  // user already paid to embed. Rejecting with a bare error throws them away.
+  it('returns the configurations that finished when a later one fails', async () => {
+    // Call 1 embeds the questions; calls 2 and 3 are the first two configs.
+    const error = await runBenchmark(doc, questions, configs, noProgress, {
+      embed: breakingAfter(3), cache: null,
+    }).catch((e: unknown) => e)
+
+    expect(error).toBeInstanceOf(BenchmarkFailure)
+    const failure = error as BenchmarkFailure
+    expect(failure.completed).toHaveLength(2)
+    expect(failure.remaining).toBe(1)
+    expect(failure.message).toMatch(/502/)
+    // And the survivors are complete, scoreable results — not half-filled ones.
+    for (const r of failure.completed) expect(r.perQuestion).toHaveLength(questions.length)
+  })
+
+  it('fails with nothing completed when the question set itself cannot be embedded', async () => {
+    const error = await runBenchmark(doc, questions, configs, noProgress, {
+      embed: breakingAfter(0), cache: null,
+    }).catch((e: unknown) => e)
+    expect(error).toBeInstanceOf(BenchmarkFailure)
+    expect((error as BenchmarkFailure).completed).toEqual([])
+  })
+
+  it('stops on cancellation and keeps what finished', async () => {
+    const controller = new AbortController()
+    const error = await runBenchmark(
+      doc, questions, configs,
+      (done) => { if (done === 1) controller.abort() },
+      { embed: makeStubEmbedder(), cache: null, signal: controller.signal },
+    ).catch((e: unknown) => e)
+
+    expect(error).toBeInstanceOf(BenchmarkFailure)
+    expect((error as BenchmarkFailure).completed).toHaveLength(1)
+    expect((error as BenchmarkFailure).message).toMatch(/cancelled/i)
+  })
+
+  // A short response would leave `vectors[i]` undefined and score every chunk
+  // after the gap against an empty vector; a long one would silently shift the
+  // whole alignment. Both must stop the run, not produce numbers.
+  it('refuses a response with the wrong number of vectors', async () => {
+    for (const delta of [-1, 1]) {
+      const good = makeStubEmbedder()
+      const skewed: Embedder = async (texts, model) => {
+        const vectors = await good(texts, model)
+        return delta < 0 ? vectors.slice(0, -1) : [...vectors, vectors[0]!]
+      }
+      const error = await runBenchmark(doc, questions, [configs[0]!], noProgress, {
+        embed: skewed, cache: null,
+      }).catch((e: unknown) => e)
+      expect(error).toBeInstanceOf(BenchmarkFailure)
+      expect((error as Error).message).toMatch(/misaligned|vectors for/i)
+    }
+  })
+
+  it('refuses a response whose vectors are not all the same width', async () => {
+    const good = makeStubEmbedder()
+    const ragged: Embedder = async (texts, model) => {
+      const vectors = await good(texts, model)
+      return vectors.map((v, i) => (i === 1 ? v.slice(0, 3) : v))
+    }
+    await expect(
+      runBenchmark(doc, questions, [configs[0]!], noProgress, { embed: ragged, cache: null }),
+    ).rejects.toThrow(/dimension/i)
+  })
+
+  // A cached entry whose width no longer matches the question vectors would
+  // surface as a raw "dimension mismatch" out of `cosine`, halfway through a run
+  // the user is already paying for. Treat it as a miss and re-embed.
+  it('ignores a cache entry that cannot belong to this chunking', async () => {
+    const store = new Map<string, number[][]>()
+    const cache = {
+      get: async (k: string) => store.get(k) ?? null,
+      put: async (k: string, v: number[][]) => void store.set(k, v),
+    }
+    const clean = await runBenchmark(doc, questions, [configs[0]!], noProgress, {
+      embed: makeStubEmbedder(), cache, fingerprint: 'fp',
+    })
+
+    for (const [k, v] of store) store.set(k, v.map((row) => row.slice(0, 4)))
+    const afterCorruption = await runBenchmark(doc, questions, [configs[0]!], noProgress, {
+      embed: makeStubEmbedder(), cache, fingerprint: 'fp',
+    })
+    expect(JSON.stringify(afterCorruption)).toBe(JSON.stringify(clean))
+  })
+
+  it('ignores a cache entry with the wrong number of vectors', async () => {
+    const store = new Map<string, number[][]>()
+    const cache = {
+      get: async (k: string) => store.get(k) ?? null,
+      put: async (k: string, v: number[][]) => void store.set(k, v),
+    }
+    const clean = await runBenchmark(doc, questions, [configs[0]!], noProgress, {
+      embed: makeStubEmbedder(), cache, fingerprint: 'fp',
+    })
+    for (const [k, v] of store) store.set(k, v.slice(0, 1))
+    const after = await runBenchmark(doc, questions, [configs[0]!], noProgress, {
+      embed: makeStubEmbedder(), cache, fingerprint: 'fp',
+    })
+    expect(JSON.stringify(after)).toBe(JSON.stringify(clean))
+  })
+
+  // Two configurations can chunk a document identically — overlap does nothing
+  // when every paragraph already fits, and `recursive` matches `sentence-window`
+  // on text with no paragraph breaks. Their cache keys differ, because a key
+  // records the settings rather than the result, so without a within-run memo the
+  // same embeddings are bought twice in the same run.
+  it('embeds an identical chunking once even under two different config names', async () => {
+    const flat = 'Alpha beta gamma delta. Epsilon zeta eta theta. Iota kappa lambda mu. '
+      + 'Nu xi omicron pi. Rho sigma tau upsilon.'
+    const pair: Config[] = [
+      { chunker: 'sentence-window', size: 50, overlap: 0, model: SMALL, k: 2 },
+      { chunker: 'recursive', size: 50, overlap: 0, model: SMALL, k: 2 },
+    ]
+    const question = [{ id: 'q1', text: 'alpha beta', gold: { start: 0, end: 23 } }]
+
+    const embed = makeStubEmbedder()
+    const [a, b] = await runBenchmark(flat, question, pair, noProgress, { embed, cache: null })
+    expect(a!.chunkCount).toBe(b!.chunkCount)
+    expect(a!.perQuestion).toEqual(b!.perQuestion)
+    // One call for the questions, one for the shared chunking. Not two.
+    expect(embed.calls()).toBe(2)
   })
 })

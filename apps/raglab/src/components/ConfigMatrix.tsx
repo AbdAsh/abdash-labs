@@ -3,12 +3,12 @@ import { CHUNKERS, type ChunkerId } from '../lib/chunkers'
 import {
   EMBEDDING_MODELS,
   MAX_CONFIGS,
-  MatrixTooLargeError,
   estimateTokens,
-  expandMatrix,
-  type Config,
+  unreachableQuestions,
   type MatrixSelection,
+  type MatrixState,
 } from '../lib/engine'
+import type { Question } from '../lib/metrics'
 
 const SIZES = [200, 400, 800, 1600]
 const OVERLAPS = [0, 80, 160, 320]
@@ -17,8 +17,9 @@ const KS = [1, 3, 5, 10]
 interface Props {
   selection: MatrixSelection
   onChange: (selection: MatrixSelection) => void
+  matrix: MatrixState
   text: string
-  questions: string[]
+  questions: Question[]
 }
 
 function toggle<T>(list: T[], value: T): T[] {
@@ -59,28 +60,31 @@ function Row<T extends string | number>({
 }
 
 /**
- * The matrix picker and the pre-run cost estimate.
+ * The matrix picker, the pre-run cost estimate, and the reachability check.
  *
  * The estimate is not decoration. Showing projected tokens and dollars before the
  * run commits is the difference between a demo and a tool someone would trust
  * with a real document, and it is the only place a user learns that doubling
  * overlap doubles what they pay for the same document.
+ *
+ * The reachability check belongs here for the same reason: it is a fact about the
+ * selection, and here the selection is still editable and no money has moved.
  */
-export function ConfigMatrix({ selection, onChange, text, questions }: Props) {
-  const { configs, error } = useMemo(() => {
-    try {
-      return { configs: expandMatrix(selection), error: null as string | null }
-    } catch (e) {
-      return {
-        configs: [] as Config[],
-        error: e instanceof Error ? e.message : String(e),
-      }
-    }
-  }, [selection])
+export function ConfigMatrix({ selection, onChange, matrix, text, questions }: Props) {
+  const { configs, error, overBy } = matrix
+
+  const questionTexts = useMemo(() => questions.map((q) => q.text), [questions])
 
   const estimate = useMemo(
-    () => (configs.length > 0 ? estimateTokens(text, configs, questions) : { tokens: 0, usd: 0 }),
-    [text, configs, questions],
+    () => (configs.length > 0
+      ? estimateTokens(text, configs, questionTexts)
+      : { tokens: 0, usd: 0 }),
+    [text, configs, questionTexts],
+  )
+
+  const unreachable = useMemo(
+    () => (configs.length > 0 ? unreachableQuestions(questions, configs) : []),
+    [questions, configs],
   )
 
   const set = (patch: Partial<MatrixSelection>) => onChange({ ...selection, ...patch })
@@ -118,7 +122,10 @@ export function ConfigMatrix({ selection, onChange, text, questions }: Props) {
         label="Embedding model"
         values={Object.keys(EMBEDDING_MODELS)}
         selected={selection.models}
-        format={(m) => EMBEDDING_MODELS[m]?.label ?? m}
+        format={(m) => {
+          const model = EMBEDDING_MODELS[m]
+          return model ? `${model.label} · ${model.dims}d` : m
+        }}
         onToggle={(v) => set({ models: toggle(selection.models, v) })}
       />
       <Row
@@ -129,37 +136,52 @@ export function ConfigMatrix({ selection, onChange, text, questions }: Props) {
         onToggle={(v) => set({ ks: toggle(selection.ks, v) })}
       />
 
-      {error
-        ? (
-          <p className="error" role="alert">
-            {error}
-            {error.includes(String(MAX_CONFIGS)) && (
-              <span className="error-note">
-                {' '}
-                Nothing is dropped silently — a truncated matrix would report a
-                comparison you did not ask for.
-              </span>
-            )}
-          </p>
-        )
-        : (
-          <dl className="estimate">
-            <div>
-              <dt>Configurations</dt>
-              <dd>{configs.length}</dd>
-            </div>
-            <div>
-              <dt>Embedding tokens</dt>
-              <dd>{estimate.tokens.toLocaleString()}</dd>
-            </div>
-            <div>
-              <dt>Estimated cost</dt>
-              <dd>{estimate.usd < 0.01 ? '< $0.01' : `$${estimate.usd.toFixed(3)}`}</dd>
-            </div>
-          </dl>
-        )}
+      {error && (
+        <p className="error" role="alert">
+          {error}
+          {overBy > 0 && (
+            <span className="error-note">
+              {' '}
+              Deselect {overBy} combination{overBy === 1 ? '' : 's'} worth. Nothing is
+              dropped silently — a truncated matrix would report a comparison you did
+              not ask for.
+            </span>
+          )}
+        </p>
+      )}
+
+      {unreachable.length > 0 && (
+        <p className="warn" role="status">
+          {unreachable.length} question{unreachable.length === 1 ? '' : 's'} cannot be hit
+          at{' '}
+          {[...new Set(unreachable.flatMap((u) => u.blockedSizes))]
+            .sort((a, b) => a - b)
+            .join(' or ')}{' '}
+          characters: a chunk has to cover half the gold answer, and{' '}
+          {unreachable.length === 1 ? 'that answer is' : 'those answers are'} longer than
+          twice that. Those configurations score 0 on{' '}
+          {unreachable.length === 1 ? 'it' : 'them'} whatever the embedding does. Add a
+          chunk size of at least{' '}
+          {Math.max(...unreachable.map((u) => u.minSize))}, or shorten the span.
+        </p>
+      )}
+
+      {!error && (
+        <dl className="estimate">
+          <div>
+            <dt>Configurations</dt>
+            <dd>{configs.length}</dd>
+          </div>
+          <div>
+            <dt>Embedding tokens</dt>
+            <dd>{estimate.tokens.toLocaleString()}</dd>
+          </div>
+          <div>
+            <dt>Estimated cost</dt>
+            <dd>{estimate.usd < 0.01 ? '< $0.01' : `$${estimate.usd.toFixed(3)}`}</dd>
+          </div>
+        </dl>
+      )}
     </section>
   )
 }
-
-export { MatrixTooLargeError }

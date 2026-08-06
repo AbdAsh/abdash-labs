@@ -119,14 +119,27 @@ Deno.serve(async (req) => {
     // Charge on the first batch only. A missing, malformed, expired or
     // someone-else's token all fail closed to "this is a new run".
     let activeRunId = runId
-    if (!activeRunId || !(await isValidRunId(activeRunId, caller.userId))) {
+    const charging = !activeRunId || !(await isValidRunId(activeRunId, caller.userId))
+    if (charging) {
       await consumeQuota(caller.jwt, 'raglab', 'runs', 1)
       activeRunId = await mintRunId(caller.userId)
     }
 
-    const vectors = await embed(texts, model)
-    if (vectors.length !== texts.length) {
-      throw new Error(`OpenAI returned ${vectors.length} vectors for ${texts.length} texts`)
+    let vectors: number[][]
+    try {
+      vectors = await embed(texts, model)
+      if (vectors.length !== texts.length) {
+        throw new Error(`OpenAI returned ${vectors.length} vectors for ${texts.length} texts`)
+      }
+    } catch (e) {
+      // The gate has to come before the spend, or an over-quota caller gets a
+      // free OpenAI call on every request. But a run that produced no vectors is
+      // not a run, and an anonymous visitor has two a day — two upstream hiccups
+      // would lock them out for the rest of it. So put the unit back.
+      if (charging) {
+        await consumeQuota(caller.jwt, 'raglab', 'runs', -1).catch(() => {})
+      }
+      throw e
     }
 
     // Vectors go back to the browser and stop there. Nothing in this function

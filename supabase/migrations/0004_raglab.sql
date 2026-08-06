@@ -117,33 +117,56 @@ create policy runs_own on raglab.runs for all to authenticated
 -- Access by slug therefore goes through a SECURITY DEFINER accessor that takes
 -- the slug as an argument, so the filter is inside the security boundary rather
 -- than in a client the database has to trust. owner_id is never returned.
+--
+-- Every reference below is schema-qualified and `pg_temp` is pinned last, because
+-- a SECURITY DEFINER function runs with the owner's rights and Postgres searches
+-- the temporary schema first unless it is named explicitly.
+--
+-- Runs come from a lateral subquery rather than a join with GROUP BY: grouping
+-- would have to hash `questions`, a jsonb column allowed up to 64 KB, to collapse
+-- rows the primary key already identifies. The subquery also gives the aggregate
+-- somewhere to put a LIMIT — a permalink returns the run history inline, and
+-- without a bound one experiment with fifty saved runs answers with twelve
+-- megabytes.
 create or replace function raglab.experiment_by_slug(p_slug text)
 returns table (
   id uuid, slug text, doc_name text, doc_fingerprint text, doc_path text,
   questions jsonb, created_at timestamptz, runs jsonb
 )
 language sql stable security definer
-set search_path = raglab, public
+set search_path = raglab, public, pg_temp
 as $$
   select e.id, e.slug, e.doc_name, e.doc_fingerprint, e.doc_path,
          e.questions, e.created_at,
          coalesce(
-           jsonb_agg(
-             jsonb_build_object(
-               'id', r.id, 'experiment_id', r.experiment_id,
-               'results', r.results, 'created_at', r.created_at
-             )
-             order by r.created_at desc
-           ) filter (where r.id is not null),
+           (
+             select jsonb_agg(
+                      jsonb_build_object(
+                        'id', r.id, 'experiment_id', r.experiment_id,
+                        'results', r.results, 'created_at', r.created_at
+                      )
+                      order by r.created_at desc, r.id
+                    )
+             from (
+               select id, experiment_id, results, created_at
+               from raglab.runs
+               where experiment_id = e.id
+               order by created_at desc, id
+               limit 20
+             ) r
+           ),
            '[]'::jsonb
          ) as runs
   from raglab.experiments e
-  left join raglab.runs r on r.experiment_id = e.id
-  where e.slug = p_slug
-  group by e.id, e.slug, e.doc_name, e.doc_fingerprint, e.doc_path, e.questions, e.created_at;
+  where e.slug = p_slug;
 $$;
 
 grant select, insert, update, delete on raglab.experiments, raglab.runs to authenticated;
+
+-- CREATE FUNCTION grants EXECUTE to PUBLIC by default, which for a SECURITY
+-- DEFINER function means the grant below would be decorative. Revoke first so the
+-- callable set is exactly what this line says it is.
+revoke execute on function raglab.experiment_by_slug(text) from public;
 grant execute on function raglab.experiment_by_slug(text) to anon, authenticated;
 
 -- Dashboard step, not expressible in SQL: add `raglab` under
