@@ -17,9 +17,9 @@
  *   produces. Contradictory instructions resolve to "the separation stands".
  */
 
-import { mergeNodes, normalizeName, type ResolvedNode } from './resolve'
-import { normalizeQuote } from './validate'
-import type { Evidence, Graph, GraphEdge } from './graph'
+import { mergeNodes, type ResolvedNode } from './resolve'
+import { nameAppearsIn, normalizeName } from './validate'
+import { MAX_EVIDENCE_PER_EDGE, type Evidence, type Graph, type GraphEdge } from './graph'
 
 export type Correction =
   | { kind: 'merge'; ids: string[] }
@@ -35,23 +35,9 @@ const isSplit = (c: unknown): c is { kind: 'split'; id: string; alias: string } 
   typeof (c as { alias: unknown }).alias === 'string'
 
 /**
- * Whole-name containment, case-insensitive and whitespace-tolerant. Used to
- * decide which evidence follows a split, so "Chen" must not match inside
- * "Chenille" — but "Chen founded…" must match.
+ * Deduplicates on (chunk, quote) and holds the same per-edge ceiling assembly
+ * applies, so no amount of merging can grow one row past the storage budget.
  */
-function quoteNames(quote: string, name: string): boolean {
-  const haystack = normalizeName(normalizeQuote(quote))
-  const needle = normalizeName(name)
-  if (!needle) return false
-  for (let at = haystack.indexOf(needle); at !== -1; at = haystack.indexOf(needle, at + 1)) {
-    const before = at === 0 ? ' ' : haystack[at - 1]!
-    const afterIndex = at + needle.length
-    const after = afterIndex >= haystack.length ? ' ' : haystack[afterIndex]!
-    if (before === ' ' && after === ' ') return true
-  }
-  return false
-}
-
 function dedupeEvidence(items: Evidence[]): Evidence[] {
   const seen = new Set<string>()
   const out: Evidence[] = []
@@ -60,6 +46,7 @@ function dedupeEvidence(items: Evidence[]): Evidence[] {
     if (seen.has(key)) continue
     seen.add(key)
     out.push(e)
+    if (out.length >= MAX_EVIDENCE_PER_EDGE) break
   }
   return out
 }
@@ -166,7 +153,7 @@ function applySplit(graph: Graph, id: string, alias: string): Graph {
   // name what stays behind. "Dr. Sarah Chen founded Helix Labs" contains the
   // string "Chen", but it is plainly about Sarah Chen, so it does not move.
   const belongsToSplit = (e: Evidence) =>
-    quoteNames(e.quote, surface) && !retainedAliases.some((a) => quoteNames(e.quote, a))
+    nameAppearsIn(e.quote, surface) && !retainedAliases.some((a) => nameAppearsIn(e.quote, a))
 
   const edges: GraphEdge[] = []
   const movedChunks: string[] = []

@@ -1,18 +1,34 @@
 /**
  * The anti-hallucination gate.
  *
- * Every relation the model returns must carry a `quote` that is a *verbatim*
- * substring of the chunk it was extracted from. Relations whose quote fails
- * are dropped — never repaired, never softened, never shown. This is what
- * turns provenance from a claim into a guarantee.
+ * A relation survives only if its `quote` clears two independent tests:
  *
- * The one tolerance is whitespace: PDF text extraction sprays line breaks and
- * double spaces through sentences, and no model reproduces those faithfully.
- * So both sides are whitespace-normalised before the substring test.
+ *   1. The quote is a *verbatim* substring of the chunk it came from.
+ *   2. The quote actually names one of the two entities the relation is about.
  *
- * Nothing else is tolerated. Not case, not a dropped letter, not an inserted
- * article, not a "co-" prefix on the verb. Word-level fuzziness is precisely
- * where a fabricated citation would hide, so the gate stays exact there.
+ * Test 1 alone is not enough, and that is the subtle part. A model can copy a
+ * real sentence and staple it to a claim the sentence never made — quote
+ * "Dr. Sarah Chen founded Helix Labs" in support of "Marcus Webb founded
+ * Rotterdam" and every character checks out. The citation is genuine and the
+ * claim is invented, which is the worst possible combination because it looks
+ * verified. Test 2 anchors the evidence to the claim.
+ *
+ * Relations that fail either test are dropped — never repaired, never
+ * softened, never shown. This is what turns provenance from a claim into a
+ * guarantee.
+ *
+ * The one tolerance in test 1 is whitespace: PDF text extraction sprays line
+ * breaks and double spaces through sentences, and no model reproduces those
+ * faithfully. So both sides are whitespace-normalised before the substring
+ * test. Nothing else is tolerated — not case, not a dropped letter, not an
+ * inserted article, not a "co-" prefix on the verb. Word-level fuzziness is
+ * precisely where a fabricated citation would hide.
+ *
+ * Test 2 is deliberately the looser of the two: *one* endpoint, not both.
+ * Requiring both would drop "Chen founded Helix Labs" whenever the model named
+ * the entity "Dr. Sarah Chen", and surface-form variation is the norm, not the
+ * exception — resolving it is the rest of this app's job. One named endpoint is
+ * enough to rule out a quote that is about something else entirely.
  */
 
 export const ENTITY_TYPES = [
@@ -92,6 +108,64 @@ export function quoteSupportedBy(quote: unknown, chunkText: string): boolean {
   return containsAtWordBoundary(normalizeQuote(chunkText), q)
 }
 
+const HONORIFIC = /^(dr|mr|mrs|ms|miss|prof|professor|sir|dame|rev|lord|lady)\s+/
+
+/**
+ * The canonical surface form of a name.
+ *
+ * Lowercases, folds intra-word periods and apostrophes so `U.S.A.` matches
+ * `USA` and `O'Brien` matches `OBrien`, turns separating punctuation into
+ * spaces so `Jean-Luc` matches `Jean Luc`, collapses whitespace, and strips
+ * leading honorifics.
+ *
+ * It lives here rather than in the resolver because both the gate and the
+ * resolver have to agree on what counts as "the same name", and only one of
+ * them can own the rule. The gate is the lower layer, so it owns it.
+ *
+ * Honorific stripping is a person-shaped rule applied without knowing the
+ * type, so an artifact literally named "Dr Pepper" normalises to "pepper".
+ * That is tolerable precisely because the resolver's type gate keeps it from
+ * ever touching a person node.
+ */
+export function normalizeName(n: string): string {
+  let s = String(n ?? '')
+    .toLowerCase()
+    .replace(/[.'’`]/g, '')
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  for (;;) {
+    const stripped = s.replace(HONORIFIC, '')
+    if (stripped === s || stripped.length === 0) break
+    s = stripped
+  }
+  return s
+}
+
+/**
+ * Whole-name containment, case-insensitive and punctuation-tolerant, so "Chen"
+ * matches "Chen founded…" but never "Chenille". Honorifics fold on both sides,
+ * so the entity "Dr. Sarah Chen" is found in a passage that writes plain
+ * "Sarah Chen".
+ *
+ * Used by the gate to anchor a quote to its relation, and by the split
+ * correction to decide which evidence follows an alias — one rule, so a quote
+ * that was good enough to create an edge is good enough to keep after a split.
+ */
+export function nameAppearsIn(text: string, name: string): boolean {
+  const haystack = normalizeName(text)
+  const needle = normalizeName(name)
+  if (!needle || !haystack) return false
+  for (let at = haystack.indexOf(needle); at !== -1; at = haystack.indexOf(needle, at + 1)) {
+    const before = at === 0 ? ' ' : haystack[at - 1]!
+    const afterIndex = at + needle.length
+    const after = afterIndex >= haystack.length ? ' ' : haystack[afterIndex]!
+    if (before === ' ' && after === ' ') return true
+  }
+  return false
+}
+
 function hasEndpoints(r: RawRelation): boolean {
   return (
     typeof r.source === 'string' &&
@@ -120,7 +194,9 @@ export function validateExtraction(
     const ok =
       hasEndpoints(relation) &&
       wordCount(quote) >= MIN_QUOTE_WORDS &&
-      containsAtWordBoundary(normalizedChunk, quote)
+      containsAtWordBoundary(normalizedChunk, quote) &&
+      // Anchored: a real sentence is not evidence for a claim it never mentions.
+      (nameAppearsIn(quote, relation.source) || nameAppearsIn(quote, relation.target))
     if (ok) kept.push(relation)
     else dropped.push(relation)
   }

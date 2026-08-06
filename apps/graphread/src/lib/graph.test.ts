@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import type { ChunkExtraction, EntityType, RawRelation } from './validate'
-import { lexicalPass, type ResolvedNode } from './resolve'
-import { assemble } from './graph'
+import { nameAppearsIn, type ChunkExtraction, type EntityType, type RawRelation } from './validate'
+import { embeddingPass, lexicalPass, type EmbedFn, type ResolvedNode } from './resolve'
+import { assemble, degrees, neighbourhood } from './graph'
 
 const TEXT_1 =
   'Dr. Sarah Chen founded Helix Labs in 2019. Helix Labs is based in Rotterdam. ' +
@@ -343,5 +343,138 @@ describe('assemble', () => {
       edges: [],
       stats: { chunks: 0, keptRelations: 0, droppedRelations: 0, unresolvedRelations: 0 },
     })
+  })
+
+  it('drops a relation whose quote is real but says nothing about its endpoints', () => {
+    // The quote is verbatim in c1. It is not about Marcus Webb and Rotterdam.
+    const g = assemble(
+      [
+        extraction(
+          'c1',
+          [],
+          [rel('Marcus Webb', 'founded', 'Rotterdam', 'Dr. Sarah Chen founded Helix Labs')],
+        ),
+      ],
+      resolvedNodes(),
+      chunkTexts,
+    )
+    expect(g.edges).toHaveLength(0)
+    expect(g.stats.droppedRelations).toBe(1)
+  })
+
+  it('keeps an entity that no surviving relation mentions', () => {
+    // Marcus Webb and Rotterdam are extracted but unconnected. They belong in
+    // the graph: the document named them, and an isolated node is information.
+    const g = assemble(
+      [
+        extraction(
+          'c1',
+          [],
+          [rel('Dr. Sarah Chen', 'founded', 'Helix Labs', 'Dr. Sarah Chen founded Helix Labs')],
+        ),
+      ],
+      resolvedNodes(),
+      chunkTexts,
+    )
+    const d = degrees(g)
+    expect(g.nodes.map((n) => n.id)).toContain('person:marcus-webb')
+    expect(d.get('person:marcus-webb')).toBe(0)
+    // An orphan's neighbourhood is itself, so isolating one cannot blank the view.
+    expect([...neighbourhood(g, 'person:marcus-webb')]).toEqual(['person:marcus-webb'])
+  })
+
+  it('shrugs off a chunk that yielded nothing at all', () => {
+    const g = assemble(
+      [
+        extraction('c1', [], []),
+        extraction(
+          'c2',
+          [],
+          [rel('sarah chen', 'founded', 'Helix Labs', 'Chen founded Helix Labs after leaving Orbit')],
+        ),
+      ],
+      resolvedNodes(),
+      chunkTexts,
+    )
+    expect(g.stats.chunks).toBe(2)
+    expect(g.edges).toHaveLength(1)
+  })
+})
+
+describe('assemble — provenance after automatic resolution', () => {
+  /** Fake embedder: identical vectors, so the two person nodes fuse. */
+  const fuse: EmbedFn = async (texts) => texts.map(() => [1, 0])
+
+  it('fuses two mentions into one node and keeps both passages under one edge', async () => {
+    const nodes = await embeddingPass(
+      lexicalPass([
+        { entity: ent('Dr. Sarah Chen', 'person'), chunkId: 'c1' },
+        { entity: ent('Chen', 'person'), chunkId: 'c2' },
+        { entity: ent('Helix Labs', 'organization'), chunkId: 'c1' },
+      ]),
+      0.8,
+      fuse,
+    )
+
+    const g = assemble(
+      [
+        extraction(
+          'c1',
+          [],
+          [rel('Dr. Sarah Chen', 'founded', 'Helix Labs', 'Dr. Sarah Chen founded Helix Labs')],
+        ),
+        extraction(
+          'c2',
+          [],
+          [rel('Chen', 'founded', 'Helix Labs', 'Chen founded Helix Labs after leaving Orbit')],
+        ),
+      ],
+      nodes,
+      chunkTexts,
+    )
+
+    expect(g.edges).toHaveLength(1)
+    const founded = g.edges[0]!
+    expect(founded.weight).toBe(2)
+
+    // Both quotes survive, and each is still the passage that used that surface
+    // form. An automatic merge that dropped or swapped one would keep the count.
+    const c1 = founded.evidence.find((e) => e.chunkId === 'c1')!
+    const c2 = founded.evidence.find((e) => e.chunkId === 'c2')!
+    expect(nameAppearsIn(c1.quote, 'Dr. Sarah Chen')).toBe(true)
+    expect(c2.quote).toContain('Chen founded Helix Labs after leaving Orbit')
+    for (const e of founded.evidence) {
+      expect(chunkTexts.get(e.chunkId)).toContain(e.quote)
+    }
+  })
+})
+
+describe('assemble — a document large enough to be a real one', () => {
+  it('builds a 400-entity graph without quadratic blow-up or dropped provenance', () => {
+    const N = 400
+    const chunks = new Map<string, string>()
+    const extractions: ChunkExtraction[] = []
+    const mentions: { entity: ReturnType<typeof ent>; chunkId: string }[] = []
+
+    for (let i = 0; i < N; i++) {
+      const id = `k${i}`
+      const a = `Person ${i}`
+      const b = `Org ${i}`
+      const text = `${a} founded ${b} in 2019. ${a} still runs it.`
+      chunks.set(id, text)
+      mentions.push({ entity: ent(a, 'person'), chunkId: id })
+      mentions.push({ entity: ent(b, 'organization'), chunkId: id })
+      extractions.push(extraction(id, [], [rel(a, 'founded', b, `${a} founded ${b}`)]))
+    }
+
+    const started = Date.now()
+    const g = assemble(extractions, lexicalPass(mentions), chunks)
+    expect(Date.now() - started).toBeLessThan(4000)
+
+    expect(g.nodes).toHaveLength(N * 2)
+    expect(g.edges).toHaveLength(N)
+    expect(g.stats.droppedRelations).toBe(0)
+    expect(g.stats.unresolvedRelations).toBe(0)
+    expect(degrees(g).get('person:person-0')).toBe(1)
   })
 })

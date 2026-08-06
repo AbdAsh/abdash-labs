@@ -8,6 +8,7 @@
 
 import { chunkPages, extractPages, type Page } from '@labs/doc-core'
 import { supabase } from '@labs/platform'
+import { functionError, QuotaError } from './errors'
 import { assemble, type Graph } from './graph'
 import { embeddingPass, lexicalPass } from './resolve'
 import type { ChunkExtraction, RawEntity } from './validate'
@@ -39,7 +40,15 @@ export interface RunResult {
   graph: Graph
   chunks: SourceChunk[]
   extractions: ChunkExtraction[]
+  /**
+   * Chunks that never came back. The graph is built from the rest rather than
+   * thrown away — a graph missing four passages of thirty is worth far more
+   * than an error page — but the caller has to say so, because a silently
+   * partial graph is a dishonest one.
+   */
   failedChunks: string[]
+  /** True when the run gave up early: quota exhausted, or the user cancelled. */
+  stoppedEarly: boolean
 }
 
 export interface RunOptions {
@@ -69,7 +78,7 @@ async function extractChunk(chunk: SourceChunk, chunkIndex: number): Promise<Chu
   }>('graphread-extract', {
     body: { chunkId: chunk.id, chunkIndex, text: chunk.content },
   })
-  if (error) throw error
+  if (error) throw await functionError(error, 'The extractor could not be reached.')
   return {
     chunkId: chunk.id,
     entities: Array.isArray(data?.entities) ? data.entities : [],
@@ -104,6 +113,7 @@ export async function runExtraction(
   const extractions: ChunkExtraction[] = []
   const failedChunks: string[] = []
   let done = 0
+  let quotaStopped = false
 
   const report = () => {
     onProgress?.({
@@ -122,7 +132,13 @@ export async function runExtraction(
   }
 
   if (chunks.length === 0) {
-    return { graph: snapshot([], chunkTexts, 0), chunks, extractions, failedChunks }
+    return {
+      graph: snapshot([], chunkTexts, 0),
+      chunks,
+      extractions,
+      failedChunks,
+      stoppedEarly: false,
+    }
   }
 
   // The first chunk goes alone and carries chunkIndex 0, which is what charges
@@ -133,7 +149,7 @@ export async function runExtraction(
     settle(first, await extractChunk(first, 0))
   } catch (e) {
     // A quota rejection is the user's answer, not a partial result.
-    if (isQuotaError(e)) throw e
+    if (e instanceof QuotaError) throw e
     settle(first, null)
   }
 
@@ -147,9 +163,17 @@ export async function runExtraction(
       if (!chunk) return
       try {
         settle(chunk, await extractChunk(chunk, index + 1))
-      } catch {
+      } catch (e) {
+        // Mid-run the allowance can still run out. Stop asking rather than
+        // grinding through the remaining chunks collecting the same refusal.
+        if (e instanceof QuotaError) {
+          quotaStopped = true
+          settle(chunk, null)
+          return
+        }
         settle(chunk, null)
       }
+      if (quotaStopped) return
     }
   }
   await Promise.all(Array.from({ length: Math.min(CONCURRENCY, queue.length) }, worker))
@@ -166,10 +190,6 @@ export async function runExtraction(
     chunks,
     extractions,
     failedChunks,
+    stoppedEarly: quotaStopped || signal?.aborted === true,
   }
-}
-
-function isQuotaError(e: unknown): boolean {
-  const message = e instanceof Error ? e.message : String(e)
-  return /429|daily limit/i.test(message)
 }

@@ -104,11 +104,37 @@ button:hover {
   display: none;
 }
 
+.file-button.is-disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+button:disabled:hover {
+  border-color: var(--border);
+}
+
 .error {
   margin: 0;
   padding: 0.6rem 1.1rem;
   background: rgba(240, 127, 158, 0.12);
   color: var(--danger);
+}
+
+.notice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+  margin: 0;
+  padding: 0.6rem 1.1rem;
+  background: rgba(111, 177, 240, 0.1);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.88rem;
 }
 
 .estimate,
@@ -126,6 +152,21 @@ button:hover {
 .estimate p,
 .progress {
   margin: 0;
+}
+
+.progress-bar {
+  flex: 1 1 8rem;
+  max-width: 18rem;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.progress-bar > div {
+  height: 100%;
+  background: var(--accent);
+  transition: width 200ms linear;
 }
 
 .filters {
@@ -212,6 +253,19 @@ button:hover {
   font-size: 0.8rem;
 }
 
+.graph-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 1.5rem;
+  color: var(--muted);
+  text-align: center;
+  pointer-events: none;
+}
+
 .panel {
   width: min(24rem, 42vw);
   flex: none;
@@ -237,6 +291,14 @@ button:hover {
   margin-top: 0.45rem;
 }
 
+.panel-close {
+  margin-left: auto;
+  flex: none;
+  padding: 0.1rem 0.5rem;
+  font-size: 1.1rem;
+  line-height: 1.2;
+}
+
 .panel-sub {
   margin: 0.15rem 0 0;
   color: var(--muted);
@@ -245,6 +307,13 @@ button:hover {
 
 .panel-desc {
   margin: 0.8rem 0 0;
+}
+
+/* Model prose sitting beside verified quotes has to look different from them. */
+.panel-unverified {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-style: italic;
 }
 
 .panel-section {
@@ -350,19 +419,60 @@ button:hover {
   margin-top: 1.5rem;
 }
 
+/*
+ * A force graph on a phone is a hard sell: the canvas wants the whole viewport
+ * and the provenance panel is the reason anyone is here. So on a narrow screen
+ * the panel becomes a bottom sheet that overlays the graph rather than pushing
+ * it off-screen — you keep the node you tapped in view while you read its
+ * quotes, and the panel closes with the × in its header.
+ */
 @media (max-width: 720px) {
   .workspace {
+    position: relative;
     flex-direction: column;
   }
 
-  .panel {
-    width: 100%;
-    max-height: none;
-    border-left: none;
-    border-top: 1px solid var(--border);
+  .graph-canvas {
+    min-height: 60dvh;
   }
 
-  .graph-canvas {
-    min-height: 55dvh;
+  .panel {
+    position: absolute;
+    inset: auto 0 0 0;
+    width: 100%;
+    max-height: 58dvh;
+    padding-bottom: 1.2rem;
+    border-left: none;
+    border-top: 1px solid var(--border);
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 -8px 24px rgb(0 0 0 / 0.35);
+    overscroll-behavior: contain;
+  }
+
+  .filters {
+    padding: 0.6rem 0.8rem;
+  }
+
+  /* Thumb-sized, per the WCAG 2.5.8 minimum. */
+  .chip,
+  .panel-close,
+  .entity-link {
+    min-height: 28px;
+  }
+}
+
+/*
+ * The force layout is the one real animation here, and it is not decoration —
+ * it is how the graph arranges itself. GraphView solves it off-screen instead
+ * when this is set (see `stillLayout`); this covers the rest.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

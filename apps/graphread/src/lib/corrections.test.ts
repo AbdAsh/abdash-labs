@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { ChunkExtraction, EntityType, RawRelation } from './validate'
+import { nameAppearsIn, type ChunkExtraction, type EntityType, type RawRelation } from './validate'
 import { lexicalPass } from './resolve'
 import { assemble, type Graph } from './graph'
 import { applyCorrections, type Correction } from './corrections'
@@ -62,6 +62,34 @@ function fixture(): Graph {
 const node = (g: Graph, id: string) => g.nodes.find((n) => n.id === id)
 const edge = (g: Graph, source: string, relation: string, target: string) =>
   g.edges.find((e) => e.source === source && e.relation === relation && e.target === target)
+
+/** Every (chunk, quote) pair the graph is currently showing anywhere. */
+const allEvidence = (g: Graph): string[] =>
+  g.edges.flatMap((e) => e.evidence.map((x) => `${x.chunkId} ${x.quote}`)).sort()
+
+/**
+ * The provenance invariant, and the thing counts cannot check: every quote
+ * displayed under an edge must actually name one of that edge's endpoints, by
+ * any recorded alias. A correction that keeps both quotes but files one of
+ * them under the wrong pair of entities passes every count assertion in this
+ * file and still breaks the product's central claim.
+ */
+function expectEveryQuoteAttributable(g: Graph): void {
+  const byId = new Map(g.nodes.map((n) => [n.id, n]))
+  for (const e of g.edges) {
+    const source = byId.get(e.source)
+    const target = byId.get(e.target)
+    expect(source, `dangling source on ${e.id}`).toBeDefined()
+    expect(target, `dangling target on ${e.id}`).toBeDefined()
+    const surfaces = [source!.name, ...source!.aliases, target!.name, ...target!.aliases]
+    for (const item of e.evidence) {
+      expect(
+        surfaces.some((s) => nameAppearsIn(item.quote, s)),
+        `${e.id} cites ${JSON.stringify(item.quote)}, which names neither endpoint`,
+      ).toBe(true)
+    }
+  }
+}
 
 describe('fixture', () => {
   it('starts with Chen and Sarah Chen as two nodes and two separate founded edges', () => {
@@ -150,6 +178,48 @@ describe('applyCorrections — merge', () => {
   })
 })
 
+describe('applyCorrections — provenance survives a merge', () => {
+  it('keeps every quote attributable to the entities its edge now joins', () => {
+    expectEveryQuoteAttributable(fixture())
+    expectEveryQuoteAttributable(applyCorrections(fixture(), [{ kind: 'merge', ids: [SARAH, CHEN] }]))
+  })
+
+  it('loses no evidence at all when nothing collapses to a self-loop', () => {
+    const before = fixture()
+    const after = applyCorrections(before, [{ kind: 'merge', ids: [SARAH, CHEN] }])
+    // Fusing two edges must union their evidence, never pick a winner.
+    expect(allEvidence(after)).toEqual(allEvidence(before))
+  })
+
+  it('keeps each quote with the mention that produced it, not merely in the pile', () => {
+    const g = applyCorrections(fixture(), [{ kind: 'merge', ids: [SARAH, CHEN] }])
+    const founded = edge(g, SARAH, 'founded', HELIX)!
+
+    // Both survive — but the point is which is which. The passage that wrote
+    // "Dr. Sarah Chen" is still the c1 citation and the one that wrote "Chen"
+    // is still the c2 citation; a merge must not shuffle them.
+    const fromC1 = founded.evidence.find((e) => e.chunkId === 'c1')!
+    const fromC2 = founded.evidence.find((e) => e.chunkId === 'c2')!
+    expect(fromC1.quote).toBe('Dr. Sarah Chen founded Helix Labs')
+    expect(fromC2.quote).toBe('Chen founded Helix Labs after leaving Orbit')
+    expect(chunkTexts.get('c1')).toContain(fromC1.quote)
+    expect(chunkTexts.get('c2')).toContain(fromC2.quote)
+  })
+
+  it('holds the per-edge evidence ceiling when a merge unions two long lists', () => {
+    const base = fixture()
+    const many = (chunk: string, n: number) =>
+      Array.from({ length: n }, (_, i) => ({ chunkId: chunk, quote: `Chen founded Helix Labs ${i}` }))
+    for (const e of base.edges) {
+      if (e.relation !== 'founded') continue
+      e.evidence = many(e.source === CHEN ? 'c2' : 'c1', 20)
+    }
+    const g = applyCorrections(base, [{ kind: 'merge', ids: [SARAH, CHEN] }])
+    // 40 distinct quotes in, capped on the way out — the row cannot grow without bound.
+    expect(edge(g, SARAH, 'founded', HELIX)!.evidence).toHaveLength(25)
+  })
+})
+
 describe('applyCorrections — split', () => {
   const merged = () => applyCorrections(fixture(), [{ kind: 'merge', ids: [SARAH, CHEN] }])
 
@@ -210,6 +280,18 @@ describe('applyCorrections — split', () => {
     expect(applyCorrections(before, [{ kind: 'split', id: 'person:ghost', alias: 'x' }])).toEqual(
       before,
     )
+  })
+
+  it('leaves every quote attributable on both sides of the separation', () => {
+    expectEveryQuoteAttributable(
+      applyCorrections(merged(), [{ kind: 'split', id: SARAH, alias: 'Chen' }]),
+    )
+  })
+
+  it('loses no evidence when a node is pulled apart', () => {
+    const before = merged()
+    const after = applyCorrections(before, [{ kind: 'split', id: SARAH, alias: 'Chen' }])
+    expect(allEvidence(after)).toEqual(allEvidence(before))
   })
 
   it('moves the whole edge when no evidence names the retained node', () => {

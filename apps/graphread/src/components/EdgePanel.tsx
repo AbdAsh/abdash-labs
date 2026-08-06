@@ -5,13 +5,14 @@ export interface EdgePanelProps {
   edge: GraphEdge
   chunkPages?: Map<string, number>
   onSelectNode: (id: string) => void
+  onClose?: () => void
 }
 
 /**
  * An edge's evidence. Every quote here was matched against its source passage
  * before the edge was drawn — that is the only reason the edge exists.
  */
-export function EdgePanel({ graph, edge, chunkPages, onSelectNode }: EdgePanelProps) {
+export function EdgePanel({ graph, edge, chunkPages, onSelectNode, onClose }: EdgePanelProps) {
   const name = (id: string) => graph.nodes.find((n) => n.id === id)?.name ?? id
   const where = (chunkId: string) => {
     const page = chunkPages?.get(chunkId)
@@ -33,8 +34,15 @@ export function EdgePanel({ graph, edge, chunkPages, onSelectNode }: EdgePanelPr
           </h2>
           <p className="panel-sub">
             asserted {edge.weight} {edge.weight === 1 ? 'time' : 'times'}
+            {edge.weight > edge.evidence.length &&
+              ` · showing ${edge.evidence.length} of the passages`}
           </p>
         </div>
+        {onClose && (
+          <button type="button" className="panel-close" aria-label="Close panel" onClick={onClose}>
+            ×
+          </button>
+        )}
       </header>
 
       <section className="panel-section">

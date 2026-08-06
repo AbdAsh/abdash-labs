@@ -12,9 +12,16 @@ import { TYPE_COLORS } from './types'
  * follow.
  *
  * react-force-graph mutates the objects it is handed: it writes x/y/vx/vy onto
- * nodes and swaps link `source`/`target` from ids to node references. So the
- * data passed in here is always a fresh shallow copy, never the application's
- * own graph.
+ * nodes and swaps link `source`/`target` from ids to node references. So it is
+ * never given the application's own graph — only the simulation nodes this
+ * component owns.
+ *
+ * Those simulation nodes are *reused* between renders rather than rebuilt, and
+ * that is the difference between the live-growth demo working and not. A fresh
+ * object for an existing id reads to the simulation as a brand new node with no
+ * position, so every chunk that lands would fling the whole layout apart and
+ * re-settle it. Keeping the object keeps its position and velocity, and the
+ * graph grows by accretion — which is the thing that is nice to watch.
  */
 
 interface SimNode {
@@ -60,6 +67,18 @@ const MERGE_OVERLAP = 4
 /** Two clicks inside this window on the same node isolate its neighbourhood. */
 const DOUBLE_CLICK_MS = 320
 
+/**
+ * Past this many visible nodes, only the well-connected ones get a label.
+ * Drawing four hundred strings a frame is what turns a 60fps graph into a
+ * slideshow, and four hundred overlapping strings are unreadable anyway.
+ */
+const LABEL_BUDGET = 120
+
+const prefersReducedMotion = (): boolean =>
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
 export function GraphView({
   graph,
   selectedNodeId,
@@ -73,8 +92,14 @@ export function GraphView({
   onMergeNodes,
 }: GraphViewProps) {
   const wrapper = useRef<HTMLDivElement>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the lib ships no ref type
+  const engine = useRef<any>(null)
   const [size, setSize] = useState({ width: 800, height: 600 })
   const [hoveredId, setHoveredId] = useState<string | null>(null)
+
+  // Reduced motion is settled once, at mount: a force layout that re-settles
+  // mid-session because the OS preference flipped would be its own animation.
+  const [stillLayout] = useState(prefersReducedMotion)
 
   useEffect(() => {
     const el = wrapper.current
@@ -109,17 +134,42 @@ export function GraphView({
     return ids
   }, [graph, visibleTypes, query, isolatedId])
 
-  // A fresh object graph every render the data changes — see the note above.
+  // The live simulation nodes, keyed by id and kept across rebuilds — see the
+  // note at the top of the file. Held in a ref because their x/y belong to the
+  // simulation, not to React.
+  const simNodes = useRef(new Map<string, SimNode>())
+
   const data = useMemo(() => {
     const degree = degrees(graph)
-    const nodes: SimNode[] = graph.nodes
-      .filter((n) => visibleIds.has(n.id))
-      .map((n) => ({
-        id: n.id,
-        name: n.name,
-        type: n.type,
-        degree: degree.get(n.id) ?? 0,
-      }))
+    const nodes: SimNode[] = []
+
+    for (const node of graph.nodes) {
+      if (!visibleIds.has(node.id)) continue
+      const existing = simNodes.current.get(node.id)
+      if (existing) {
+        existing.name = node.name
+        existing.type = node.type
+        existing.degree = degree.get(node.id) ?? 0
+        nodes.push(existing)
+      } else {
+        const fresh: SimNode = {
+          id: node.id,
+          name: node.name,
+          type: node.type,
+          degree: degree.get(node.id) ?? 0,
+        }
+        simNodes.current.set(node.id, fresh)
+        nodes.push(fresh)
+      }
+    }
+
+    // Ids that no longer exist — a merge absorbed them, or a re-extraction
+    // replaced the graph. Forget them so the map cannot grow without bound.
+    if (simNodes.current.size > graph.nodes.length) {
+      const live = new Set(graph.nodes.map((n) => n.id))
+      for (const id of simNodes.current.keys()) if (!live.has(id)) simNodes.current.delete(id)
+    }
+
     const links: SimLink[] = graph.edges
       .filter((e) => visibleIds.has(e.source) && visibleIds.has(e.target))
       .map((e) => ({
@@ -129,6 +179,7 @@ export function GraphView({
         relation: e.relation,
         weight: e.weight,
       }))
+
     return { nodes, links }
   }, [graph, visibleIds])
 
@@ -136,6 +187,8 @@ export function GraphView({
     const focus = hoveredId ?? selectedNodeId
     return focus ? neighbourhood(graph, focus) : null
   }, [graph, hoveredId, selectedNodeId])
+
+  const labelEveryone = data.nodes.length <= LABEL_BUDGET
 
   const radius = useCallback((n: SimNode) => 3 + Math.sqrt(n.degree) * 2.2, [])
 
@@ -159,7 +212,8 @@ export function GraphView({
       }
 
       // Labels only once there is room for them; below that they are noise.
-      if (scale > 1.1 || node.degree > 2) {
+      const worthLabelling = labelEveryone || node.degree > 2 || node.id === selectedNodeId
+      if (worthLabelling && (scale > 1.1 || node.degree > 2)) {
         const fontSize = Math.max(9, 12 / scale)
         ctx.font = `${fontSize}px system-ui, sans-serif`
         ctx.textAlign = 'center'
@@ -169,7 +223,7 @@ export function GraphView({
       }
       ctx.globalAlpha = 1
     },
-    [highlighted, radius, selectedNodeId],
+    [highlighted, labelEveryone, radius, selectedNodeId],
   )
 
   const drawNodeHitArea = useCallback(
@@ -210,7 +264,8 @@ export function GraphView({
       }
       // Dropping one node onto another is the merge gesture. It is deliberately
       // an explicit human act: automatic resolution will not merge across entity
-      // types, and a person looking at both nodes may decide otherwise.
+      // types, and a person looking at both nodes may decide otherwise. It is
+      // also undoable, because on a touch screen a drag is easy to mean loosely.
       if (nearest) onMergeNodes(dragged.id, nearest.id)
     },
     [data.nodes, onMergeNodes, radius],
@@ -235,9 +290,19 @@ export function GraphView({
     [isolatedId, onIsolate, onSelectEdge, onSelectNode],
   )
 
+  // A four-hundred-node layout settles far outside the default viewport, so
+  // without this the first thing a real document shows you is empty space.
+  const fitToView = useCallback(() => {
+    engine.current?.zoomToFit?.(stillLayout ? 0 : 400, 48)
+  }, [stillLayout])
+
+  const empty = data.nodes.length === 0
+  const filtered = empty && graph.nodes.length > 0
+
   return (
     <div ref={wrapper} className="graph-canvas">
       <ForceGraph2D
+        ref={engine}
         width={size.width}
         height={size.height}
         graphData={data}
@@ -251,7 +316,13 @@ export function GraphView({
         linkWidth={(l: SimLink) => (l.id === selectedEdgeId ? 2.5 : 0.6 + Math.log2(l.weight + 1))}
         linkDirectionalArrowLength={4}
         linkDirectionalArrowRelPos={0.92}
-        cooldownTicks={120}
+        // With reduced motion the layout is solved before the first paint and
+        // never animates; otherwise it settles on screen, which is the demo.
+        // Warmup is synchronous, so a big graph gets fewer ticks — a rougher
+        // layout beats freezing the tab for two seconds.
+        warmupTicks={stillLayout ? (data.nodes.length > 200 ? 60 : 200) : 0}
+        cooldownTicks={stillLayout ? 0 : Math.min(400, 120 + data.nodes.length)}
+        onEngineStop={fitToView}
         d3VelocityDecay={0.3}
         onNodeHover={(n: SimNode | null) => setHoveredId(n?.id ?? null)}
         onNodeClick={handleNodeClick}
@@ -267,6 +338,15 @@ export function GraphView({
         }}
         onNodeDragEnd={handleNodeDragEnd}
       />
+
+      {empty && (
+        <p className="graph-empty">
+          {filtered
+            ? 'Nothing matches the current search and filters.'
+            : 'No entities yet. Open a document to build a graph.'}
+        </p>
+      )}
+
       {isolatedId && (
         <button type="button" className="isolate-exit" onClick={() => onIsolate(null)}>
           Showing one neighbourhood — show all

@@ -93,9 +93,14 @@ Rules for relations:
   span of at least four words that on its own states the relation. Do not
   paraphrase it, do not correct its spelling, do not join two separate sentences,
   do not add or remove a single word.
+- The quote MUST contain the name of at least one of the two entities, written
+  out. A span like "the two companies competed for the same grants" is true of
+  the passage and useless as evidence, because nothing in it says which two.
+  Widen the span until it names one of them, or omit the relation.
 
-The quote is verified against the passage by an exact string match. A relation
-whose quote is not found is discarded, so a relation you cannot quote is worth
+Two checks run against the passage: the quote must be found by exact string
+match, and it must name one of the entities it is offered as evidence for. A
+relation failing either is discarded, so a relation you cannot quote is worth
 nothing — omit it instead. Fewer, well-quoted relations beat more, loose ones.
 
 Return only entities and relations that the passage itself asserts.`

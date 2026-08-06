@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { EntityType, RawEntity } from './validate'
-import { embeddingPass, lexicalPass, normalizeName, type EmbedFn, type ResolvedNode } from './resolve'
+import { embeddingPass, lexicalPass, type EmbedFn, type ResolvedNode } from './resolve'
 
 const e = (name: string, type: EntityType, description = '', chunkId = 'c1') => ({
   entity: { name, type, description } satisfies RawEntity,
@@ -30,36 +30,7 @@ function fakeEmbedder(byName: Record<string, number[]>) {
 
 const names = (nodes: ResolvedNode[]) => nodes.map((n) => n.name).sort()
 
-describe('normalizeName', () => {
-  it('lowercases and collapses whitespace', () => {
-    expect(normalizeName('  Sarah   CHEN ')).toBe('sarah chen')
-  })
-
-  it('strips honorifics with or without the period', () => {
-    expect(normalizeName('Dr. Sarah Chen')).toBe('sarah chen')
-    expect(normalizeName('Dr Sarah Chen')).toBe('sarah chen')
-    expect(normalizeName('Prof. Sarah Chen')).toBe('sarah chen')
-    expect(normalizeName('Mrs Sarah Chen')).toBe('sarah chen')
-  })
-
-  it('strips stacked honorifics', () => {
-    expect(normalizeName('Prof. Dr. Sarah Chen')).toBe('sarah chen')
-  })
-
-  it('never strips an honorific down to nothing', () => {
-    expect(normalizeName('Dr.')).toBe('dr')
-  })
-
-  it('folds intra-word periods and apostrophes so acronyms match', () => {
-    expect(normalizeName('U.S.A.')).toBe('usa')
-    expect(normalizeName("O'Brien")).toBe('obrien')
-  })
-
-  it('turns separating punctuation into a space', () => {
-    expect(normalizeName('Jean-Luc Picard')).toBe('jean luc picard')
-    expect(normalizeName('Helix Labs, Inc')).toBe('helix labs inc')
-  })
-})
+// `normalizeName` is exercised in validate.test.ts, where the function lives.
 
 describe('lexicalPass', () => {
   it('merges case and honorific variants', () => {

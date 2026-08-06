@@ -10,12 +10,12 @@ Deployed at `labs.abdash.net/graphread`.
 
 ### 1. The quote gate — `src/lib/validate.ts`
 
-Every relation the model returns must carry a `quote`. Before that relation can become an edge,
-the quote is checked against the chunk it came from. **If it is not there, the relation is
-dropped.** Never repaired, never softened, never shown. This is what makes provenance a guarantee
-rather than a claim.
+Every relation the model returns must carry a `quote`, and that quote has to pass **two**
+independent tests before the relation can become an edge. Failing either one drops it. Never
+repaired, never softened, never shown. This is what makes provenance a guarantee rather than a
+claim.
 
-The gate has exactly one tolerance and it is deliberate:
+**Test one: is the quote real?** It is checked verbatim against the chunk it came from.
 
 - **Whitespace is normalised on both sides.** PDF extraction sprays line breaks and double spaces
   through sentences, and no model reproduces those faithfully. Rejecting on whitespace would drop
@@ -29,6 +29,18 @@ The gate has exactly one tolerance and it is deliberate:
   chose not to copy.
 - **A quote under three words is dropped as unsupportive.** A bare verb matches half the document
   and proves nothing.
+
+**Test two: is the quote about this relation?** The first test alone has a hole big enough to walk
+through, and it is the more dangerous of the two because what comes out the other side looks
+*more* trustworthy, not less. A model can copy a genuine sentence and staple it to a claim the
+sentence never made — cite `"Dr. Sarah Chen founded Helix Labs"` in support of `Marcus Webb
+founded Rotterdam` and every character checks out. So the quote must also **name at least one of
+the relation's two endpoints**, whole-word, with honorifics and punctuation folded.
+
+One endpoint, not both, and that is calibration rather than laziness: entity names vary between
+passages, which is the entire reason the resolver exists. Demanding both would throw away
+`"Chen founded Helix Labs"` whenever the model named the entity `Dr. Sarah Chen`. Demanding one
+still rules out a quote that is about something else entirely.
 
 The gate runs inside `assemble()`, not upstream of it, so there is no code path that produces an
 edge from an unverified relation. The drop count is surfaced in the UI whether or not it is
@@ -65,9 +77,10 @@ silently.
 
 ```
 src/lib/
-  validate.ts     the quote gate + the extraction contract types
-  resolve.ts      normalizeName, lexicalPass, embeddingPass, mergeNodes
+  validate.ts     the quote gate, normalizeName, the extraction contract types
+  resolve.ts      lexicalPass, embeddingPass, mergeNodes
   embed.ts        the raglab-embed client (the only network call outside extract.ts)
+  errors.ts       unwraps Edge Function errors; say() for every catch site
   graph.ts        assemble() — endpoint resolution, edge collapsing, provenance
   corrections.ts  applyCorrections() — merge and split, order-independent and idempotent
   extract.ts      the pipeline: file → pages → chunks → graphread-extract → graph
@@ -76,6 +89,31 @@ src/lib/
 src/components/   GraphView, NodePanel, EdgePanel, Filters
 src/demo/         the committed demo graph and the source it was built from
 ```
+
+`normalizeName` lives in `validate.ts` rather than `resolve.ts` because the gate and the resolver
+have to agree on what counts as the same name, and only one module can own that rule. The gate is
+the lower layer, so it owns it; `resolve.ts` re-exports it for callers who expect it there.
+
+## When the run goes wrong
+
+None of this had ever met a real model, so the failure paths got as much attention as the happy
+one. `src/lib/extract.test.ts` drives all of it against a mocked function.
+
+- **A chunk fails.** The other twenty-nine still build a graph. `stats.chunks` keeps counting the
+  document, not the part of it that worked, and the UI says "this graph covers 29 of 30 passages".
+  A silently partial graph is a dishonest one.
+- **The allowance runs out.** On the first chunk it throws before spending anything else — which
+  is why chunk 0 goes alone. Mid-run the workers stop rather than collecting thirty more refusals.
+  This only works because `errors.ts` unwraps the response body: supabase-js reports every non-2xx
+  as the same opaque `"Edge Function returned a non-2xx status code"`, so a 429 is invisible until
+  you read `error.context`.
+- **The user stops it.** An `AbortController` ends the run and keeps what was read.
+- **Nothing comes back at all.** The graph goes empty and says so. It never falls back to showing
+  the demo graph under the user's document name.
+- **A chunk yields no entities, or an entity is in no relation.** Both are ordinary. Orphan nodes
+  stay in the graph — the document named them, and that is information.
+- **A permalink no longer resolves.** It says so, rather than quietly showing the demo as though
+  it were the graph the link asked for.
 
 ## The demo graph
 
@@ -91,6 +129,11 @@ relation. Regenerate with `UPDATE_DEMO=1 npx vitest run apps/graphread/src/demo`
 for a public-domain text; a synthetic one was used instead so that every quote is verifiable
 byte-for-byte with no risk of a misremembered citation, and so the type-gate pair (Helix Labs the
 company, Helix the sequencer) is actually present to look at. Ten nodes, 21 edges, 7.9 KB.
+
+The demo was also the first thing the anchored gate caught. One relation —
+`Orbit Biosciences —competed with→ Helix Labs` — was quoted as *"For four years the two companies
+competed for the same grants"*, which is verbatim in the passage and names neither company. The
+sentence was rewritten to name them. A demo that cannot pass its own gate is not a demo.
 
 ## Cost
 
@@ -108,10 +151,31 @@ allowance, charged once on the first chunk. `graphread:chunks` (80 anon, 400 lin
 `0005_graphread.sql`) is charged on **every** call — so a client that misreports its chunk index
 to dodge the document charge still hits a hard ceiling. The page cap is 60.
 
+## Permalinks
+
+A saved graph is one row in `graphread.graphs`: nodes, edges, stats, the chunk-to-page map and the
+correction list together, so opening a link is a single fetch.
+
+There is **no public select policy on the table**, deliberately. `for select using (true)` would
+open the permalink and also grant the whole table, because RLS cannot see that the client filtered
+by slug — anyone could list every document every user has ever graphed, with owner ids. Reads go
+through `graphread.graph_by_slug(text)`, a `security definer` accessor that puts the filter inside
+the security boundary and never returns `owner_id`.
+
+The one thing it says about ownership is `is_owner`, and it only ever tells you about yourself.
+The client needs it because writes still go to the table under the owner policy: without it the
+app would show merge and split controls to a stranger and then swallow every save as a zero-row
+update that reports no error. A viewer of someone else's graph is told their corrections stay on
+their device.
+
+`revoke all … from public` precedes the grant, because `create function` grants EXECUTE to PUBLIC
+by default and an accessor that is the sole gate on a table should name its callers.
+
 ## Status
 
-Tests: **97 passing** across `validate`, `resolve`, `graph`, `corrections`, `cost` and `demo`.
-Typecheck and lint clean. `vite build` produces a working `/graphread/` bundle with no key in it.
+Tests: **137 passing** across `validate`, `resolve`, `graph`, `corrections`, `extract`, `errors`,
+`cost` and `demo`. Typecheck and lint clean. `vite build` produces a working `/graphread/` bundle
+with no key in it.
 
 Not yet done, and why:
 
@@ -123,8 +187,13 @@ Not yet done, and why:
   `SUPABASE_ANON_KEY` against a project with 0001 and 0005 applied.
 - **The 30-edge quote audit and the 40-page duplicate-rate audit are not done.** Both require real
   extraction runs against a live model. The gate guarantees 100% of rendered edges are
-  quote-validated by construction; what the audit measures is the softer question of whether the
-  quote genuinely *supports* the relation, and that needs human reading of real output.
-- **The 60fps drag check is not done.** It needs a browser and a mid-range laptop.
+  quote-validated *and* anchored to an endpoint by construction; what the audit measures is the
+  softer remainder — whether the quote genuinely *supports* the relation — and that needs human
+  reading of real output.
+- **The 60fps drag check is not done.** It needs a browser and a mid-range laptop. What has been
+  done is the arithmetic: `assemble` builds a 400-entity graph in well under a second (asserted in
+  `graph.test.ts`), simulation nodes are reused across renders so a chunk landing does not restart
+  the layout, labels are budgeted above 120 visible nodes, and the view zooms to fit when the
+  engine settles.
 - **Component rendering is untested.** `react-force-graph-2d` needs a real canvas; the lib layer
   is pure and carries the whole test suite instead.

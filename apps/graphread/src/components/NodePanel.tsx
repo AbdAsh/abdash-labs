@@ -18,6 +18,7 @@ export interface NodePanelProps {
   chunkPages?: Map<string, number>
   onSelectNode: (id: string) => void
   onIsolate: (id: string) => void
+  onClose?: () => void
   onSplit?: (id: string, alias: string) => void
 }
 
@@ -33,6 +34,7 @@ export function NodePanel({
   chunkPages,
   onSelectNode,
   onIsolate,
+  onClose,
   onSplit,
 }: NodePanelProps) {
   const byId = useMemo(() => new Map(graph.nodes.map((n) => [n.id, n])), [graph.nodes])
@@ -63,14 +65,34 @@ export function NodePanel({
         <div>
           <h2>{node.name}</h2>
           <p className="panel-sub">
-            {node.type} · mentioned {node.mentions}{' '}
-            {node.mentions === 1 ? 'time' : 'times'} across {node.chunkIds.length}{' '}
-            {node.chunkIds.length === 1 ? 'passage' : 'passages'}
+            {node.type} · mentioned {node.mentions} {node.mentions === 1 ? 'time' : 'times'} in{' '}
+            {node.chunkIds.length === 0 ? (
+              'no recorded passage'
+            ) : (
+              <>
+                {node.chunkIds.length === 1 ? 'passage ' : 'passages '}
+                {node.chunkIds.map(where).join(', ')}
+              </>
+            )}
           </p>
         </div>
+        {onClose && (
+          <button type="button" className="panel-close" aria-label="Close panel" onClick={onClose}>
+            ×
+          </button>
+        )}
       </header>
 
-      {node.description && <p className="panel-desc">{node.description}</p>}
+      {node.description && (
+        <p className="panel-desc">
+          {node.description}
+          {/* Descriptions are the model's own words about the passage, not a
+              quote from it, and they sit next to quotes that were verified.
+              Saying which is which is the difference between a citation and a
+              claim wearing a citation's clothes. */}
+          <span className="panel-unverified"> — the model's summary, not a quotation</span>
+        </p>
+      )}
 
       {node.aliases.length > 1 && (
         <section className="panel-section">
@@ -100,7 +122,12 @@ export function NodePanel({
 
       <section className="panel-section">
         <h3>Relations</h3>
-        {grouped.length === 0 && <p className="panel-hint">No relations survived the quote gate.</p>}
+        {grouped.length === 0 && (
+          <p className="panel-hint">
+            Nothing connects this entity. Either the document never related it to another entity,
+            or the relations that did could not be quoted and were dropped.
+          </p>
+        )}
         {grouped.map(([relation, items]) => (
           <div key={relation} className="relation-group">
             <h4>{relation}</h4>

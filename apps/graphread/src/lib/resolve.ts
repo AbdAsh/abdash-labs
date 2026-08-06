@@ -14,7 +14,11 @@
  * 1.0. Similarity is never allowed to overrule a type disagreement.
  */
 
-import { ENTITY_TYPES, type EntityType, type RawEntity } from './validate'
+import { ENTITY_TYPES, normalizeName, type EntityType, type RawEntity } from './validate'
+
+// Re-exported because the resolver is where callers expect name normalisation
+// to live, even though the gate owns the rule.
+export { normalizeName }
 
 export interface ResolvedNode {
   id: string
@@ -38,35 +42,6 @@ export const DEFAULT_SIMILARITY_THRESHOLD = 0.86
 
 /** raglab-embed caps a request at 200 texts. */
 const EMBED_BATCH = 200
-
-const HONORIFIC = /^(dr|mr|mrs|ms|miss|prof|professor|sir|dame|rev|lord|lady)\s+/
-
-/**
- * Lowercases, folds intra-word periods and apostrophes so `U.S.A.` matches
- * `USA` and `O'Brien` matches `OBrien`, turns separating punctuation into
- * spaces so `Jean-Luc` matches `Jean Luc`, collapses whitespace, and strips
- * leading honorifics.
- *
- * Honorific stripping is a person-shaped rule applied without knowing the
- * type, so an artifact literally named "Dr Pepper" normalises to "pepper".
- * That is tolerable precisely because the type gate keeps it from ever
- * touching a person node.
- */
-export function normalizeName(n: string): string {
-  let s = String(n ?? '')
-    .toLowerCase()
-    .replace(/[.'’`]/g, '')
-    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-
-  for (;;) {
-    const stripped = s.replace(HONORIFIC, '')
-    if (stripped === s || stripped.length === 0) break
-    s = stripped
-  }
-  return s
-}
 
 /** Stable across runs, so a permalink's node ids survive re-extraction. */
 function nodeId(type: EntityType, normalized: string): string {

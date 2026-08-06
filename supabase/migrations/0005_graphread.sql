@@ -16,6 +16,10 @@ create table graphread.graphs (
   nodes       jsonb not null,
   edges       jsonb not null,
   corrections jsonb not null default '[]'::jsonb,
+  -- chunk id -> page number. Evidence cites a chunk; without this map a shared
+  -- permalink can only tell a stranger the quote came from "c7", which cites
+  -- nothing they can look up.
+  chunk_pages jsonb not null default '{}'::jsonb,
   stats       jsonb,
   created_at  timestamptz not null default now()
 );
@@ -39,20 +43,39 @@ create policy graphs_own on graphread.graphs for all to authenticated
 -- Access by slug goes through a SECURITY DEFINER accessor instead, putting the
 -- filter inside the security boundary. owner_id is never returned: a permalink
 -- reveals the graph, not who made it.
+--
+-- `is_owner` is the one thing said about ownership, and it only ever tells you
+-- about yourself. The client needs it because writes go to the table under the
+-- owner policy: without it the app would offer merge and split controls to a
+-- stranger and then swallow every save as a zero-row update.
+
+-- Dropped first because `create or replace` cannot change a return type, and
+-- this signature has grown since it was first written.
+drop function if exists graphread.graph_by_slug(text);
+
 create or replace function graphread.graph_by_slug(p_slug text)
 returns table (
   slug text, doc_name text, nodes jsonb, edges jsonb,
-  corrections jsonb, stats jsonb, created_at timestamptz
+  corrections jsonb, chunk_pages jsonb, stats jsonb,
+  created_at timestamptz, is_owner boolean
 )
 language sql stable security definer
 set search_path = graphread, public
 as $$
-  select g.slug, g.doc_name, g.nodes, g.edges, g.corrections, g.stats, g.created_at
+  select g.slug, g.doc_name, g.nodes, g.edges, g.corrections, g.chunk_pages,
+         g.stats, g.created_at, g.owner_id = auth.uid()
   from graphread.graphs g
   where g.slug = p_slug;
 $$;
 
 grant select, insert, update, delete on graphread.graphs to authenticated;
+
+-- CREATE FUNCTION grants EXECUTE to PUBLIC by default, which is backwards for a
+-- SECURITY DEFINER function: the marker exists precisely because the function
+-- runs with more privilege than its caller, so the caller list should be stated
+-- rather than inherited. This accessor is the only way into a table with no
+-- select policy, so it says who may call it.
+revoke all on function graphread.graph_by_slug(text) from public;
 grant execute on function graphread.graph_by_slug(text) to anon, authenticated;
 
 -- A second meter for the extraction Edge Function. `extractions` (seeded in

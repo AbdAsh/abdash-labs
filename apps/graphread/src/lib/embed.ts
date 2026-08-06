@@ -8,6 +8,7 @@
  */
 
 import { supabase } from '@labs/platform'
+import { functionError } from './errors'
 import type { EmbedFn } from './resolve'
 
 /** Must match the dimension the rest of the platform stores: halfvec(1536). */
@@ -35,7 +36,9 @@ export const embedTexts: EmbedFn = async (texts) => {
     'raglab-embed',
     { body: { texts, model: EMBED_MODEL, runId: newEmbedRunId() } },
   )
-  if (error) throw error
+  // Whatever this is, `embeddingPass` catches it and falls back to the lexical
+  // graph — but the message still reaches the console, so make it a real one.
+  if (error) throw await functionError(error, 'raglab-embed could not be reached.')
 
   const vectors = data?.vectors
   if (!Array.isArray(vectors) || vectors.length !== texts.length) {

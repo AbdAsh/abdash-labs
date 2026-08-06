@@ -28,10 +28,6 @@ export const demoSource = source as DemoSource
 
 export const DEMO_DOC_NAME = demoSource.docName
 
-export const demoChunkTexts: Map<string, string> = new Map(
-  demoSource.chunks.map((c) => [c.id, c.content]),
-)
-
 export const demoChunkPages: Map<string, number> = new Map(
   demoSource.chunks.map((c) => [c.id, c.page]),
 )
