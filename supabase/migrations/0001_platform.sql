@@ -117,8 +117,22 @@ begin
   return true;
 end $$;
 
+-- CREATE FUNCTION grants EXECUTE to PUBLIC by default, and PUBLIC includes every
+-- role Supabase ships — `anon` among them. For a SECURITY DEFINER function that
+-- default is backwards: the whole point of the marker is that the function runs
+-- with more privilege than its caller, so the caller list must be stated rather
+-- than inherited. Revoke first, then grant deliberately.
+--
+-- `handle_new_user` gets no grant at all. It is a trigger function and the
+-- trigger fires it as the table owner; nothing should ever call it directly.
+revoke all on function platform.handle_new_user()                    from public;
+revoke all on function platform.quota_for(text, text)                from public;
+revoke all on function platform.consume_quota(text, text, int)       from public;
+revoke all on function platform.current_tier()                       from public;
+
 grant execute on function platform.quota_for(text, text)            to authenticated;
 grant execute on function platform.consume_quota(text, text, int)   to authenticated;
+grant execute on function platform.current_tier()                   to authenticated;
 
 insert into platform.quota_limits (app, tier, key, value) values
   ('recto',     'anon',   'notebooks',   1), ('recto',     'linked', 'notebooks',    3),
