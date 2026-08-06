@@ -360,6 +360,42 @@ button:focus-visible {
   font-size: var(--step--1);
 }
 
+/* A failure the reader has to be able to dismiss, shown beside whatever it was
+   that failed rather than in one shared slot on the other page of the spread. */
+.notice {
+  display: flex;
+  align-items: start;
+  gap: 0.5rem;
+  font-size: var(--step--1);
+  color: var(--danger);
+  border-inline-start: 2px solid var(--danger);
+  padding-block: 0.4rem;
+  padding-inline-start: 0.6rem;
+  text-wrap: pretty;
+}
+
+.notice span {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.notice__dismiss {
+  flex: none;
+  color: inherit;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.row__meta--warn {
+  color: var(--danger);
+}
+
+.row[data-status='indexing'] .row__title {
+  text-decoration: line-through;
+  text-decoration-color: var(--rule-strong);
+  color: var(--ink-soft);
+}
+
 /* ─── Recto: conversation ──────────────────────────────────────────────── */
 
 .recto {
@@ -471,9 +507,14 @@ button:focus-visible {
   text-wrap: pretty;
 }
 
-.answer--pending .thinking {
+.answer--pending .thinking,
+.answer--lost .thinking {
   color: var(--ink-faint);
   font-style: italic;
+}
+
+.answer--lost .thinking {
+  font-size: var(--step--1);
 }
 
 .answer__cursor {
@@ -609,15 +650,18 @@ button:focus-visible {
 
 /* ─── Composer ─────────────────────────────────────────────────────────── */
 
+.composer-dock {
+  position: sticky;
+  inset-block-end: 0;
+  background: var(--paper);
+  border-block-start: 1px solid var(--rule-strong);
+}
+
 .composer {
   display: flex;
   gap: 0.5rem;
   padding-block: 0.85rem;
   padding-inline: clamp(1rem, 4vw, 2.5rem);
-  border-block-start: 1px solid var(--rule-strong);
-  background: var(--paper);
-  position: sticky;
-  inset-block-end: 0;
 }
 
 .composer input {
@@ -638,6 +682,20 @@ button:focus-visible {
   border-color: var(--rule-strong);
   color: var(--ink-faint);
   cursor: not-allowed;
+}
+
+/* The day's remaining allowance, under the composer where it is read just
+   before it matters rather than after it runs out. */
+.allowance {
+  padding-block-end: 0.65rem;
+  padding-inline: clamp(1rem, 4vw, 2.5rem);
+  font-size: var(--step--2);
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.allowance[data-spent] {
+  color: var(--danger);
 }
 
 /* ─── Colophon ─────────────────────────────────────────────────────────── */

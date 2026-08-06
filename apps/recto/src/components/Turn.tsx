@@ -65,9 +65,19 @@ export function Turn({ turn, streaming }: { turn: TurnData; streaming: boolean }
           {renderAnswer(turn.answer, turn.citations.length, jumpTo)}
           {streaming && <span className="answer__cursor" aria-hidden="true" />}
         </p>
-      ) : (
+      ) : streaming ? (
         <p className="answer answer--pending">
           <span className="thinking">Reading the notebook…</span>
+        </p>
+      ) : (
+        // An empty answer that is not streaming is a turn whose reply never
+        // arrived — the connection dropped, or the model failed after
+        // retrieval. Reusing the pending state here left reloaded transcripts
+        // saying "Reading the notebook…" forever, for a read that ended days ago.
+        <p className="answer answer--lost">
+          <span className="thinking">
+            No answer came back for this question. Ask it again.
+          </span>
         </p>
       )}
       <Citations

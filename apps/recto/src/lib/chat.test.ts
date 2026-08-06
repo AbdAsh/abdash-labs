@@ -69,10 +69,27 @@ describe('consumeStream — the \\f protocol', () => {
     expect(c.tokens.join('')).toBe('Hello')
   })
 
-  it('emits no tokens when the stream ends before the form feed', async () => {
+  // A stream that dies before the form feed used to resolve quietly, which left
+  // the turn on screen with no answer, no error and no way to tell it from a
+  // model still thinking. Silence is the one thing this cannot do.
+  it('raises when the stream ends before the form feed', async () => {
     const c = collect(['[{"n":1'])
-    await c.run()
+    await expect(c.run()).rejects.toThrow(/closed before the answer started/i)
     expect(c.citations).toEqual([])
+    expect(c.tokens).toEqual([])
+  })
+
+  it('raises when the stream is empty from the first read', async () => {
+    const c = collect([])
+    await expect(c.run()).rejects.toThrow(/closed before the answer started/i)
+  })
+
+  // Citations arriving with no answer behind them is a real outcome — the model
+  // failed after retrieval — and it must resolve, so the turn can say so.
+  it('resolves when citations arrive but no answer does', async () => {
+    const c = collect(['[]\f'])
+    await c.run()
+    expect(c.citations).toEqual([[]])
     expect(c.tokens).toEqual([])
   })
 

@@ -48,9 +48,19 @@ describe('listNotebooks', () => {
     ])
   })
 
-  it('throws the PostgREST error rather than returning an empty list', async () => {
-    from.mockReturnValue(builder({ data: null, error: new Error('PGRST106') }))
-    await expect(listNotebooks()).rejects.toThrow('PGRST106')
+  // PostgREST returns a plain `{ message, details, hint, code }` object, never
+  // an Error. Mocking it as `new Error(...)` hid the fact that `throw error`
+  // reached the interface as the literal string "[object Object]".
+  it('turns the raw PostgREST failure into a readable Error', async () => {
+    from.mockReturnValue(
+      builder({
+        data: null,
+        error: { message: 'schema must be one of the following: public', details: '', hint: null, code: 'PGRST106' },
+      }),
+    )
+    await expect(listNotebooks()).rejects.toBeInstanceOf(Error)
+    await expect(listNotebooks()).rejects.toThrow(/schema must be one of the following/)
+    await expect(listNotebooks()).rejects.not.toThrow(/\[object Object\]/)
   })
 })
 
@@ -90,13 +100,19 @@ describe('createNotebook', () => {
 })
 
 describe('renameNotebook / deleteNotebook', () => {
-  it('surfaces a rename failure', async () => {
-    from.mockReturnValue(builder({ error: new Error('nope') }))
-    await expect(renameNotebook('n1', 't')).rejects.toThrow('nope')
+  it('surfaces a rename failure as a sentence, not as [object Object]', async () => {
+    from.mockReturnValue(builder({ error: { message: 'new row violates row-level security' } }))
+    await expect(renameNotebook('n1', 't')).rejects.toThrow(/row-level security/)
+    await expect(renameNotebook('n1', 't')).rejects.not.toThrow(/\[object Object\]/)
   })
 
   it('resolves on a successful delete', async () => {
     from.mockReturnValue(builder({ error: null }))
     await expect(deleteNotebook('n1')).resolves.toBeUndefined()
+  })
+
+  it('surfaces a failed delete', async () => {
+    from.mockReturnValue(builder({ error: { message: 'deadlock detected' } }))
+    await expect(deleteNotebook('n1')).rejects.toThrow(/deadlock detected/)
   })
 })
