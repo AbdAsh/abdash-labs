@@ -1,46 +1,67 @@
+/* Critiq wears the house theme from @labs/ui. The names below are the ones the
+   rest of this file already spoke, now pointing at the shared system rather
+   than at their own hexes — so the whole app re-skins from this block and the
+   600 lines under it stay about layout, which is what they should have been
+   about all along.
+   `--accent` is deliberately absent: it is inherited from the theme, where
+   AppShell sets Critiq's amber. Redefining it here would pin the app to one
+   colour and break the tint that the starfield reads. */
 :root {
-  --bg: #0e1116;
-  --panel: #161b22;
-  --panel-quiet: #12161d;
-  --line: #262d38;
-  --text: #e6edf3;
-  --muted: #8b95a5;
-  --accent: #6ea8fe;
-  --good: #3fb950;
-  --fair: #d29922;
-  --poor: #f85149;
-  --radius: 10px;
+  /* Amber, matching ACCENTS.critiq. Duplicated as a literal so the first paint
+     is already the right colour — AppShell sets it in an effect, one frame
+     later, and a flash of teal on every load is worse than the duplication. */
+  --accent-r: 240;
+  --accent-g: 169;
+  --accent-b: 59;
+
+  --panel: rgba(13, 27, 42, 0.28);
+  --panel-quiet: rgba(255, 255, 255, 0.03);
+  /* Recessed surfaces: inputs, code, evidence. Darkening rather than lightening
+     keeps the starfield readable through the panel above it. */
+  --sunk: rgba(0, 0, 0, 0.22);
+  --sunk-deep: rgba(0, 0, 0, 0.38);
+  --line: rgba(255, 255, 255, 0.08);
+  --text: var(--white);
+  --muted: var(--silver);
+  --fair: var(--warn);
+  --poor: var(--bad);
+  --radius: var(--radius-card);
 }
-
-* { box-sizing: border-box; }
-
-html, body { margin: 0; padding: 0; }
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  -webkit-text-size-adjust: 100%;
-}
-
-a { color: var(--accent); }
 
 .app {
   max-width: 56rem;
   margin: 0 auto;
-  padding: 2rem 1rem 5rem;
+  padding: 2.5rem 1rem 5rem;
 }
 
 .stack { display: flex; flex-direction: column; gap: 1.25rem; }
 
-.panel {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 1.5rem;
+/* Staggered rather than simultaneous. A report is a document; letting its
+   sections arrive in reading order costs 200ms and makes the page feel
+   composed instead of dumped. */
+.stack > * {
+  animation: labs-rise var(--duration-slow) var(--ease-out-quart) both;
+  animation-delay: calc(var(--i, 0) * 70ms);
 }
 
-.panel--quiet { background: var(--panel-quiet); }
+.panel {
+  background: var(--panel);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-panel);
+  padding: 1.5rem;
+  box-shadow:
+    0 0 40px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.04),
+    inset 0 0 60px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.02);
+  transition: border-color var(--color-shift), box-shadow var(--color-shift);
+}
+
+.panel--quiet {
+  background: var(--panel-quiet);
+  border-color: var(--line);
+  box-shadow: none;
+}
 
 .title { font-size: clamp(1.4rem, 4vw, 1.9rem); line-height: 1.25; margin: 0 0 .5rem; }
 .subtitle { font-size: 1.05rem; margin: 1.5rem 0 .75rem; }
@@ -62,7 +83,7 @@ a { color: var(--accent); }
   padding: .7rem .85rem;
   font: inherit;
   color: var(--text);
-  background: #0b0e13;
+  background: var(--sunk);
   border: 1px solid var(--line);
   border-radius: var(--radius);
 }
@@ -73,7 +94,7 @@ a { color: var(--accent); }
   padding: .7rem 1.1rem;
   font: inherit;
   font-weight: 600;
-  color: #06131f;
+  color: var(--dark);
   background: var(--accent);
   border: 1px solid transparent;
   border-radius: var(--radius);
@@ -108,7 +129,7 @@ a { color: var(--accent); }
   padding: .75rem .9rem;
   font-size: .875rem;
   color: var(--muted);
-  background: #0b0e13;
+  background: var(--sunk);
   border: 1px solid var(--line);
   border-radius: var(--radius);
 }
@@ -123,7 +144,7 @@ a { color: var(--accent); }
 
 .failure {
   padding: 1rem 1.1rem;
-  background: #1a0f10;
+  background: rgba(248, 81, 73, .07);
   border: 1px solid var(--poor);
   border-radius: var(--radius);
 }
@@ -137,10 +158,10 @@ a { color: var(--accent); }
   margin: .5rem 0 0;
   padding: .6rem .7rem;
   overflow-x: auto;
-  font: .8rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: .8rem/1.5 var(--font-mono);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  background: #05070a;
+  background: var(--sunk-deep);
   border: 1px solid var(--line);
   border-radius: 6px;
 }
@@ -198,7 +219,7 @@ a { color: var(--accent); }
   flex-wrap: wrap;
   margin: 0 0 1.25rem;
   padding: 1rem 1.1rem;
-  background: #0b0e13;
+  background: var(--sunk);
   border: 1px solid var(--accent);
   border-radius: var(--radius);
 }
@@ -218,13 +239,13 @@ a { color: var(--accent); }
   padding: .6rem .8rem;
   color: var(--muted);
   text-decoration: none;
-  background: #0b0e13;
+  background: var(--sunk);
   border: 1px solid var(--line);
   border-radius: var(--radius);
 }
 
 .examples__tab:hover { border-color: var(--accent); }
-.examples__tab.is-active { border-color: var(--accent); background: #101722; }
+.examples__tab.is-active { border-color: var(--accent); background: var(--accent-glow); }
 .examples__title { font-weight: 600; color: var(--text); }
 .examples__url { font-size: .8rem; overflow-wrap: anywhere; }
 .examples__blurb { margin-bottom: 1rem; }
@@ -241,7 +262,7 @@ a { color: var(--accent); }
   padding: .7rem .9rem;
   font-size: .85rem;
   color: var(--muted);
-  background: #0b0e13;
+  background: var(--sunk);
   border: 1px solid var(--fair);
   border-radius: var(--radius);
 }
@@ -281,7 +302,7 @@ a { color: var(--accent); }
   align-items: center;
   gap: .6rem;
   padding: .5rem .7rem;
-  background: #0b0e13;
+  background: var(--sunk);
   border: 1px solid var(--line);
   border-radius: var(--radius);
 }
@@ -316,7 +337,7 @@ a { color: var(--accent); }
 }
 
 .grade--button:hover { border-color: var(--accent); }
-.grade.is-active { border-color: var(--accent); background: #101722; }
+.grade.is-active { border-color: var(--accent); background: var(--accent-glow); }
 
 .grade--good  .grade__letter { color: #04240c; background: var(--good); }
 .grade--fair  .grade__letter { color: #241a00; background: var(--fair); }
@@ -367,19 +388,30 @@ a { color: var(--accent); }
 .group { margin-bottom: 2rem; }
 .group:last-child { margin-bottom: 0; }
 
+/* Severity used to be a 3px stripe down the left edge. It was doing a job the
+   pill in the header already does, and the stripe is the single most templated
+   device in audit UIs — it reads as a default, not a decision. Severity now
+   tints the whole card: the full border and a wash of the same hue, so the
+   signal is the surface rather than an ornament stuck to its side. */
 .finding {
+  --severity: var(--silver);
   padding: 1rem;
   margin-bottom: .75rem;
-  background: #0b0e13;
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--line);
+  background:
+    linear-gradient(color-mix(in oklch, var(--severity) 5%, transparent), transparent 60%),
+    var(--sunk);
+  border: 1px solid color-mix(in oklch, var(--severity) 26%, transparent);
   border-radius: var(--radius);
+  transition: border-color var(--duration-normal) var(--ease-smooth),
+              background var(--duration-normal) var(--ease-smooth);
 }
 
-.finding--critical { border-left-color: var(--poor); }
-.finding--high     { border-left-color: #db6d28; }
-.finding--medium   { border-left-color: var(--fair); }
-.finding--low      { border-left-color: var(--muted); }
+.finding:hover { border-color: color-mix(in oklch, var(--severity) 45%, transparent); }
+
+.finding--critical { --severity: var(--poor); }
+.finding--high     { --severity: #db6d28; }
+.finding--medium   { --severity: var(--fair); }
+.finding--low      { --severity: var(--silver); }
 
 .finding__head { display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
 .finding__title { font-size: 1rem; margin: 0; flex: 1 1 14rem; }
@@ -423,10 +455,10 @@ a { color: var(--accent); }
   /* Evidence is real markup and can be long; it scrolls inside its own box
      rather than pushing the page sideways. */
   overflow-x: auto;
-  font: .82rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: .82rem/1.5 var(--font-mono);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  background: #05070a;
+  background: var(--sunk-deep);
   border: 1px solid var(--line);
   border-radius: 6px;
 }
@@ -457,10 +489,10 @@ a { color: var(--accent); }
   /* Evidence is real markup and can be long; it scrolls inside its own box
      rather than pushing the page sideways. */
   overflow-x: auto;
-  font: .82rem/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: .82rem/1.6 var(--font-mono);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  background: #05070a;
+  background: var(--sunk-deep);
   border: 1px solid var(--line);
   border-radius: 6px;
 }
@@ -531,7 +563,7 @@ a { color: var(--accent); }
 .measures__row dd { margin: 0; font-size: .875rem; overflow-wrap: anywhere; }
 
 .measures__row dd.is-mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: .8rem;
 }
 
@@ -548,7 +580,7 @@ a { color: var(--accent); }
 .outline__level {
   flex: none;
   width: 1.75rem;
-  font: .72rem/1.7 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: .72rem/1.7 var(--font-mono);
   color: var(--accent);
 }
 

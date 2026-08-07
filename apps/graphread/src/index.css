@@ -1,23 +1,24 @@
+/* On the house theme from @labs/ui. `--accent` is inherited so AppShell can set
+   GraphRead's rose and the ambient field can pick it up. */
 :root {
-  --bg: #0d1117;
-  --bg-raised: #161b22;
-  --border: #262d38;
-  --text: #e9edf3;
-  --muted: #9aa3b0;
-  --accent: #6fb1f0;
-  --danger: #f07f9e;
-  color-scheme: dark;
-}
+  --accent-r: 228;
+  --accent-g: 86;
+  --accent-b: 154;
 
-* {
-  box-sizing: border-box;
+  --panel: rgba(13, 27, 42, 0.28);
+  --bg-raised: rgba(255, 255, 255, 0.04);
+  --sunk: rgba(0, 0, 0, 0.22);
+  --border: rgba(255, 255, 255, 0.08);
+  --text: var(--white);
+  --muted: var(--silver);
+  --danger: var(--bad);
 }
 
 body {
   margin: 0;
-  background: var(--bg);
+  background: var(--darker);
   color: var(--text);
-  font: 15px/1.55 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font: 15px/1.55 var(--font-body);
 }
 
 button {
@@ -25,13 +26,23 @@ button {
   color: inherit;
   background: var(--bg-raised);
   border: 1px solid var(--border);
-  border-radius: 7px;
+  border-radius: var(--radius-control);
   padding: 0.4rem 0.75rem;
   cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease-smooth),
+    border-color var(--duration-fast) var(--ease-smooth),
+    transform var(--duration-fast) var(--ease-out-quart);
 }
 
 button:hover {
-  border-color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--accent-glow);
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0);
 }
 
 .link-button {
@@ -121,7 +132,7 @@ button:disabled:hover {
 .error {
   margin: 0;
   padding: 0.6rem 1.1rem;
-  background: rgba(240, 127, 158, 0.12);
+  background: rgba(248, 81, 73, 0.12);
   color: var(--danger);
 }
 
@@ -132,7 +143,7 @@ button:disabled:hover {
   align-items: baseline;
   margin: 0;
   padding: 0.6rem 1.1rem;
-  background: rgba(111, 177, 240, 0.1);
+  background: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.1);
   border-bottom: 1px solid var(--border);
   font-size: 0.88rem;
 }
@@ -385,7 +396,7 @@ button:disabled:hover {
 .relation-row {
   margin-bottom: 0.55rem;
   padding-left: 0.6rem;
-  border-left: 2px solid var(--border);
+  border-left: 1px solid var(--border);
 }
 
 .entity-link {
@@ -427,7 +438,7 @@ button:disabled:hover {
 .quotes li {
   margin: 0.25rem 0;
   font-size: 0.85rem;
-  color: #cbd5e1;
+  color: var(--white);
 }
 
 .quotes q {

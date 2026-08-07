@@ -1,17 +1,18 @@
 /**
  * The one thing every app in this origin has in common.
  *
- * Six apps with six visual identities — a book spread, a dark offline console, a
- * report, a graph — and a reviewer who arrived from a link and may not know whose
- * work they are looking at. This is the attribution, and it is deliberately the
- * only shared chrome: anything more would flatten identities the apps earned.
+ * Six apps with six accents and a reviewer who arrived from a deep link and may
+ * not know whose work they are looking at. This is the attribution, and it is
+ * deliberately the only shared chrome — anything more would flatten identities
+ * the apps earned.
+ *
+ * Reads the theme's tokens but does not require them: every custom property
+ * below carries a literal fallback, so the byline is still legible if it is
+ * ever mounted somewhere theme.css was not loaded.
  *
  * Zero dependencies beyond React, and no import from `@labs/platform`. PlaneMode
  * ships this too, and its whole claim is that no server is involved; pulling a
  * Supabase client into its bundle through a footer would be a quiet lie.
- *
- * Styles are scoped by a single class prefix and injected once, so an app can
- * mount it without adding a stylesheet import to its build.
  */
 import { useId } from 'react'
 
@@ -29,17 +30,19 @@ const CSS = `
   gap: .625rem;
   align-items: center;
   margin: 0;
-  padding: .4rem .7rem;
-  font: 400 .75rem/1.4 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  padding: .4rem .8rem;
+  font: 400 .75rem/1.4 var(--font-body, ui-sans-serif, system-ui, sans-serif);
   letter-spacing: .01em;
-  color: var(--labs-byline-fg, #6b7280);
-  background: var(--labs-byline-bg, rgba(255, 255, 255, .82));
-  border-start-start-radius: .5rem;
-  border-block-start: 1px solid var(--labs-byline-line, rgba(0, 0, 0, .08));
-  border-inline-start: 1px solid var(--labs-byline-line, rgba(0, 0, 0, .08));
-  backdrop-filter: blur(8px);
-  opacity: .72;
-  transition: opacity .18s ease;
+  color: var(--silver, #a0a4a8);
+  background: rgba(13, 27, 42, .55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-start-start-radius: .75rem;
+  border-block-start: 1px solid var(--accent-border, rgba(255, 255, 255, .1));
+  border-inline-start: 1px solid var(--accent-border, rgba(255, 255, 255, .1));
+  opacity: .62;
+  transform: translateY(0);
+  transition: opacity .24s cubic-bezier(.4,0,.2,1), border-color .8s ease;
 }
 .labs-byline:hover,
 .labs-byline:focus-within { opacity: 1; }
@@ -47,31 +50,25 @@ const CSS = `
 .labs-byline a {
   color: inherit;
   text-decoration: none;
-  border-block-end: 1px solid currentColor;
+  border-block-end: 1px solid transparent;
   padding-block-end: 1px;
+  transition: color .18s cubic-bezier(.4,0,.2,1), border-color .18s cubic-bezier(.4,0,.2,1);
 }
 .labs-byline a:hover,
-.labs-byline a:focus-visible { color: var(--labs-byline-accent, #111827); }
-.labs-byline__name { font-weight: 550; }
-.labs-byline__sep { opacity: .45; }
+.labs-byline a:focus-visible {
+  color: #fff;
+  border-block-end-color: var(--accent, currentColor);
+}
+.labs-byline__name { font-weight: 550; color: var(--white, #e8edf2); }
+.labs-byline__sep { opacity: .4; }
 
 /* Out of the way where a fixed pill costs the most room. */
 @media (max-width: 34rem) {
-  .labs-byline { font-size: .6875rem; padding: .3rem .5rem; gap: .45rem; }
+  .labs-byline { font-size: .6875rem; padding: .3rem .55rem; gap: .45rem; }
   .labs-byline__hide-sm { display: none; }
 }
 @media print { .labs-byline { display: none; } }
 @media (prefers-reduced-motion: reduce) { .labs-byline { transition: none; } }
-
-@media (prefers-color-scheme: dark) {
-  .labs-byline {
-    color: var(--labs-byline-fg, #9ca3af);
-    background: var(--labs-byline-bg, rgba(17, 18, 22, .82));
-    border-color: var(--labs-byline-line, rgba(255, 255, 255, .1));
-  }
-  .labs-byline a:hover,
-  .labs-byline a:focus-visible { color: var(--labs-byline-accent, #f3f4f6); }
-}
 `
 
 export interface BylineProps {

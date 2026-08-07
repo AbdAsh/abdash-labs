@@ -1,48 +1,30 @@
 /* AskSheet — an instrument, not a chat app. Dense, monospace where it counts,
    and the privacy contract is furniture rather than a footnote. */
 
+/* On the house theme from @labs/ui. The light palette and its dark counterpart
+   are both gone: abdash.net has exactly one appearance, and an app that follows
+   the OS preference disagrees with the portfolio half the time.
+   `--accent` is absent on purpose — inherited from the theme, where AppShell
+   sets AskSheet's teal, which is also the portfolio's own house colour. */
 :root {
-  --bg: #fbfbf9;
-  --panel: #ffffff;
-  --panel-2: #f4f4f1;
-  --ink: #16181d;
-  --ink-soft: #5b6068;
-  --ink-faint: #8b9098;
-  --line: #e0e0da;
-  --line-strong: #c9c9c1;
-  --accent: #1f6f5c;
-  --accent-soft: #e6f1ed;
-  --warn: #8a5a12;
-  --warn-soft: #fbf1de;
-  --danger: #9c2b2b;
-  --danger-soft: #fbeceb;
-  --radius: 10px;
-  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
-  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
-  color-scheme: light dark;
-}
+  --accent-r: 46;
+  --accent-g: 196;
+  --accent-b: 182;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #101215;
-    --panel: #171a1f;
-    --panel-2: #1e222a;
-    --ink: #e8eaed;
-    --ink-soft: #a3a9b3;
-    --ink-faint: #757c87;
-    --line: #282d35;
-    --line-strong: #3a414c;
-    --accent: #5ec9a6;
-    --accent-soft: #11302a;
-    --warn: #e0b061;
-    --warn-soft: #2e2517;
-    --danger: #e8827c;
-    --danger-soft: #2e1a19;
-  }
-}
-
-* {
-  box-sizing: border-box;
+  --panel: rgba(13, 27, 42, 0.28);
+  --panel-2: rgba(255, 255, 255, 0.03);
+  --sunk: rgba(0, 0, 0, 0.22);
+  --ink: var(--white);
+  --ink-soft: var(--silver);
+  --ink-faint: rgba(160, 164, 168, 0.62);
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.16);
+  --warn-soft: rgba(210, 153, 34, 0.1);
+  --danger: var(--bad);
+  --danger-soft: rgba(248, 81, 73, 0.1);
+  --radius: var(--radius-card);
+  --mono: var(--font-mono);
+  --sans: var(--font-body);
 }
 
 html,
@@ -52,7 +34,7 @@ body {
 }
 
 body {
-  background: var(--bg);
+  background: var(--darker);
   color: var(--ink);
   font: 15px/1.55 var(--sans);
   -webkit-font-smoothing: antialiased;
@@ -148,10 +130,9 @@ a {
 
 .contract {
   margin: 1.1rem 0 0;
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--accent);
+  border: 1px solid var(--accent-border);
   border-radius: var(--radius);
-  background: var(--panel);
+  background: linear-gradient(var(--accent-wash), transparent 70%), var(--panel);
   padding: 0.85rem 1rem;
 }
 
@@ -239,7 +220,8 @@ a {
 /* ---------- the finished example ---------- */
 
 .example {
-  border-left: 3px solid var(--accent);
+  border: 1px solid var(--accent-border);
+  background: var(--accent-wash);
 }
 
 .example-lede {
@@ -472,11 +454,11 @@ button {
 
 @media (prefers-color-scheme: dark) {
   .btn-primary {
-    color: #0d1a17;
+    color: rgba(0, 0, 0, 0.22);
   }
   .btn-primary:hover:not(:disabled),
   .btn-primary:focus-visible {
-    color: #0d1a17;
+    color: rgba(0, 0, 0, 0.22);
   }
 }
 
@@ -694,7 +676,8 @@ button {
 /* The label that keeps the recording and the computation apart. Permanent, and
    deliberately not styled as a dismissible aside. */
 .answer.is-replay {
-  border-left: 3px solid var(--accent);
+  border: 1px solid var(--accent-border);
+  background: var(--accent-wash);
 }
 
 .provenance {

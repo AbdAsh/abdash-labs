@@ -1,74 +1,452 @@
 <!doctype html>
-<meta charset="utf-8">
-<title>abdash labs — seven AI demos by Abdulrahman Mahmutoglu</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Seven applied-AI applications sharing one account: retrieval, realtime voice, code generation, evaluation, structured extraction and on-device inference. Built by Abdulrahman Mahmutoglu.">
-<meta name="author" content="Abdulrahman Mahmutoglu">
-<link rel="canonical" href="https://labs.abdash.net/">
-<meta property="og:title" content="abdash labs — seven AI demos">
-<meta property="og:description" content="Every one opens on a finished example. No signup, nothing to prepare.">
-<meta property="og:url" content="https://labs.abdash.net/">
-<meta property="og:type" content="website">
-<style>
-  :root { color-scheme: light dark; --fg:#111827; --muted:#6b7280; --line:rgba(0,0,0,.1); --bg:#fff; --card:rgba(0,0,0,.02); }
-  @media (prefers-color-scheme: dark) {
-    :root { --fg:#e9eaee; --muted:#9ca3af; --line:rgba(255,255,255,.12); --bg:#0e0f13; --card:rgba(255,255,255,.03); }
-  }
-  * { box-sizing: border-box }
-  body { margin:0; background:var(--bg); color:var(--fg);
-    font:16px/1.65 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; }
-  main { max-width:46rem; margin:0 auto; padding:4rem 1.25rem 6rem }
-  h1 { font-size:1.5rem; letter-spacing:-.01em; margin:0 0 .35rem }
-  .lede { color:var(--muted); margin:0 0 .4rem }
-  .by { color:var(--muted); font-size:.9rem; margin:0 0 2.5rem }
-  .by a { color:inherit }
-  h2 { font-size:.75rem; text-transform:uppercase; letter-spacing:.08em;
-    color:var(--muted); font-weight:600; margin:2.5rem 0 .85rem }
-  ul { list-style:none; margin:0; padding:0; display:grid; gap:.5rem }
-  li a { display:block; padding:.85rem 1rem; border:1px solid var(--line);
-    border-radius:.55rem; background:var(--card); color:inherit; text-decoration:none }
-  li a:hover, li a:focus-visible { border-color:currentColor }
-  .name { font-weight:600 }
-  .what { color:var(--muted); font-size:.9rem; display:block; margin-top:.15rem }
-  footer { margin-top:3.5rem; padding-top:1.25rem; border-top:1px solid var(--line);
-    color:var(--muted); font-size:.85rem }
-  footer a { color:inherit }
-</style>
-<main>
-  <h1>abdash labs</h1>
-  <p class="lede">Seven AI applications sharing one account, one database and one deploy.</p>
-  <p class="by">
-    Built by <a href="https://abdash.net">Abdulrahman Mahmutoglu</a> ·
-    <a href="https://github.com/AbdAsh/abdash-labs">Source</a>
-  </p>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>abdash labs — six AI demos by Abdulrahman Mahmutoglu</title>
+    <meta
+      name="description"
+      content="Six applied-AI applications sharing one account: retrieval, spreadsheets, SEO review, evaluation, entity graphs and on-device inference. Built by Abdulrahman Mahmutoglu."
+    />
+    <meta name="author" content="Abdulrahman Mahmutoglu" />
+    <meta name="theme-color" content="#070f18" />
+    <link rel="canonical" href="https://labs.abdash.net/" />
+    <meta property="og:title" content="abdash labs — six AI demos" />
+    <meta
+      property="og:description"
+      content="Every one opens on a finished example. No signup, nothing to prepare."
+    />
+    <meta property="og:url" content="https://labs.abdash.net/" />
+    <meta property="og:type" content="website" />
 
-  <p>
-    Each one proves a different thing about applied AI engineering, and each opens on a
-    <strong>finished example</strong> — real captured output, instant, no signup and nothing
-    to prepare. The live tool is always one click further in.
-  </p>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
 
-  <h2>The seven</h2>
-  <ul>
-    <li><a href="/recto/"><span class="name">Recto</span>
-      <span class="what">Multi-document notebooks where every answer names which document it came from.</span></a></li>
-    <li><a href="/asksheet/"><span class="name">AskSheet</span>
-      <span class="what">Ask a spreadsheet in English. The data never leaves your browser — check the network tab.</span></a></li>
-    <li><a href="/critiq/"><span class="name">Critiq</span>
-      <span class="what">SEO and answer-engine review of any URL. The self-audit of abdash.net is not flattering.</span></a></li>
-    <li><a href="/raglab/"><span class="name">RAG Lab</span>
-      <span class="what">Which chunking actually wins? Benchmarks, not vibes — and the expensive model lost.</span></a></li>
-    <li><a href="/graphread/"><span class="name">GraphRead</span>
-      <span class="what">A document as an entity graph. Click any edge for the sentence that justified it.</span></a></li>
-    <li><a href="/planemode/"><span class="name">PlaneMode</span>
-      <span class="what">A language model running entirely in your browser. Turn on airplane mode and keep going.</span></a></li>
-    <li><a href="https://abdash.net"><span class="name">Concierge ↗</span>
-      <span class="what">A voice agent that has read the CV, embedded on the portfolio. Interrupt it mid-sentence.</span></a></li>
-  </ul>
+    <!--
+      Self-contained on purpose. This file is copied verbatim into dist/ by
+      scripts/build-all.mjs — no bundler touches it — so it cannot import
+      @labs/ui the way the six apps do. The tokens below are the same ones
+      theme.css defines; if the two ever disagree, theme.css is the original.
+    -->
+    <style>
+      @property --accent-r { syntax: '<number>'; inherits: true; initial-value: 46; }
+      @property --accent-g { syntax: '<number>'; inherits: true; initial-value: 196; }
+      @property --accent-b { syntax: '<number>'; inherits: true; initial-value: 182; }
 
-  <footer>
-    One anonymous account works across all of them, created on first paint and never asked for.
-    Isolation between visitors is enforced by Postgres row-level security and verified by
-    cross-user tests, not asserted. <a href="https://github.com/AbdAsh/abdash-labs">Read the source</a>.
-  </footer>
-</main>
+      :root {
+        --darker: #070f18;
+        --dark: #0d1b2a;
+        --silver: #a0a4a8;
+        --white: #e8edf2;
+        --accent-r: 46; --accent-g: 196; --accent-b: 182;
+        --accent: rgb(var(--accent-r), var(--accent-g), var(--accent-b));
+        --accent-glow: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.08);
+        --accent-soft: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.15);
+        --accent-border: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.2);
+        --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+        --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+        --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+        --color-shift: 0.8s ease;
+        color-scheme: dark;
+      }
+
+      *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+      html {
+        -webkit-font-smoothing: antialiased;
+        transition: --accent-r var(--color-shift), --accent-g var(--color-shift), --accent-b var(--color-shift);
+      }
+
+      body {
+        min-height: 100vh;
+        background: var(--darker);
+        color: var(--white);
+        font: 400 16px/1.65 var(--font-body);
+      }
+
+      #starfield { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+      main {
+        position: relative;
+        z-index: 1;
+        max-width: 60rem;
+        margin: 0 auto;
+        padding: clamp(3rem, 8vw, 6rem) 1.25rem 7rem;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 12px;
+        margin-bottom: 1.25rem;
+        border-radius: 100px;
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        background: var(--accent-glow);
+        border: 1px solid var(--accent-border);
+        transition: color var(--color-shift), background var(--color-shift), border-color var(--color-shift);
+      }
+      .eyebrow::before {
+        content: '';
+        width: 7px; height: 7px;
+        border-radius: 50%;
+        background: var(--accent);
+        animation: pulse 2s ease-in-out infinite;
+      }
+      @keyframes pulse { 0%, 100% { opacity: 0.4 } 50% { opacity: 1 } }
+
+      h1 {
+        font-size: clamp(2rem, 6vw, 3.25rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.05;
+        margin-bottom: 0.75rem;
+      }
+
+      .lede {
+        color: var(--silver);
+        font-size: clamp(1rem, 2vw, 1.125rem);
+        max-width: 54ch;
+        text-wrap: pretty;
+      }
+      .lede strong { color: var(--white); font-weight: 600; }
+
+      .by {
+        margin-top: 1.5rem;
+        font-size: 0.85rem;
+        color: var(--silver);
+      }
+      .by a {
+        color: var(--white);
+        text-decoration: none;
+        border-bottom: 1px solid var(--accent-border);
+        padding-bottom: 1px;
+        transition: border-color var(--color-shift), color 0.18s var(--ease-smooth);
+      }
+      .by a:hover { color: var(--accent); }
+
+      h2 {
+        margin: clamp(3rem, 7vw, 4.5rem) 0 1.25rem;
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--silver);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+        gap: 12px;
+      }
+
+      /* Each card owns a hue and lends it to the page on hover — the same triple
+         the app itself runs on, so the hover previews where the link goes. */
+      .card {
+        --c: rgb(var(--r), var(--g), var(--b));
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 1.15rem 1.25rem 1.35rem;
+        color: inherit;
+        text-decoration: none;
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 14px;
+        animation: rise 0.6s var(--ease-out-quart) both;
+        animation-delay: calc(var(--i) * 70ms);
+        transition:
+          background 0.3s var(--ease-smooth),
+          border-color 0.3s var(--ease-smooth),
+          transform 0.3s var(--ease-out-quart),
+          box-shadow 0.3s var(--ease-smooth);
+      }
+      @keyframes rise {
+        from { opacity: 0; transform: translateY(14px) }
+        to { opacity: 1; transform: translateY(0) }
+      }
+
+      .card:hover, .card:focus-visible {
+        background: rgba(255, 255, 255, 0.055);
+        border-color: rgba(var(--r), var(--g), var(--b), 0.4);
+        transform: translateY(-3px);
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.34), 0 0 26px rgba(var(--r), var(--g), var(--b), 0.1);
+      }
+
+      .card .dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: var(--c);
+        box-shadow: 0 0 10px rgba(var(--r), var(--g), var(--b), 0.7);
+        transition: transform 0.3s var(--ease-smooth);
+      }
+      .card:hover .dot { transform: scale(1.4) }
+
+      .card .name {
+        font-size: 1.05rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        transition: color 0.18s var(--ease-smooth);
+      }
+      .card:hover .name { color: var(--c) }
+
+      .card .what {
+        color: var(--silver);
+        font-size: 0.85rem;
+        line-height: 1.55;
+        text-wrap: pretty;
+      }
+
+      footer {
+        margin-top: 3.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.07);
+        color: var(--silver);
+        font-size: 0.85rem;
+        max-width: 62ch;
+        text-wrap: pretty;
+      }
+      footer a { color: var(--white); text-decoration: underline; text-underline-offset: 2px; }
+      footer a:hover { color: var(--accent) }
+
+      :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+      ::selection { background: var(--accent); color: var(--dark) }
+      ::-webkit-scrollbar { width: 5px }
+      ::-webkit-scrollbar-track { background: transparent }
+      ::-webkit-scrollbar-thumb { background: var(--accent-soft); border-radius: 3px }
+
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+        .card { opacity: 1; transform: none }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="starfield" aria-hidden="true"></canvas>
+
+    <main>
+      <span class="eyebrow">six apps · one account · one deploy</span>
+      <h1>abdash labs</h1>
+      <p class="lede">
+        Applied-AI work that runs, not screenshots of it. Every app opens on a
+        <strong>finished example</strong> — real captured output, instant, no
+        signup and nothing to prepare. The live tool is one click further in.
+      </p>
+      <p class="by">
+        Built by <a href="https://abdash.net">Abdulrahman Mahmutoglu</a> ·
+        <a href="https://github.com/AbdAsh/abdash-labs">Source</a>
+      </p>
+
+      <h2>The apps</h2>
+      <div class="grid">
+        <a class="card" href="/recto/" style="--r:139; --g:92; --b:246; --i:0">
+          <span class="dot" aria-hidden="true"></span>
+          <span class="name">Recto</span>
+          <span class="what">Multi-document notebooks where every answer names the document it came from.</span>
+        </a>
+        <a class="card" href="/asksheet/" style="--r:46; --g:196; --b:182; --i:1">
+          <span class="dot" aria-hidden="true"></span>
+          <span class="name">AskSheet</span>
+          <span class="what">Ask a spreadsheet in English. The data never leaves your browser — check the network tab.</span>
+        </a>
+        <a class="card" href="/critiq/" style="--r:240; --g:169; --b:59; --i:2">
+          <span class="dot" aria-hidden="true"></span>
+          <span class="name">Critiq</span>
+          <span class="what">SEO and answer-engine review of any URL. The self-audit of abdash.net is not flattering.</span>
+        </a>
+        <a class="card" href="/raglab/" style="--r:78; --g:168; --b:245; --i:3">
+          <span class="dot" aria-hidden="true"></span>
+          <span class="name">RAG Lab</span>
+          <span class="what">Which chunking actually wins? Benchmarks, not vibes — and the expensive model lost.</span>
+        </a>
+        <a class="card" href="/graphread/" style="--r:228; --g:86; --b:154; --i:4">
+          <span class="dot" aria-hidden="true"></span>
+          <span class="name">GraphRead</span>
+          <span class="what">A document as an entity graph. Click any edge for the sentence that justified it.</span>
+        </a>
+        <a class="card" href="/planemode/" style="--r:95; --g:208; --b:138; --i:5">
+          <span class="dot" aria-hidden="true"></span>
+          <span class="name">PlaneMode</span>
+          <span class="what">A language model running entirely in your browser. Turn on airplane mode and keep going.</span>
+        </a>
+      </div>
+
+      <footer>
+        One anonymous account works across all of them, created on first paint and
+        never asked for. Isolation between visitors is enforced by Postgres
+        row-level security and verified by cross-user tests, not asserted.
+        <a href="https://github.com/AbdAsh/abdash-labs">Read the source</a>. There is
+        a seventh — a voice agent that has read the CV — embedded on
+        <a href="https://abdash.net">abdash.net</a> itself.
+      </footer>
+    </main>
+
+    <script>
+      // The same ambient field as abdash.net and the six apps. Hand-inlined
+      // rather than imported because nothing bundles this page.
+      (function () {
+        var canvas = document.getElementById('starfield');
+        var ctx = canvas.getContext('2d');
+        var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var W = 0, H = 0, stars = [], shoots = [];
+        var mx = 0, my = 0, smx = 0, smy = 0, raf = 0, tick = 0;
+        var accent = [46, 196, 182];
+
+        function resize() {
+          var dpr = Math.min(devicePixelRatio || 1, 2);
+          W = innerWidth; H = innerHeight;
+          canvas.width = W * dpr; canvas.height = H * dpr;
+          canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          var target = Math.round(Math.min(170, Math.max(45, (W * H) / 9000)));
+          if (stars.length > target) stars.length = target;
+          while (stars.length < target) {
+            stars.push({
+              x: Math.random() * W, y: Math.random() * H,
+              s: Math.random() * 2.5 + 0.5, o: Math.random() * 0.6 + 0.2,
+              ts: Math.random() * 0.015 + 0.004, to: Math.random() * Math.PI * 2,
+              vx: (Math.random() - 0.5) * 0.15, vy: (Math.random() - 0.5) * 0.15
+            });
+          }
+        }
+        resize();
+        addEventListener('resize', resize);
+        mx = smx = W / 2; my = smy = H / 2;
+        addEventListener('mousemove', function (e) { mx = e.clientX; my = e.clientY; }, { passive: true });
+
+        if (!reduced) {
+          setInterval(function () {
+            if (document.hidden) return;
+            shoots.push({
+              x: Math.random() * W * 0.8, y: Math.random() * H * 0.3,
+              len: Math.random() * 100 + 40, spd: Math.random() * 12 + 6,
+              a: Math.PI / 4 + (Math.random() - 0.5) * 0.5, life: 1
+            });
+          }, 3200);
+        }
+
+        function sample() {
+          var cs = getComputedStyle(document.documentElement);
+          var r = parseFloat(cs.getPropertyValue('--accent-r'));
+          var g = parseFloat(cs.getPropertyValue('--accent-g'));
+          var b = parseFloat(cs.getPropertyValue('--accent-b'));
+          if (!isNaN(r) && !isNaN(g) && !isNaN(b)) accent = [r, g, b];
+        }
+
+        function frame(t) {
+          ctx.clearRect(0, 0, W, H);
+          if (tick++ % 12 === 0) sample();
+          var c = Math.round(accent[0]) + ',' + Math.round(accent[1]) + ',' + Math.round(accent[2]);
+
+          smx += (mx - smx) * 0.05; smy += (my - smy) * 0.05;
+
+          var vg = ctx.createRadialGradient(W * 0.15, H * 0.3, 0, W * 0.15, H * 0.3, W * 0.6);
+          vg.addColorStop(0, 'rgba(' + c + ',0.06)');
+          vg.addColorStop(0.5, 'rgba(' + c + ',0.015)');
+          vg.addColorStop(1, 'transparent');
+          ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+
+          var vg2 = ctx.createRadialGradient(W * 0.85, H * 0.75, 0, W * 0.85, H * 0.75, W * 0.5);
+          vg2.addColorStop(0, 'rgba(' + c + ',0.035)');
+          vg2.addColorStop(0.6, 'rgba(' + c + ',0.008)');
+          vg2.addColorStop(1, 'transparent');
+          ctx.fillStyle = vg2; ctx.fillRect(0, 0, W, H);
+
+          if (!reduced) {
+            var g2 = ctx.createRadialGradient(smx, smy, 0, smx, smy, 400);
+            g2.addColorStop(0, 'rgba(' + c + ',0.14)');
+            g2.addColorStop(0.3, 'rgba(' + c + ',0.06)');
+            g2.addColorStop(1, 'transparent');
+            ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H);
+          }
+
+          for (var i = 0; i < stars.length; i++) {
+            var st = stars[i];
+            if (!reduced) {
+              st.x += st.vx; st.y += st.vy;
+              if (st.x < -5) st.x = W + 5; if (st.x > W + 5) st.x = -5;
+              if (st.y < -5) st.y = H + 5; if (st.y > H + 5) st.y = -5;
+            }
+            var tw = reduced ? 1 : Math.sin(t * st.ts + st.to) * 0.3 + 0.7;
+            var dx = st.x - smx, dy = st.y - smy;
+            var boost = reduced ? 0 : Math.max(0, 1 - Math.sqrt(dx * dx + dy * dy) / 400) * 0.6;
+            var op = Math.min(1, st.o * tw + boost);
+            ctx.beginPath();
+            ctx.arc(st.x, st.y, st.s * (1 + boost * 0.3), 0, Math.PI * 2);
+            ctx.fillStyle = st.s > 1.4 ? 'rgba(255,255,255,' + op * 0.85 + ')' : 'rgba(' + c + ',' + op + ')';
+            ctx.fill();
+          }
+
+          for (var a1 = 0; a1 < stars.length; a1++) {
+            for (var b1 = a1 + 1; b1 < stars.length; b1++) {
+              var ddx = stars[a1].x - stars[b1].x, ddy = stars[a1].y - stars[b1].y;
+              var dd = ddx * ddx + ddy * ddy;
+              if (dd < 6000) {
+                ctx.beginPath();
+                ctx.moveTo(stars[a1].x, stars[a1].y);
+                ctx.lineTo(stars[b1].x, stars[b1].y);
+                ctx.strokeStyle = 'rgba(' + c + ',' + 0.08 * (1 - Math.sqrt(dd) / 77) + ')';
+                ctx.lineWidth = 0.5; ctx.stroke();
+              }
+            }
+          }
+
+          shoots = shoots.filter(function (s) {
+            s.x += Math.cos(s.a) * s.spd; s.y += Math.sin(s.a) * s.spd; s.life -= 0.01;
+            if (s.life <= 0) return false;
+            var tx = s.x - Math.cos(s.a) * s.len, ty = s.y - Math.sin(s.a) * s.len;
+            var sg = ctx.createLinearGradient(tx, ty, s.x, s.y);
+            sg.addColorStop(0, 'transparent');
+            sg.addColorStop(1, 'rgba(' + c + ',' + s.life * 0.8 + ')');
+            ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(s.x, s.y);
+            ctx.strokeStyle = sg; ctx.lineWidth = 1.8; ctx.stroke();
+            return true;
+          });
+
+          raf = requestAnimationFrame(frame);
+        }
+        document.addEventListener('visibilitychange', function () {
+          cancelAnimationFrame(raf);
+          if (!document.hidden) raf = requestAnimationFrame(frame);
+        });
+        raf = requestAnimationFrame(frame);
+
+        // Hovering a card retints the whole page in that app's colour.
+        var HOUSE = [46, 196, 182];
+        function setAccent(rgb) {
+          var s = document.documentElement.style;
+          s.setProperty('--accent-r', rgb[0]);
+          s.setProperty('--accent-g', rgb[1]);
+          s.setProperty('--accent-b', rgb[2]);
+        }
+        setAccent(HOUSE);
+        Array.prototype.forEach.call(document.querySelectorAll('.card'), function (card) {
+          var cs = getComputedStyle(card);
+          var hue = ['r', 'g', 'b'].map(function (k) {
+            return Number(cs.getPropertyValue('--' + k).trim());
+          });
+          var on = function () { setAccent(hue); };
+          var off = function () { setAccent(HOUSE); };
+          card.addEventListener('mouseenter', on);
+          card.addEventListener('mouseleave', off);
+          card.addEventListener('focus', on);
+          card.addEventListener('blur', off);
+        });
+      })();
+    </script>
+  </body>
+</html>

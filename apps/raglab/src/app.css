@@ -1,27 +1,30 @@
 /* RAG Lab — a measurement instrument, styled like one.
    Dark, dense, tabular figures everywhere a number appears. */
 
+/* On the house theme from @labs/ui. `--accent` and `--warn` are absent on
+   purpose: both are inherited, the first so AppShell can set RAG Lab's blue and
+   the starfield can read it, the second because a warning should look the same
+   in every app on this origin. */
 :root {
-  --bg: #0d1117;
-  --panel: #131a24;
-  --line: #232a35;
-  --ink: #e6edf3;
-  --dim: #9aa4b2;
-  --accent: #4cc2ff;
-  --ok: #56d364;
-  --warn: #e3b341;
-  --danger: #f85149;
-  --radius: 10px;
-  color-scheme: dark;
-}
+  --accent-r: 78;
+  --accent-g: 168;
+  --accent-b: 245;
 
-* { box-sizing: border-box; }
+  --panel: rgba(13, 27, 42, 0.28);
+  --sunk: rgba(0, 0, 0, 0.22);
+  --line: rgba(255, 255, 255, 0.08);
+  --ink: var(--white);
+  --dim: var(--silver);
+  --ok: var(--good);
+  --danger: var(--bad);
+  --radius: var(--radius-card);
+}
 
 body {
   margin: 0;
-  background: var(--bg);
+  background: var(--darker);
   color: var(--ink);
-  font: 15px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font: 15px/1.6 var(--font-body);
   -webkit-text-size-adjust: 100%;
 }
 
@@ -79,13 +82,13 @@ button {
   cursor: pointer;
   border-radius: 7px;
   border: 1px solid var(--line);
-  background: #1b2330;
+  background: rgba(255, 255, 255, 0.04);
   color: var(--ink);
   padding: 0.4rem 0.75rem;
   transition: border-color 0.12s, background 0.12s;
 }
 
-button:hover:not(:disabled) { border-color: #38414f; }
+button:hover:not(:disabled) { border-color: rgba(255, 255, 255, 0.16); }
 button:disabled { opacity: 0.45; cursor: not-allowed; }
 button:focus-visible, input:focus-visible, summary:focus-visible {
   outline: 2px solid var(--accent);
@@ -95,13 +98,13 @@ button:focus-visible, input:focus-visible, summary:focus-visible {
 button.primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #06121c;
+  color: var(--dark);
   font-weight: 650;
   padding: 0.55rem 1.1rem;
 }
 
 button.secondary { background: transparent; }
-button.danger { background: transparent; color: var(--danger); border-color: #4a2226; }
+button.danger { background: transparent; color: var(--danger); border-color: rgba(248, 81, 73, 0.32); }
 
 .chip {
   padding: 0.3rem 0.7rem;
@@ -111,8 +114,8 @@ button.danger { background: transparent; color: var(--danger); border-color: #4a
 }
 
 .chip-on {
-  background: rgba(76, 194, 255, 0.14);
-  border-color: rgba(76, 194, 255, 0.55);
+  background: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.14);
+  border-color: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.55);
   color: var(--accent);
 }
 
@@ -142,7 +145,7 @@ input[type="text"] {
   width: 100%;
   font: inherit;
   padding: 0.45rem 0.6rem;
-  background: #0f151d;
+  background: rgba(0, 0, 0, 0.22);
   border: 1px solid var(--line);
   border-radius: 7px;
   color: var(--ink);
@@ -191,20 +194,26 @@ input[type="text"] {
 
 .questions { list-style: decimal; padding-left: 1.4rem; margin: 0; }
 .questions li { margin-bottom: 1rem; }
-.questions li.invalid { border-left: 2px solid var(--warn); padding-left: 0.6rem; margin-left: -0.6rem; }
+.questions li.invalid {
+  border: 1px solid rgba(210, 153, 34, 0.32);
+  background: rgba(210, 153, 34, 0.07);
+  border-radius: var(--radius-control);
+  padding: 0.35rem 0.6rem;
+  margin-left: -0.6rem;
+}
 
 .gold-preview {
   margin: 0.4rem 0;
   font-size: 0.85rem;
   line-height: 1.55;
-  background: #0f151d;
+  background: rgba(0, 0, 0, 0.22);
   border: 1px solid var(--line);
   border-radius: 7px;
   padding: 0.5rem 0.6rem;
 }
 
 .gold-preview.empty { color: var(--dim); font-style: italic; }
-.gold-preview mark { background: rgba(76, 194, 255, 0.22); color: var(--ink); border-radius: 3px; padding: 0 2px; }
+.gold-preview mark { background: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.22); color: var(--ink); border-radius: 3px; padding: 0 2px; }
 .row-actions { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
 
 .document { margin-top: 1rem; }
@@ -217,7 +226,7 @@ input[type="text"] {
   white-space: pre-wrap;
   word-break: break-word;
   font: 13px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace;
-  background: #0f151d;
+  background: rgba(0, 0, 0, 0.22);
   border: 1px solid var(--line);
   border-radius: 7px;
   padding: 0.8rem;
@@ -229,7 +238,7 @@ input[type="text"] {
 .mode-switch { margin: 0 0 0.35rem; font-size: 0.82rem; }
 .mode-switch .dim { font-size: 0.8rem; }
 
-.example-head { border-color: rgba(76, 194, 255, 0.35); }
+.example-head { border-color: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.35); }
 
 /* The date is the claim. It says a machine ran this on a day against a live
    service, which is the difference between a benchmark and a screenshot. */
@@ -264,8 +273,8 @@ input[type="text"] {
 /* --- results --- */
 
 .verdict {
-  background: rgba(76, 194, 255, 0.09);
-  border: 1px solid rgba(76, 194, 255, 0.3);
+  background: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.09);
+  border: 1px solid rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.3);
   border-radius: 7px;
   padding: 0.6rem 0.75rem;
   margin-bottom: 0.9rem;
@@ -278,7 +287,7 @@ table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 34
 th, td { text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--line); }
 th { color: var(--dim); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-tr.winner td { background: rgba(86, 211, 100, 0.07); }
+tr.winner td { background: rgba(63, 185, 80, 0.07); }
 
 .bar { position: relative; display: inline-block; padding-right: 0.2rem; }
 
@@ -329,7 +338,7 @@ tr.winner td { background: rgba(86, 211, 100, 0.07); }
 
 .pill.ok { color: var(--ok); }
 .pill.warn { color: var(--warn); }
-.drill-body { padding: 0 0 1rem 0.4rem; border-left: 2px solid var(--line); margin-left: 0.4rem; }
+.drill-body { padding: 0 0 1rem 0.4rem; border-left: 1px solid var(--line); margin-left: 0.4rem; }
 .miss { margin-bottom: 0.9rem; }
 .miss-config { font-size: 0.82rem; color: var(--warn); }
 
@@ -360,10 +369,10 @@ tr.winner td { background: rgba(86, 211, 100, 0.07); }
 .progress > div { height: 100%; background: var(--accent); transition: width 0.25s ease; }
 
 .error { color: var(--danger); font-size: 0.88rem; }
-.error.banner { border: 1px solid #4a2226; background: rgba(248, 81, 73, 0.08); border-radius: 7px; padding: 0.6rem 0.75rem; }
+.error.banner { border: 1px solid rgba(248, 81, 73, 0.32); background: rgba(248, 81, 73, 0.08); border-radius: 7px; padding: 0.6rem 0.75rem; }
 .error-note { color: var(--dim); }
 .warn { color: var(--warn); font-size: 0.88rem; }
-.warn.banner { border: 1px solid #4a3d1c; background: rgba(227, 179, 65, 0.08); border-radius: 7px; padding: 0.6rem 0.75rem; }
+.warn.banner { border: 1px solid rgba(210, 153, 34, 0.32); background: rgba(210, 153, 34, 0.08); border-radius: 7px; padding: 0.6rem 0.75rem; }
 
 .twin {
   display: block;

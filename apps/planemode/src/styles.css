@@ -1,24 +1,27 @@
+/* On the house theme from @labs/ui. `--accent` and `--warn` are inherited.
+   Worth stating plainly, because it is the one thing about this app that could
+   look like a contradiction: @labs/ui costs PlaneMode nothing at runtime. The
+   theme is a stylesheet, the shell is React and a canvas, and neither reaches
+   for the network or for @labs/platform. Turn the network off after the model
+   has downloaded and every pixel here still renders. */
 :root {
-  --bg: #101014;
-  --panel: #17171d;
-  --line: #2a2a33;
-  --ink: #e9e9ef;
-  --muted: #9a9aa8;
-  --accent: #6fd3a0;
-  --warn: #e8b84b;
-  --danger: #e5705f;
-  color-scheme: dark;
-}
+  --accent-r: 95;
+  --accent-g: 208;
+  --accent-b: 138;
 
-* {
-  box-sizing: border-box;
+  --panel: rgba(13, 27, 42, 0.28);
+  --sunk: rgba(0, 0, 0, 0.22);
+  --line: rgba(255, 255, 255, 0.08);
+  --ink: var(--white);
+  --muted: var(--silver);
+  --danger: var(--bad);
 }
 
 body {
   margin: 0;
-  background: var(--bg);
+  background: var(--darker);
   color: var(--ink);
-  font: 16px/1.55 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font: 16px/1.55 var(--font-body);
 }
 
 main {
@@ -76,10 +79,10 @@ button:disabled {
 }
 
 .firstrun__hardware {
-  background: var(--panel);
-  border-left: 3px solid var(--accent);
+  background: linear-gradient(var(--accent-wash), transparent 70%), var(--panel);
+  border: 1px solid var(--accent-border);
   padding: 0.75rem 1rem;
-  border-radius: 0 0.4rem 0.4rem 0;
+  border-radius: var(--radius-control);
   font-size: 0.92rem;
 }
 
@@ -92,10 +95,10 @@ button:disabled {
 }
 
 .firstrun__resume {
-  background: var(--panel);
-  border-left: 3px solid var(--warn);
+  background: linear-gradient(rgba(210, 153, 34, 0.08), transparent 70%), var(--panel);
+  border: 1px solid rgba(210, 153, 34, 0.32);
   padding: 0.75rem 1rem;
-  border-radius: 0 0.4rem 0.4rem 0;
+  border-radius: var(--radius-control);
   font-size: 0.95rem;
 }
 
@@ -200,10 +203,10 @@ button:disabled {
 /* Download ----------------------------------------------------------- */
 
 .download__cached {
-  background: var(--panel);
-  border-left: 3px solid var(--accent);
+  background: linear-gradient(var(--accent-wash), transparent 70%), var(--panel);
+  border: 1px solid var(--accent-border);
   padding: 0.75rem 1rem;
-  border-radius: 0 0.4rem 0.4rem 0;
+  border-radius: var(--radius-control);
   font-size: 0.92rem;
 }
 
@@ -303,7 +306,7 @@ button:disabled {
 
 .turn--user {
   align-self: flex-end;
-  background: #23303a;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .turn--assistant {
@@ -437,10 +440,10 @@ button:disabled {
 }
 
 .unsupported__reason {
-  background: var(--panel);
-  border-left: 3px solid var(--warn);
+  background: linear-gradient(rgba(210, 153, 34, 0.08), transparent 70%), var(--panel);
+  border: 1px solid rgba(210, 153, 34, 0.32);
   padding: 0.75rem 1rem;
-  border-radius: 0 0.4rem 0.4rem 0;
+  border-radius: var(--radius-control);
 }
 
 .unsupported__demo {

@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { Byline } from '@labs/ui'
+import '@labs/ui/theme.css'
+import { AppShell } from '@labs/ui'
 import { App } from './App'
 import { bootstrap } from './lib/bootstrap'
 import './styles/app.css'
@@ -21,9 +22,8 @@ if (!root) throw new Error('#root is missing from index.html')
 // the live path only. See the note above the render in `App.tsx`.
 createRoot(root).render(
   <StrictMode>
-    <>
+    <AppShell app="asksheet">
       <App />
-      <Byline app="AskSheet" />
-    </>
+    </AppShell>
   </StrictMode>,
 )

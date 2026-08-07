@@ -1,0 +1,357 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   The labs share abdash.net's surface.
+   ───────────────────────────────────────────────────────────────────────────
+   Every value here is lifted from the portfolio's global.css rather than
+   reinvented, because the goal is not "a theme that resembles the portfolio" —
+   it is that clicking from abdash.net into labs.abdash.net should not read as
+   leaving. Same near-black, same glass, same Inter, same easing curve. If a
+   token below disagrees with the portfolio, the portfolio is right and this is
+   a bug.
+
+   What is NOT shared: the accent hue. The portfolio gives each tab its own
+   colour and morphs between them; the labs extend that idea by giving each app
+   its own. Shared chrome, individual signal — which is what keeps six apps from
+   collapsing into one indistinguishable product.
+
+   No @import of any kind, no external asset references. PlaneMode ships this
+   file, and its entire claim is that it keeps working with the network off.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Registered so the accent can be INTERPOLATED rather than swapped. A plain
+   custom property jumps between values; these tween, which is what makes the
+   hue change on the landing page read as one surface changing its mind rather
+   than six separate cards flashing. */
+@property --accent-r { syntax: '<number>'; inherits: true; initial-value: 46; }
+@property --accent-g { syntax: '<number>'; inherits: true; initial-value: 196; }
+@property --accent-b { syntax: '<number>'; inherits: true; initial-value: 182; }
+
+:root {
+  /* ── Surfaces (portfolio, verbatim) ── */
+  --darker: #070f18;
+  --dark: #0d1b2a;
+  --navy: #1b3a4b;
+  --teal: #2ec4b6;
+  --silver: #a0a4a8;
+  --white: #e8edf2;
+
+  /* ── Accent: each app overrides the triple, everything else derives ── */
+  --accent-r: 46;
+  --accent-g: 196;
+  --accent-b: 182;
+  --accent: rgb(var(--accent-r), var(--accent-g), var(--accent-b));
+  --accent-soft: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.15);
+  --accent-glow: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.08);
+  --accent-border: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.2);
+  --accent-muted: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.5);
+  --accent-wash: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.04);
+
+  /* ── Semantic status. Deliberately not accent-derived: an error must not
+        change colour just because it happened inside the green app. ── */
+  --good: #3fb950;
+  --warn: #d29922;
+  --bad: #f85149;
+
+  /* ── Type ── */
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-heading: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Fixed rem steps, not clamp. These are application UIs, not landing pages;
+     fluid type in a data table makes column widths jump on resize. */
+  --step--2: 0.6875rem;
+  --step--1: 0.8125rem;
+  --step-0: 0.9375rem;
+  --step-1: 1.0625rem;
+  --step-2: 1.375rem;
+  --step-3: 1.75rem;
+
+  /* ── 4pt space scale ── */
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* ── Motion (portfolio, verbatim) ── */
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 600ms;
+  --color-shift: 0.8s ease;
+
+  /* ── Shape ── */
+  --radius-panel: 20px;
+  --radius-card: 14px;
+  --radius-control: 10px;
+  --radius-pill: 100px;
+
+  --measure: 68ch;
+  color-scheme: dark;
+}
+
+/* ═══ RESET ═══ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* The accent tween itself. */
+  transition: --accent-r var(--color-shift), --accent-g var(--color-shift), --accent-b var(--color-shift);
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: 1.6;
+  background-color: var(--darker);
+  color: var(--white);
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: 1.2;
+  color: #fff;
+  text-wrap: balance;
+}
+h1 { font-size: var(--step-3); letter-spacing: -0.02em; }
+h2 { font-size: var(--step-2); letter-spacing: -0.01em; }
+h3 { font-size: var(--step-1); }
+
+p { color: var(--silver); }
+p, li { text-wrap: pretty; }
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-smooth);
+}
+a:hover { color: #fff; }
+
+code, pre, kbd, samp { font-family: var(--font-mono); font-size: 0.875em; }
+
+/* Focus is never removed, only restyled. Two rings so it stays visible on both
+   the near-black page and the lighter glass surfaces sitting on top of it. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection { background: var(--accent); color: var(--dark); }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--accent-soft); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-muted); }
+
+/* ═══ GLASS ═══
+   Transparent on purpose — the starfield behind is meant to show through, and
+   an opaque panel would turn the ambient layer into wallpaper nobody sees. */
+.labs-panel {
+  background: rgba(13, 27, 42, 0.28);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-panel);
+  transition: border-color var(--color-shift), box-shadow var(--color-shift);
+  box-shadow:
+    0 0 40px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.04),
+    inset 0 0 60px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.02);
+}
+
+.labs-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-card);
+  padding: var(--space-md) var(--space-lg);
+  transition:
+    background var(--duration-normal) var(--ease-smooth),
+    border-color var(--duration-normal) var(--ease-smooth),
+    transform var(--duration-normal) var(--ease-out-quart),
+    box-shadow var(--duration-normal) var(--ease-smooth);
+}
+
+/* Lift only where the card is actually a target. A static card that rises on
+   hover promises a click that never happens. */
+.labs-card--interactive:hover,
+.labs-card--interactive:focus-visible {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--accent-border);
+  transform: translateY(-2px);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.06);
+}
+
+/* ═══ CONTROLS ═══ */
+.labs-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-control);
+  border: 1px solid var(--accent-border);
+  background: var(--accent-glow);
+  color: var(--accent);
+  font: 500 var(--step--1) / 1 var(--font-body);
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease-smooth),
+    border-color var(--duration-fast) var(--ease-smooth),
+    color var(--duration-fast) var(--ease-smooth),
+    transform var(--duration-fast) var(--ease-out-quart);
+}
+.labs-btn:hover:not(:disabled) {
+  background: var(--accent-soft);
+  color: #fff;
+  transform: translateY(-1px);
+}
+.labs-btn:active:not(:disabled) { transform: translateY(0); }
+.labs-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Not every button is primary. */
+.labs-btn--quiet {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--silver);
+}
+.labs-btn--quiet:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--accent-border);
+  color: #fff;
+}
+
+.labs-input,
+.labs-select,
+.labs-textarea {
+  width: 100%;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-control);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--white);
+  font: 400 var(--step-0) / 1.5 var(--font-body);
+  transition: border-color var(--duration-fast) var(--ease-smooth), background var(--duration-fast) var(--ease-smooth);
+}
+.labs-input::placeholder, .labs-textarea::placeholder { color: rgba(160, 164, 168, 0.55); }
+.labs-input:focus, .labs-select:focus, .labs-textarea:focus {
+  border-color: var(--accent-border);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ═══ BADGE ═══ */
+.labs-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: var(--accent-glow);
+  border: 1px solid var(--accent-border);
+  color: var(--accent);
+  transition: color var(--color-shift), border-color var(--color-shift), background var(--color-shift);
+}
+.labs-badge--quiet {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--silver);
+}
+
+.labs-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: labs-pulse 2s ease-in-out infinite;
+}
+
+/* ═══ MOTION ═══
+   One orchestrated entrance beats scattered micro-animation. Elements declare
+   their position in the sequence with --i and inherit the timing from here, so
+   a stagger is `style={{'--i': n}}` at the call site and nothing more. */
+@keyframes labs-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes labs-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes labs-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+@keyframes labs-shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+
+.labs-rise {
+  animation: labs-rise var(--duration-slow) var(--ease-out-quart) both;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+.labs-fade {
+  animation: labs-fade var(--duration-normal) var(--ease-smooth) both;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+
+/* Height that animates without animating height. */
+.labs-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--duration-normal) var(--ease-smooth);
+}
+.labs-collapse[data-open='true'] { grid-template-rows: 1fr; }
+.labs-collapse > * { overflow: hidden; }
+
+/* Loading that reads as work in progress rather than a frozen screen. */
+.labs-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: labs-shimmer 1.4s linear infinite;
+  border-radius: var(--radius-control);
+}
+
+/* ═══ AMBIENT LAYER ═══ */
+.labs-starfield {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+/* Anything that should sit above the starfield rather than under it. */
+.labs-above { position: relative; z-index: 1; }
+
+/* ═══ REDUCED MOTION ═══
+   Honoured properly: the entrance animations resolve to their final state
+   instead of being cancelled, so nothing is left invisible at opacity 0. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .labs-rise, .labs-fade { animation: none; opacity: 1; transform: none; }
+}

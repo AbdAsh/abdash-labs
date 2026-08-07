@@ -1,26 +1,101 @@
 <!doctype html>
-<meta charset="utf-8">
-<title>Not found — abdash labs</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex">
-<!--
-  Served by `not_found_handling: "404-page"` in wrangler.jsonc.
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Not found — abdash labs</title>
+    <meta name="robots" content="noindex" />
+    <meta name="theme-color" content="#070f18" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400&display=swap"
+      rel="stylesheet"
+    />
+    <!--
+      Served by `not_found_handling: "404-page"` in wrangler.jsonc.
 
-  This is only reached for paths outside every app prefix. Anything under
-  /recto/, /critiq/ and the rest is caught first by a 200 proxy rule in
-  public/_redirects and handed to that app's own index.html, so a deep link into
-  a client-routed app never lands here.
--->
-<main style="font: 16px/1.6 system-ui; max-width: 40rem; margin: 4rem auto; padding: 0 1rem">
-  <h1>Not found</h1>
-  <p>There is nothing at that address. The seven demos live here:</p>
-  <ul>
-    <li><a href="/recto/">Recto</a> — multi-document notebooks with citations</li>
-    <li><a href="/asksheet/">AskSheet</a> — ask your spreadsheet, in your browser</li>
-    <li><a href="/critiq/">Critiq</a> — SEO and answer-engine review</li>
-    <li><a href="/raglab/">RAG Lab</a> — retrieval benchmarks, not vibes</li>
-    <li><a href="/graphread/">GraphRead</a> — see the shape of a document</li>
-    <li><a href="/planemode/">PlaneMode</a> — AI that works in airplane mode</li>
-  </ul>
-  <p><a href="https://abdash.net">← abdash.net</a></p>
-</main>
+      Only reached for paths outside every app prefix. Critiq's own routes
+      (/critiq/r/… and /critiq/example/…) are caught first by proxy rules in
+      public/_redirects and handed to Critiq's index.html, so a deep link into a
+      client-routed report never lands here. The other five apps keep their state
+      in the query string, so their URLs are always real directories.
+    -->
+    <style>
+      :root {
+        --darker: #070f18;
+        --dark: #0d1b2a;
+        --silver: #a0a4a8;
+        --white: #e8edf2;
+        --accent: #2ec4b6;
+        --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+        color-scheme: dark;
+      }
+      *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 2rem 1.25rem;
+        background: var(--darker);
+        color: var(--white);
+        font: 400 16px/1.65 var(--font-body);
+      }
+      main { max-width: 34rem; width: 100% }
+      .code {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+      h1 {
+        margin: 0.5rem 0 0.6rem;
+        font-size: clamp(1.75rem, 6vw, 2.5rem);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      p { color: var(--silver) }
+      ul { list-style: none; margin: 1.75rem 0 0; display: grid; gap: 6px }
+      li a {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        padding: 0.7rem 0.9rem;
+        border-radius: 12px;
+        color: inherit;
+        text-decoration: none;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        transition: background 0.22s ease, border-color 0.22s ease, transform 0.22s cubic-bezier(0.25, 1, 0.5, 1);
+      }
+      li a:hover, li a:focus-visible {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(46, 196, 182, 0.32);
+        transform: translateY(-2px);
+      }
+      .n { font-weight: 600 }
+      .d { color: var(--silver); font-size: 0.85rem }
+      .home { display: inline-block; margin-top: 2rem; color: var(--accent); text-decoration: none }
+      .home:hover { text-decoration: underline }
+      @media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <span class="code">404</span>
+      <h1>Nothing at that address</h1>
+      <p>The six demos live here — each opens on a finished example.</p>
+      <ul>
+        <li><a href="/recto/"><span class="n">Recto</span><span class="d">notebooks that cite their sources</span></a></li>
+        <li><a href="/asksheet/"><span class="n">AskSheet</span><span class="d">ask your spreadsheet, in your browser</span></a></li>
+        <li><a href="/critiq/"><span class="n">Critiq</span><span class="d">SEO and answer-engine review</span></a></li>
+        <li><a href="/raglab/"><span class="n">RAG Lab</span><span class="d">retrieval benchmarks, not vibes</span></a></li>
+        <li><a href="/graphread/"><span class="n">GraphRead</span><span class="d">see the shape of a document</span></a></li>
+        <li><a href="/planemode/"><span class="n">PlaneMode</span><span class="d">AI that works in airplane mode</span></a></li>
+      </ul>
+      <a class="home" href="https://abdash.net">← abdash.net</a>
+    </main>
+  </body>
+</html>
