@@ -1,0 +1,3244 @@
+{
+  "schema": 1,
+  "provenance": {
+    "capturedAt": "2026-08-07T14:46:10.334Z",
+    "source": "raglab-embed Edge Function, OpenAI embeddings",
+    "tier": "anonymous session",
+    "elapsedMs": 46605,
+    "httpBatches": 14,
+    "vectorsPurchased": 1256,
+    "charactersEmbedded": 104436,
+    "runIds": 1,
+    "quotaUnits": 1,
+    "cacheAssisted": false,
+    "hitThreshold": 0.5,
+    "models": [
+      {
+        "id": "text-embedding-3-small",
+        "label": "OpenAI 3-small",
+        "dims": 1536
+      },
+      {
+        "id": "text-embedding-3-large",
+        "label": "OpenAI 3-large",
+        "dims": 3072
+      }
+    ]
+  },
+  "document": {
+    "id": "us-constitution-selected",
+    "title": "Constitution of the United States — Selected Provisions",
+    "source": "National Archives (archives.gov)",
+    "license": "Public domain — work of the United States federal government",
+    "characters": 7024,
+    "fingerprint": "sample:us-constitution-selected"
+  },
+  "matrix": {
+    "chunkers": [
+      "fixed",
+      "sentence-window",
+      "recursive"
+    ],
+    "sizes": [
+      80,
+      160
+    ],
+    "overlaps": [
+      40
+    ],
+    "models": [
+      "text-embedding-3-small",
+      "text-embedding-3-large"
+    ],
+    "ks": [
+      1
+    ]
+  },
+  "questions": [
+    {
+      "id": "q01-religion-speech",
+      "text": "What does the First Amendment say about religion and speech?",
+      "gold": {
+        "start": 1905,
+        "end": 2066
+      },
+      "goldText": "Congress shall make no law respecting an establishment of religion, or prohibiting the free exercise thereof; or abridging the freedom of speech, or of the press"
+    },
+    {
+      "id": "q02-senator-age",
+      "text": "How old must a person be to serve as a Senator?",
+      "gold": {
+        "start": 1290,
+        "end": 1425
+      },
+      "goldText": "No Person shall be a Senator who shall not have attained to the Age of thirty Years, and been nine Years a Citizen of the United States"
+    },
+    {
+      "id": "q03-house-term",
+      "text": "How often are members of the House of Representatives elected?",
+      "gold": {
+        "start": 593,
+        "end": 711
+      },
+      "goldText": "The House of Representatives shall be composed of Members chosen every second Year by the People of the several States"
+    },
+    {
+      "id": "q04-president-eligibility",
+      "text": "What age and residency requirements apply to the office of President?",
+      "gold": {
+        "start": 1773,
+        "end": 1889
+      },
+      "goldText": "shall not have attained to the Age of thirty five Years, and been fourteen Years a Resident within the United States"
+    },
+    {
+      "id": "q05-unreasonable-searches",
+      "text": "What protects people against unreasonable searches and seizures?",
+      "gold": {
+        "start": 2527,
+        "end": 2676
+      },
+      "goldText": "The right of the people to be secure in their persons, houses, papers, and effects, against unreasonable searches and seizures, shall not be violated"
+    },
+    {
+      "id": "q06-warrant-requirements",
+      "text": "What must a search warrant be based on?",
+      "gold": {
+        "start": 2682,
+        "end": 2818
+      },
+      "goldText": "no Warrants shall issue, but upon probable cause, supported by Oath or affirmation, and particularly describing the place to be searched"
+    },
+    {
+      "id": "q07-double-jeopardy",
+      "text": "Can someone be prosecuted twice for the same offence?",
+      "gold": {
+        "start": 3135,
+        "end": 3231
+      },
+      "goldText": "nor shall any person be subject for the same offence to be twice put in jeopardy of life or limb"
+    },
+    {
+      "id": "q08-civil-jury-threshold",
+      "text": "What is the monetary threshold for a jury trial in a civil suit?",
+      "gold": {
+        "start": 3974,
+        "end": 4103
+      },
+      "goldText": "In Suits at common law, where the value in controversy shall exceed twenty dollars, the right of trial by jury shall be preserved"
+    },
+    {
+      "id": "q09-cruel-unusual",
+      "text": "What does the Constitution say about bail, fines and punishment?",
+      "gold": {
+        "start": 4264,
+        "end": 4375
+      },
+      "goldText": "Excessive bail shall not be required, nor excessive fines imposed, nor cruel and unusual punishments inflicted."
+    },
+    {
+      "id": "q10-reserved-powers",
+      "text": "Who holds the powers the Constitution does not give to the federal government?",
+      "gold": {
+        "start": 4536,
+        "end": 4697
+      },
+      "goldText": "The powers not delegated to the United States by the Constitution, nor prohibited by it to the States, are reserved to the States respectively, or to the people."
+    },
+    {
+      "id": "q11-slavery-abolished",
+      "text": "Which provision abolished slavery?",
+      "gold": {
+        "start": 4726,
+        "end": 4888
+      },
+      "goldText": "Neither slavery nor involuntary servitude, except as a punishment for crime whereof the party shall have been duly convicted, shall exist within the United States"
+    },
+    {
+      "id": "q12-birthright-citizenship",
+      "text": "Who is a citizen of the United States?",
+      "gold": {
+        "start": 5055,
+        "end": 5221
+      },
+      "goldText": "All persons born or naturalized in the United States, and subject to the jurisdiction thereof, are citizens of the United States and of the State wherein they reside."
+    },
+    {
+      "id": "q13-suffrage-sex",
+      "text": "Which amendment guaranteed women the vote?",
+      "gold": {
+        "start": 6279,
+        "end": 6366
+      },
+      "goldText": "shall not be denied or abridged by the United States or by any State on account of sex."
+    },
+    {
+      "id": "q14-two-term-limit",
+      "text": "How many times may a person be elected President?",
+      "gold": {
+        "start": 6519,
+        "end": 6592
+      },
+      "goldText": "No person shall be elected to the office of the President more than twice"
+    },
+    {
+      "id": "q15-voting-age",
+      "text": "What is the minimum voting age?",
+      "gold": {
+        "start": 6888,
+        "end": 7023
+      },
+      "goldText": "who are eighteen years of age or older, to vote shall not be denied or abridged by the United States or by any State on account of age."
+    }
+  ],
+  "results": [
+    {
+      "config": {
+        "chunker": "fixed",
+        "size": 80,
+        "overlap": 40,
+        "model": "text-embedding-3-small",
+        "k": 1
+      },
+      "hitRate": 0.6,
+      "mrr": 0.6,
+      "chunkCount": 175,
+      "perQuestion": [
+        {
+          "questionId": "q01-religion-speech",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "of religion, or prohibiting the free exercise thereof; or abridging the freedom"
+          ],
+          "spans": [
+            [
+              1960,
+              2040
+            ]
+          ],
+          "firstHitRank": null,
+          "bestOverlap": 0.497
+        },
+        {
+          "questionId": "q02-senator-age",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "ne Vote. No Person shall be a Senator who shall not have attained to the Age of"
+          ],
+          "spans": [
+            [
+              1280,
+              1360
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.593
+        },
+        {
+          "questionId": "q03-house-term",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "se of Representatives shall be composed of Members chosen every second Year by t"
+          ],
+          "spans": [
+            [
+              600,
+              680
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.678
+        },
+        {
+          "questionId": "q04-president-eligibility",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "eligible to the Office of President; neither shall any Person be eligible to tha"
+          ],
+          "spans": [
+            [
+              1680,
+              1760
+            ]
+          ],
+          "firstHitRank": 7,
+          "bestOverlap": 0.69
+        },
+        {
+          "questionId": "q05-unreasonable-searches",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "d effects, against unreasonable searches and seizures, shall not be violated, an"
+          ],
+          "spans": [
+            [
+              2600,
+              2680
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.537
+        },
+        {
+          "questionId": "q06-warrant-requirements",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "d no Warrants shall issue, but upon probable cause, supported by Oath or affirma"
+          ],
+          "spans": [
+            [
+              2680,
+              2760
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.588
+        },
+        {
+          "questionId": "q07-double-jeopardy",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "public danger; nor shall any person be subject for the same offence to be twice"
+          ],
+          "spans": [
+            [
+              3120,
+              3200
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.74
+        },
+        {
+          "questionId": "q08-civil-jury-threshold",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "ere the value in controversy shall exceed twenty dollars, the right of trial by"
+          ],
+          "spans": [
+            [
+              4000,
+              4080
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.62
+        },
+        {
+          "questionId": "q09-cruel-unusual",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "n law. Amendment VIII Excessive bail shall not be required, nor excessive fine"
+          ],
+          "spans": [
+            [
+              4240,
+              4320
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.721
+        },
+        {
+          "questionId": "q10-reserved-powers",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            ". Amendment X The powers not delegated to the United States by the Constitutio"
+          ],
+          "spans": [
+            [
+              4520,
+              4600
+            ]
+          ],
+          "firstHitRank": null,
+          "bestOverlap": 0.497
+        },
+        {
+          "questionId": "q11-slavery-abolished",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "of race, color, or previous condition of servitude. Amendment XVI The Congress"
+          ],
+          "spans": [
+            [
+              5680,
+              5760
+            ]
+          ],
+          "firstHitRank": null,
+          "bestOverlap": 0.494
+        },
+        {
+          "questionId": "q12-birthright-citizenship",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "izen of the United States, and who shall not, when elected, be an Inhabitant of"
+          ],
+          "spans": [
+            [
+              1400,
+              1480
+            ]
+          ],
+          "firstHitRank": null,
+          "bestOverlap": 0.482
+        },
+        {
+          "questionId": "q13-suffrage-sex",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "s. Amendment XV Section 1. The right of citizens of the United States to vote"
+          ],
+          "spans": [
+            [
+              5520,
+              5600
+            ]
+          ],
+          "firstHitRank": 3,
+          "bestOverlap": 0.92
+        },
+        {
+          "questionId": "q14-two-term-limit",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "o person shall be elected to the office of the President more than twice, and no"
+          ],
+          "spans": [
+            [
+              6520,
+              6600
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.986
+        },
+        {
+          "questionId": "q15-voting-age",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "States, who are eighteen years of age or older, to vote shall not be denied or a"
+          ],
+          "spans": [
+            [
+              6880,
+              6960
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.593
+        }
+      ]
+    },
+    {
+      "config": {
+        "chunker": "fixed",
+        "size": 80,
+        "overlap": 40,
+        "model": "text-embedding-3-large",
+        "k": 1
+      },
+      "hitRate": 0.4666666666666667,
+      "mrr": 0.4666666666666667,
+      "chunkCount": 175,
+      "perQuestion": [
+        {
+          "questionId": "q01-religion-speech",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "ed States. Amendment I Congress shall make no law respecting an establishment"
+          ],
+          "spans": [
+            [
+              1880,
+              1960
+            ]
+          ],
+          "firstHitRank": null,
+          "bestOverlap": 0.497
+        },
+        {
+          "questionId": "q02-senator-age",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "ne Vote. No Person shall be a Senator who shall not have attained to the Age of"
+          ],
+          "spans": [
+            [
+              1280,
+              1360
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.593
+        },
+        {
+          "questionId": "q03-house-term",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "se of Representatives shall be composed of Members chosen every second Year by t"
+          ],
+          "spans": [
+            [
+              600,
+              680
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.678
+        },
+        {
+          "questionId": "q04-president-eligibility",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "izen of the United States, and who shall not, when elected, be an Inhabitant of"
+          ],
+          "spans": [
+            [
+              1400,
+              1480
+            ]
+          ],
+          "firstHitRank": 2,
+          "bestOverlap": 0.69
+        },
+        {
+          "questionId": "q05-unreasonable-searches",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "ure in their persons, houses, papers, and effects, against unreasonable searches"
+          ],
+          "spans": [
+            [
+              2560,
+              2640
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.537
+        },
+        {
+          "questionId": "q06-warrant-requirements",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "and seizures, shall not be violated, and no Warrants shall issue, but upon prob"
+          ],
+          "spans": [
+            [
+              2640,
+              2720
+            ]
+          ],
+          "firstHitRank": 2,
+          "bestOverlap": 0.588
+        },
+        {
+          "questionId": "q07-double-jeopardy",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "public danger; nor shall any person be subject for the same offence to be twice"
+          ],
+          "spans": [
+            [
+              3120,
+              3200
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.74
+        },
+        {
+          "questionId": "q08-civil-jury-threshold",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "mendment VII In Suits at common law, where the value in controversy shall excee"
+          ],
+          "spans": [
+            [
+              3960,
+              4040
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.62
+        },
+        {
+          "questionId": "q09-cruel-unusual",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "n law. Amendment VIII Excessive bail shall not be required, nor excessive fine"
+          ],
+          "spans": [
+            [
+              4240,
+              4320
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.721
+        },
+        {
+          "questionId": "q10-reserved-powers",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            ". Amendment X The powers not delegated to the United States by the Constitutio"
+          ],
+          "spans": [
+            [
+              4520,
+              4600
+            ]
+          ],
+          "firstHitRank": null,
+          "bestOverlap": 0.497
+        },
+        {
+          "questionId": "q11-slavery-abolished",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "or to the people. Amendment XIII Section 1. Neither slavery nor involuntary se"
+          ],
+          "spans": [
+            [
+              4680,
+              4760
+            ]
+          ],
+          "firstHitRank": null,
+          "bestOverlap": 0.494
+        },
+        {
+          "questionId": "q12-birthright-citizenship",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "to the jurisdiction thereof, are citizens of the United States and of the State"
+          ],
+          "spans": [
+            [
+              5120,
+              5200
+            ]
+          ],
+          "firstHitRank": null,
+          "bestOverlap": 0.482
+        },
+        {
+          "questionId": "q13-suffrage-sex",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "prohibited. Amendment XIX The right of citizens of the United States to vote s"
+          ],
+          "spans": [
+            [
+              6200,
+              6280
+            ]
+          ],
+          "firstHitRank": 3,
+          "bestOverlap": 0.92
+        },
+        {
+          "questionId": "q14-two-term-limit",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "er person was elected President shall be elected to the office of the President"
+          ],
+          "spans": [
+            [
+              6720,
+              6800
+            ]
+          ],
+          "firstHitRank": 2,
+          "bestOverlap": 0.986
+        },
+        {
+          "questionId": "q15-voting-age",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "States, who are eighteen years of age or older, to vote shall not be denied or a"
+          ],
+          "spans": [
+            [
+              6880,
+              6960
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.593
+        }
+      ]
+    },
+    {
+      "config": {
+        "chunker": "fixed",
+        "size": 160,
+        "overlap": 40,
+        "model": "text-embedding-3-small",
+        "k": 1
+      },
+      "hitRate": 0.8666666666666667,
+      "mrr": 0.8666666666666667,
+      "chunkCount": 59,
+      "perQuestion": [
+        {
+          "questionId": "q01-religion-speech",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "make no law respecting an establishment of religion, or prohibiting the free exercise thereof; or abridging the freedom of speech, or of the press; or the right"
+          ],
+          "spans": [
+            [
+              1920,
+              2080
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.907
+        },
+        {
+          "questionId": "q02-senator-age",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "chosen by the Legislature thereof, for six Years; and each Senator shall have one Vote. No Person shall be a Senator who shall not have attained to the Age of"
+          ],
+          "spans": [
+            [
+              1200,
+              1360
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.778
+        },
+        {
+          "questionId": "q03-house-term",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "se of Representatives shall be composed of Members chosen every second Year by the People of the several States, and the Electors in each State shall have the Q"
+          ],
+          "spans": [
+            [
+              600,
+              760
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.941
+        },
+        {
+          "questionId": "q04-president-eligibility",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "eligible to the Office of President; neither shall any Person be eligible to that Office who shall not have attained to the Age of thirty five Years, and been f"
+          ],
+          "spans": [
+            [
+              1680,
+              1840
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.767
+        },
+        {
+          "questionId": "q05-unreasonable-searches",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "nt IV The right of the people to be secure in their persons, houses, papers, and effects, against unreasonable searches and seizures, shall not be violated, an"
+          ],
+          "spans": [
+            [
+              2520,
+              2680
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q06-warrant-requirements",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "and seizures, shall not be violated, and no Warrants shall issue, but upon probable cause, supported by Oath or affirmation, and particularly describing the pl"
+          ],
+          "spans": [
+            [
+              2640,
+              2800
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.868
+        },
+        {
+          "questionId": "q07-double-jeopardy",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "public danger; nor shall any person be subject for the same offence to be twice put in jeopardy of life or limb; nor shall be compelled in any criminal case to"
+          ],
+          "spans": [
+            [
+              3120,
+              3280
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q08-civil-jury-threshold",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "mendment VII In Suits at common law, where the value in controversy shall exceed twenty dollars, the right of trial by jury shall be preserved, and no fact tri"
+          ],
+          "spans": [
+            [
+              3960,
+              4120
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q09-cruel-unusual",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "than according to the rules of the common law. Amendment VIII Excessive bail shall not be required, nor excessive fines imposed, nor cruel and unusual punishm"
+          ],
+          "spans": [
+            [
+              4200,
+              4360
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.865
+        },
+        {
+          "questionId": "q10-reserved-powers",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "ights, shall not be construed to deny or disparage others retained by the people. Amendment X The powers not delegated to the United States by the Constitutio"
+          ],
+          "spans": [
+            [
+              4440,
+              4600
+            ]
+          ],
+          "firstHitRank": 2,
+          "bestOverlap": 0.851
+        },
+        {
+          "questionId": "q11-slavery-abolished",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "or to the people. Amendment XIII Section 1. Neither slavery nor involuntary servitude, except as a punishment for crime whereof the party shall have been duly"
+          ],
+          "spans": [
+            [
+              4680,
+              4840
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.704
+        },
+        {
+          "questionId": "q12-birthright-citizenship",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "IV Section 1. All persons born or naturalized in the United States, and subject to the jurisdiction thereof, are citizens of the United States and of the State"
+          ],
+          "spans": [
+            [
+              5040,
+              5200
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.873
+        },
+        {
+          "questionId": "q13-suffrage-sex",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "citizens of the United States to vote shall not be denied or abridged by the United States or by any State on account of sex. Amendment XXI Section 1. The ei"
+          ],
+          "spans": [
+            [
+              6240,
+              6400
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q14-two-term-limit",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "er person was elected President shall be elected to the office of the President more than once. Amendment XXVI Section 1. The right of citizens of the United"
+          ],
+          "spans": [
+            [
+              6720,
+              6880
+            ]
+          ],
+          "firstHitRank": 2,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q15-voting-age",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "1. The right of citizens of the United States, who are eighteen years of age or older, to vote shall not be denied or abridged by the United States or by any S"
+          ],
+          "spans": [
+            [
+              6840,
+              7000
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.83
+        }
+      ]
+    },
+    {
+      "config": {
+        "chunker": "fixed",
+        "size": 160,
+        "overlap": 40,
+        "model": "text-embedding-3-large",
+        "k": 1
+      },
+      "hitRate": 0.8666666666666667,
+      "mrr": 0.8666666666666667,
+      "chunkCount": 59,
+      "perQuestion": [
+        {
+          "questionId": "q01-religion-speech",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "make no law respecting an establishment of religion, or prohibiting the free exercise thereof; or abridging the freedom of speech, or of the press; or the right"
+          ],
+          "spans": [
+            [
+              1920,
+              2080
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.907
+        },
+        {
+          "questionId": "q02-senator-age",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "chosen by the Legislature thereof, for six Years; and each Senator shall have one Vote. No Person shall be a Senator who shall not have attained to the Age of"
+          ],
+          "spans": [
+            [
+              1200,
+              1360
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.778
+        },
+        {
+          "questionId": "q03-house-term",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "se of Representatives shall be composed of Members chosen every second Year by the People of the several States, and the Electors in each State shall have the Q"
+          ],
+          "spans": [
+            [
+              600,
+              760
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.941
+        },
+        {
+          "questionId": "q04-president-eligibility",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "eligible to the Office of President; neither shall any Person be eligible to that Office who shall not have attained to the Age of thirty five Years, and been f"
+          ],
+          "spans": [
+            [
+              1680,
+              1840
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.767
+        },
+        {
+          "questionId": "q05-unreasonable-searches",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "nt IV The right of the people to be secure in their persons, houses, papers, and effects, against unreasonable searches and seizures, shall not be violated, an"
+          ],
+          "spans": [
+            [
+              2520,
+              2680
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q06-warrant-requirements",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "and seizures, shall not be violated, and no Warrants shall issue, but upon probable cause, supported by Oath or affirmation, and particularly describing the pl"
+          ],
+          "spans": [
+            [
+              2640,
+              2800
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.868
+        },
+        {
+          "questionId": "q07-double-jeopardy",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "public danger; nor shall any person be subject for the same offence to be twice put in jeopardy of life or limb; nor shall be compelled in any criminal case to"
+          ],
+          "spans": [
+            [
+              3120,
+              3280
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q08-civil-jury-threshold",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "mendment VII In Suits at common law, where the value in controversy shall exceed twenty dollars, the right of trial by jury shall be preserved, and no fact tri"
+          ],
+          "spans": [
+            [
+              3960,
+              4120
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q09-cruel-unusual",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "than according to the rules of the common law. Amendment VIII Excessive bail shall not be required, nor excessive fines imposed, nor cruel and unusual punishm"
+          ],
+          "spans": [
+            [
+              4200,
+              4360
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.865
+        },
+        {
+          "questionId": "q10-reserved-powers",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "ights, shall not be construed to deny or disparage others retained by the people. Amendment X The powers not delegated to the United States by the Constitutio"
+          ],
+          "spans": [
+            [
+              4440,
+              4600
+            ]
+          ],
+          "firstHitRank": 2,
+          "bestOverlap": 0.851
+        },
+        {
+          "questionId": "q11-slavery-abolished",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "or to the people. Amendment XIII Section 1. Neither slavery nor involuntary servitude, except as a punishment for crime whereof the party shall have been duly"
+          ],
+          "spans": [
+            [
+              4680,
+              4840
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.704
+        },
+        {
+          "questionId": "q12-birthright-citizenship",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "IV Section 1. All persons born or naturalized in the United States, and subject to the jurisdiction thereof, are citizens of the United States and of the State"
+          ],
+          "spans": [
+            [
+              5040,
+              5200
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.873
+        },
+        {
+          "questionId": "q13-suffrage-sex",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "citizens of the United States to vote shall not be denied or abridged by the United States or by any State on account of sex. Amendment XXI Section 1. The ei"
+          ],
+          "spans": [
+            [
+              6240,
+              6400
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q14-two-term-limit",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "er person was elected President shall be elected to the office of the President more than once. Amendment XXVI Section 1. The right of citizens of the United"
+          ],
+          "spans": [
+            [
+              6720,
+              6880
+            ]
+          ],
+          "firstHitRank": 2,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q15-voting-age",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "1. The right of citizens of the United States, who are eighteen years of age or older, to vote shall not be denied or abridged by the United States or by any S"
+          ],
+          "spans": [
+            [
+              6840,
+              7000
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.83
+        }
+      ]
+    },
+    {
+      "config": {
+        "chunker": "sentence-window",
+        "size": 80,
+        "overlap": 40,
+        "model": "text-embedding-3-small",
+        "k": 1
+      },
+      "hitRate": 0.4666666666666667,
+      "mrr": 0.4666666666666667,
+      "chunkCount": 104,
+      "perQuestion": [
+        {
+          "questionId": "q01-religion-speech",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "Amendment I Congress shall make no law respecting an establishment of religio"
+          ],
+          "spans": [
+            [
+              1890,
+              1970
+            ]
+          ],
+          "firstHitRank": null,
+          "bestOverlap": 0.497
+        },
+        {
+          "questionId": "q02-senator-age",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "No Person shall be a Senator who shall not have attained to the Age of thirty"
+          ],
+          "spans": [
+            [
+              1288,
+              1368
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.578
+        },
+        {
+          "questionId": "q03-house-term",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "Article I, Section 2 The House of Representatives shall be composed of Member"
+          ],
+          "spans": [
+            [
+              569,
+              649
+            ]
+          ],
+          "firstHitRank": 2,
+          "bestOverlap": 0.525
+        },
+        {
+          "questionId": "q04-president-eligibility",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "eligible to the Office of President; neither shall any Person be eligible to tha"
+          ],
+          "spans": [
+            [
+              1680,
+              1760
+            ]
+          ],
+          "firstHitRank": 5,
+          "bestOverlap": 0.578
+        },
+        {
+          "questionId": "q05-unreasonable-searches",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "apers, and effects, against unreasonable searches and seizures, shall not be vio"
+          ],
+          "spans": [
+            [
+              2591,
+              2671
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.537
+        },
+        {
+          "questionId": "q06-warrant-requirements",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "lated, and no Warrants shall issue, but upon probable cause, supported by Oath o"
+          ],
+          "spans": [
+            [
+              2671,
+              2751
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.507
+        },
+        {
+          "questionId": "q07-double-jeopardy",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "offence to be twice put in jeopardy of life or limb; nor shall be compelled in"
+          ],
+          "spans": [
+            [
+              3179,
+              3259
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.542
+        },
+        {
+          "questionId": "q08-civil-jury-threshold",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "ceed twenty dollars, the right of trial by jury shall be preserved, and no fact"
+          ],
+          "spans": [
+            [
+              4037,
+              4117
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.512
+        },
+        {
+          "questionId": "q09-cruel-unusual",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "Amendment VIII Excessive bail shall not be required, nor excessive fines impo"
+          ],
+          "spans": [
+            [
+              4246,
+              4326
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.559
+        },
+        {
+          "questionId": "q10-reserved-powers",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "Amendment X The powers not delegated to the United States by the Constitution"
+          ],
+          "spans": [
+            [
+              4521,
+              4601
+            ]
+          ],
+          "firstHitRank": null,
+          "bestOverlap": 0.497
+        },
+        {
+          "questionId": "q11-slavery-abolished",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "Neither slavery nor involuntary servitude, except as a punishment for crime whe"
+          ],
+          "spans": [
+            [
+              4725,
+              4805
+            ]
+          ],
+          "firstHitRank": null,
+          "bestOverlap": 0.494
+        },
+        {
+          "questionId": "q12-birthright-citizenship",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "All persons born or naturalized in the United States, and subject to the jurisd"
+          ],
+          "spans": [
+            [
+              5054,
+              5134
+            ]
+          ],
+          "firstHitRank": null,
+          "bestOverlap": 0.482
+        },
+        {
+          "questionId": "q13-suffrage-sex",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "The eighteenth article of amendment to the Constitution of the United States is"
+          ],
+          "spans": [
+            [
+              6393,
+              6473
+            ]
+          ],
+          "firstHitRank": 11,
+          "bestOverlap": 0.862
+        },
+        {
+          "questionId": "q14-two-term-limit",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "No person shall be elected to the office of the President more than twice, and"
+          ],
+          "spans": [
+            [
+              6518,
+              6598
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q15-voting-age",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "No Person shall be a Senator who shall not have attained to the Age of thirty"
+          ],
+          "spans": [
+            [
+              1288,
+              1368
+            ]
+          ],
+          "firstHitRank": 4,
+          "bestOverlap": 0.593
+        }
+      ]
+    },
+    {
+      "config": {
+        "chunker": "sentence-window",
+        "size": 80,
+        "overlap": 40,
+        "model": "text-embedding-3-large",
+        "k": 1
+      },
+      "hitRate": 0.4666666666666667,
+      "mrr": 0.4666666666666667,
+      "chunkCount": 104,
+      "perQuestion": [
+        {
+          "questionId": "q01-religion-speech",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "Amendment I Congress shall make no law respecting an establishment of religio"
+          ],
+          "spans": [
+            [
+              1890,
+              1970
+            ]
+          ],
+          "firstHitRank": null,
+          "bestOverlap": 0.497
+        },
+        {
+          "questionId": "q02-senator-age",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "No Person shall be a Senator who shall not have attained to the Age of thirty"
+          ],
+          "spans": [
+            [
+              1288,
+              1368
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.578
+        },
+        {
+          "questionId": "q03-house-term",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "Article I, Section 2 The House of Representatives shall be composed of Member"
+          ],
+          "spans": [
+            [
+              569,
+              649
+            ]
+          ],
+          "firstHitRank": 2,
+          "bestOverlap": 0.525
+        },
+        {
+          "questionId": "q04-president-eligibility",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "ourteen Years a Resident within the United States."
+          ],
+          "spans": [
+            [
+              1840,
+              1890
+            ]
+          ],
+          "firstHitRank": 2,
+          "bestOverlap": 0.578
+        },
+        {
+          "questionId": "q05-unreasonable-searches",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "apers, and effects, against unreasonable searches and seizures, shall not be vio"
+          ],
+          "spans": [
+            [
+              2591,
+              2671
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.537
+        },
+        {
+          "questionId": "q06-warrant-requirements",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "lated, and no Warrants shall issue, but upon probable cause, supported by Oath o"
+          ],
+          "spans": [
+            [
+              2671,
+              2751
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.507
+        },
+        {
+          "questionId": "q07-double-jeopardy",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "offence to be twice put in jeopardy of life or limb; nor shall be compelled in"
+          ],
+          "spans": [
+            [
+              3179,
+              3259
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.542
+        },
+        {
+          "questionId": "q08-civil-jury-threshold",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "ceed twenty dollars, the right of trial by jury shall be preserved, and no fact"
+          ],
+          "spans": [
+            [
+              4037,
+              4117
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.512
+        },
+        {
+          "questionId": "q09-cruel-unusual",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "Amendment VIII Excessive bail shall not be required, nor excessive fines impo"
+          ],
+          "spans": [
+            [
+              4246,
+              4326
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.559
+        },
+        {
+          "questionId": "q10-reserved-powers",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "Amendment X The powers not delegated to the United States by the Constitution"
+          ],
+          "spans": [
+            [
+              4521,
+              4601
+            ]
+          ],
+          "firstHitRank": null,
+          "bestOverlap": 0.497
+        },
+        {
+          "questionId": "q11-slavery-abolished",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "r to the people. Amendment XIII Section 1."
+          ],
+          "spans": [
+            [
+              4681,
+              4725
+            ]
+          ],
+          "firstHitRank": null,
+          "bestOverlap": 0.494
+        },
+        {
+          "questionId": "q12-birthright-citizenship",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "All persons born or naturalized in the United States, and subject to the jurisd"
+          ],
+          "spans": [
+            [
+              5054,
+              5134
+            ]
+          ],
+          "firstHitRank": null,
+          "bestOverlap": 0.482
+        },
+        {
+          "questionId": "q13-suffrage-sex",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "Amendment XIX The right of citizens of the United States to vote shall not be"
+          ],
+          "spans": [
+            [
+              6211,
+              6291
+            ]
+          ],
+          "firstHitRank": 3,
+          "bestOverlap": 0.862
+        },
+        {
+          "questionId": "q14-two-term-limit",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "No person shall be elected to the office of the President more than twice, and"
+          ],
+          "spans": [
+            [
+              6518,
+              6598
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q15-voting-age",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "The right of citizens of the United States, who are eighteen years of age or ol"
+          ],
+          "spans": [
+            [
+              6843,
+              6923
+            ]
+          ],
+          "firstHitRank": 4,
+          "bestOverlap": 0.593
+        }
+      ]
+    },
+    {
+      "config": {
+        "chunker": "sentence-window",
+        "size": 160,
+        "overlap": 40,
+        "model": "text-embedding-3-small",
+        "k": 1
+      },
+      "hitRate": 0.9333333333333333,
+      "mrr": 0.9333333333333333,
+      "chunkCount": 60,
+      "perQuestion": [
+        {
+          "questionId": "q01-religion-speech",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "Amendment I Congress shall make no law respecting an establishment of religion, or prohibiting the free exercise thereof; or abridging the freedom of speech,"
+          ],
+          "spans": [
+            [
+              1890,
+              2050
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.901
+        },
+        {
+          "questionId": "q02-senator-age",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "No Person shall be a Senator who shall not have attained to the Age of thirty Years, and been nine Years a Citizen of the United States, and who shall not, wh"
+          ],
+          "spans": [
+            [
+              1288,
+              1448
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q03-house-term",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "Article I, Section 2 The House of Representatives shall be composed of Members chosen every second Year by the People of the several States, and the Electors"
+          ],
+          "spans": [
+            [
+              569,
+              729
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q04-president-eligibility",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "eligible to the Office of President; neither shall any Person be eligible to that Office who shall not have attained to the Age of thirty five Years, and been f"
+          ],
+          "spans": [
+            [
+              1680,
+              1840
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.578
+        },
+        {
+          "questionId": "q05-unreasonable-searches",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "Amendment IV The right of the people to be secure in their persons, houses, papers, and effects, against unreasonable searches and seizures, shall not be vio"
+          ],
+          "spans": [
+            [
+              2511,
+              2671
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.966
+        },
+        {
+          "questionId": "q06-warrant-requirements",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "lated, and no Warrants shall issue, but upon probable cause, supported by Oath or affirmation, and particularly describing the place to be searched, and the per"
+          ],
+          "spans": [
+            [
+              2671,
+              2831
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q07-double-jeopardy",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "offence to be twice put in jeopardy of life or limb; nor shall be compelled in any criminal case to be a witness against himself, nor be deprived of life, libe"
+          ],
+          "spans": [
+            [
+              3179,
+              3339
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.542
+        },
+        {
+          "questionId": "q08-civil-jury-threshold",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "Amendment VII In Suits at common law, where the value in controversy shall exceed twenty dollars, the right of trial by jury shall be preserved, and no fact"
+          ],
+          "spans": [
+            [
+              3957,
+              4117
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q09-cruel-unusual",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "Amendment VIII Excessive bail shall not be required, nor excessive fines imposed, nor cruel and unusual punishments inflicted."
+          ],
+          "spans": [
+            [
+              4246,
+              4375
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q10-reserved-powers",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "Amendment X The powers not delegated to the United States by the Constitution, nor prohibited by it to the States, are reserved to the States respectively, o"
+          ],
+          "spans": [
+            [
+              4521,
+              4681
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.901
+        },
+        {
+          "questionId": "q11-slavery-abolished",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "Amendment XXI Section 1. The eighteenth article of amendment to the Constitution of the United States is hereby repealed. Amendment XXII Section 1."
+          ],
+          "spans": [
+            [
+              6366,
+              6518
+            ]
+          ],
+          "firstHitRank": 2,
+          "bestOverlap": 0.981
+        },
+        {
+          "questionId": "q12-birthright-citizenship",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "All persons born or naturalized in the United States, and subject to the jurisdiction thereof, are citizens of the United States and of the State wherein they"
+          ],
+          "spans": [
+            [
+              5054,
+              5214
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.958
+        },
+        {
+          "questionId": "q13-suffrage-sex",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "Amendment XIX The right of citizens of the United States to vote shall not be denied or abridged by the United States or by any State on account of sex."
+          ],
+          "spans": [
+            [
+              6211,
+              6366
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q14-two-term-limit",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "No person shall be elected to the office of the President more than twice, and no person who has held the office of President, or acted as President, for more"
+          ],
+          "spans": [
+            [
+              6518,
+              6678
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q15-voting-age",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "The right of citizens of the United States, who are eighteen years of age or older, to vote shall not be denied or abridged by the United States or by any Stat"
+          ],
+          "spans": [
+            [
+              6843,
+              7003
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.852
+        }
+      ]
+    },
+    {
+      "config": {
+        "chunker": "sentence-window",
+        "size": 160,
+        "overlap": 40,
+        "model": "text-embedding-3-large",
+        "k": 1
+      },
+      "hitRate": 0.9333333333333333,
+      "mrr": 0.9333333333333333,
+      "chunkCount": 60,
+      "perQuestion": [
+        {
+          "questionId": "q01-religion-speech",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "Amendment I Congress shall make no law respecting an establishment of religion, or prohibiting the free exercise thereof; or abridging the freedom of speech,"
+          ],
+          "spans": [
+            [
+              1890,
+              2050
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.901
+        },
+        {
+          "questionId": "q02-senator-age",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "No Person shall be a Senator who shall not have attained to the Age of thirty Years, and been nine Years a Citizen of the United States, and who shall not, wh"
+          ],
+          "spans": [
+            [
+              1288,
+              1448
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q03-house-term",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "Article I, Section 2 The House of Representatives shall be composed of Members chosen every second Year by the People of the several States, and the Electors"
+          ],
+          "spans": [
+            [
+              569,
+              729
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q04-president-eligibility",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "eligible to the Office of President; neither shall any Person be eligible to that Office who shall not have attained to the Age of thirty five Years, and been f"
+          ],
+          "spans": [
+            [
+              1680,
+              1840
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.578
+        },
+        {
+          "questionId": "q05-unreasonable-searches",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "Amendment IV The right of the people to be secure in their persons, houses, papers, and effects, against unreasonable searches and seizures, shall not be vio"
+          ],
+          "spans": [
+            [
+              2511,
+              2671
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.966
+        },
+        {
+          "questionId": "q06-warrant-requirements",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "lated, and no Warrants shall issue, but upon probable cause, supported by Oath or affirmation, and particularly describing the place to be searched, and the per"
+          ],
+          "spans": [
+            [
+              2671,
+              2831
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q07-double-jeopardy",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "offence to be twice put in jeopardy of life or limb; nor shall be compelled in any criminal case to be a witness against himself, nor be deprived of life, libe"
+          ],
+          "spans": [
+            [
+              3179,
+              3339
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.542
+        },
+        {
+          "questionId": "q08-civil-jury-threshold",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "Amendment VII In Suits at common law, where the value in controversy shall exceed twenty dollars, the right of trial by jury shall be preserved, and no fact"
+          ],
+          "spans": [
+            [
+              3957,
+              4117
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q09-cruel-unusual",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "Amendment VIII Excessive bail shall not be required, nor excessive fines imposed, nor cruel and unusual punishments inflicted."
+          ],
+          "spans": [
+            [
+              4246,
+              4375
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q10-reserved-powers",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "Amendment X The powers not delegated to the United States by the Constitution, nor prohibited by it to the States, are reserved to the States respectively, o"
+          ],
+          "spans": [
+            [
+              4521,
+              4681
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.901
+        },
+        {
+          "questionId": "q11-slavery-abolished",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "r to the people. Amendment XIII Section 1."
+          ],
+          "spans": [
+            [
+              4681,
+              4725
+            ]
+          ],
+          "firstHitRank": 2,
+          "bestOverlap": 0.981
+        },
+        {
+          "questionId": "q12-birthright-citizenship",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "All persons born or naturalized in the United States, and subject to the jurisdiction thereof, are citizens of the United States and of the State wherein they"
+          ],
+          "spans": [
+            [
+              5054,
+              5214
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.958
+        },
+        {
+          "questionId": "q13-suffrage-sex",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "Amendment XIX The right of citizens of the United States to vote shall not be denied or abridged by the United States or by any State on account of sex."
+          ],
+          "spans": [
+            [
+              6211,
+              6366
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q14-two-term-limit",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "No person shall be elected to the office of the President more than twice, and no person who has held the office of President, or acted as President, for more"
+          ],
+          "spans": [
+            [
+              6518,
+              6678
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q15-voting-age",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "The right of citizens of the United States, who are eighteen years of age or older, to vote shall not be denied or abridged by the United States or by any Stat"
+          ],
+          "spans": [
+            [
+              6843,
+              7003
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.852
+        }
+      ]
+    },
+    {
+      "config": {
+        "chunker": "recursive",
+        "size": 80,
+        "overlap": 40,
+        "model": "text-embedding-3-small",
+        "k": 1
+      },
+      "hitRate": 0.4,
+      "mrr": 0.4,
+      "chunkCount": 130,
+      "perQuestion": [
+        {
+          "questionId": "q01-religion-speech",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "Congress shall make no law respecting an establishment of religion, or prohibiti"
+          ],
+          "spans": [
+            [
+              1905,
+              1985
+            ]
+          ],
+          "firstHitRank": null,
+          "bestOverlap": 0.497
+        },
+        {
+          "questionId": "q02-senator-age",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "No Person shall be a Senator who shall not have attained to the Age of thirty Ye"
+          ],
+          "spans": [
+            [
+              1290,
+              1370
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.593
+        },
+        {
+          "questionId": "q03-house-term",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "The House of Representatives shall be composed of Members chosen every second Ye"
+          ],
+          "spans": [
+            [
+              593,
+              673
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.678
+        },
+        {
+          "questionId": "q04-president-eligibility",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "no person who has held the office of President, or acted as President, for more"
+          ],
+          "spans": [
+            [
+              6598,
+              6678
+            ]
+          ],
+          "firstHitRank": 10,
+          "bestOverlap": 0.69
+        },
+        {
+          "questionId": "q05-unreasonable-searches",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "ts, against unreasonable searches and seizures, shall not be violated, and no Wa"
+          ],
+          "spans": [
+            [
+              2607,
+              2687
+            ]
+          ],
+          "firstHitRank": 2,
+          "bestOverlap": 0.537
+        },
+        {
+          "questionId": "q06-warrant-requirements",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "rrants shall issue, but upon probable cause, supported by Oath or affirmation, a"
+          ],
+          "spans": [
+            [
+              2687,
+              2767
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.588
+        },
+        {
+          "questionId": "q07-double-jeopardy",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "twice put in jeopardy of life or limb; nor shall be compelled in any criminal ca"
+          ],
+          "spans": [
+            [
+              3194,
+              3274
+            ]
+          ],
+          "firstHitRank": 2,
+          "bestOverlap": 0.615
+        },
+        {
+          "questionId": "q08-civil-jury-threshold",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "In Suits at common law, where the value in controversy shall exceed twenty dolla"
+          ],
+          "spans": [
+            [
+              3974,
+              4054
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.62
+        },
+        {
+          "questionId": "q09-cruel-unusual",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "Excessive bail shall not be required, nor excessive fines imposed, nor cruel and"
+          ],
+          "spans": [
+            [
+              4264,
+              4344
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.721
+        },
+        {
+          "questionId": "q10-reserved-powers",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "The powers not delegated to the United States by the Constitution, nor prohibite"
+          ],
+          "spans": [
+            [
+              4536,
+              4616
+            ]
+          ],
+          "firstHitRank": null,
+          "bestOverlap": 0.497
+        },
+        {
+          "questionId": "q11-slavery-abolished",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "Neither slavery nor involuntary servitude, except as a punishment for crime whe"
+          ],
+          "spans": [
+            [
+              4725,
+              4805
+            ]
+          ],
+          "firstHitRank": null,
+          "bestOverlap": 0.494
+        },
+        {
+          "questionId": "q12-birthright-citizenship",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "No Person except a natural born Citizen, or a Citizen of the United States, at t"
+          ],
+          "spans": [
+            [
+              1545,
+              1625
+            ]
+          ],
+          "firstHitRank": null,
+          "bestOverlap": 0.482
+        },
+        {
+          "questionId": "q13-suffrage-sex",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "Amendment VIII"
+          ],
+          "spans": [
+            [
+              4248,
+              4264
+            ]
+          ],
+          "firstHitRank": 25,
+          "bestOverlap": 0.667
+        },
+        {
+          "questionId": "q14-two-term-limit",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "No person shall be elected to the office of the President more than twice, and"
+          ],
+          "spans": [
+            [
+              6518,
+              6598
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q15-voting-age",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "No Person shall be a Senator who shall not have attained to the Age of thirty Ye"
+          ],
+          "spans": [
+            [
+              1290,
+              1370
+            ]
+          ],
+          "firstHitRank": 3,
+          "bestOverlap": 0.593
+        }
+      ]
+    },
+    {
+      "config": {
+        "chunker": "recursive",
+        "size": 80,
+        "overlap": 40,
+        "model": "text-embedding-3-large",
+        "k": 1
+      },
+      "hitRate": 0.5333333333333333,
+      "mrr": 0.5333333333333333,
+      "chunkCount": 130,
+      "perQuestion": [
+        {
+          "questionId": "q01-religion-speech",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "Amendment I"
+          ],
+          "spans": [
+            [
+              1892,
+              1905
+            ]
+          ],
+          "firstHitRank": null,
+          "bestOverlap": 0.497
+        },
+        {
+          "questionId": "q02-senator-age",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "No Person shall be a Senator who shall not have attained to the Age of thirty Ye"
+          ],
+          "spans": [
+            [
+              1290,
+              1370
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.593
+        },
+        {
+          "questionId": "q03-house-term",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "The House of Representatives shall be composed of Members chosen every second Ye"
+          ],
+          "spans": [
+            [
+              593,
+              673
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.678
+        },
+        {
+          "questionId": "q04-president-eligibility",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "ve attained to the Age of thirty five Years, and been fourteen Years a Resident"
+          ],
+          "spans": [
+            [
+              1785,
+              1865
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.69
+        },
+        {
+          "questionId": "q05-unreasonable-searches",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "ts, against unreasonable searches and seizures, shall not be violated, and no Wa"
+          ],
+          "spans": [
+            [
+              2607,
+              2687
+            ]
+          ],
+          "firstHitRank": 2,
+          "bestOverlap": 0.537
+        },
+        {
+          "questionId": "q06-warrant-requirements",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "rrants shall issue, but upon probable cause, supported by Oath or affirmation, a"
+          ],
+          "spans": [
+            [
+              2687,
+              2767
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.588
+        },
+        {
+          "questionId": "q07-double-jeopardy",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "ar or public danger; nor shall any person be subject for the same offence to be"
+          ],
+          "spans": [
+            [
+              3114,
+              3194
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.615
+        },
+        {
+          "questionId": "q08-civil-jury-threshold",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "In Suits at common law, where the value in controversy shall exceed twenty dolla"
+          ],
+          "spans": [
+            [
+              3974,
+              4054
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.62
+        },
+        {
+          "questionId": "q09-cruel-unusual",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "Excessive bail shall not be required, nor excessive fines imposed, nor cruel and"
+          ],
+          "spans": [
+            [
+              4264,
+              4344
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.721
+        },
+        {
+          "questionId": "q10-reserved-powers",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "The powers not delegated to the United States by the Constitution, nor prohibite"
+          ],
+          "spans": [
+            [
+              4536,
+              4616
+            ]
+          ],
+          "firstHitRank": null,
+          "bestOverlap": 0.497
+        },
+        {
+          "questionId": "q11-slavery-abolished",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "Amendment XIII"
+          ],
+          "spans": [
+            [
+              4699,
+              4715
+            ]
+          ],
+          "firstHitRank": null,
+          "bestOverlap": 0.494
+        },
+        {
+          "questionId": "q12-birthright-citizenship",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "No Person except a natural born Citizen, or a Citizen of the United States, at t"
+          ],
+          "spans": [
+            [
+              1545,
+              1625
+            ]
+          ],
+          "firstHitRank": null,
+          "bestOverlap": 0.482
+        },
+        {
+          "questionId": "q13-suffrage-sex",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "Amendment XIX"
+          ],
+          "spans": [
+            [
+              6213,
+              6228
+            ]
+          ],
+          "firstHitRank": 12,
+          "bestOverlap": 0.667
+        },
+        {
+          "questionId": "q14-two-term-limit",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "No person shall be elected to the office of the President more than twice, and"
+          ],
+          "spans": [
+            [
+              6518,
+              6598
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q15-voting-age",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "The right of citizens of the United States, who are eighteen years of age or ol"
+          ],
+          "spans": [
+            [
+              6843,
+              6923
+            ]
+          ],
+          "firstHitRank": 4,
+          "bestOverlap": 0.593
+        }
+      ]
+    },
+    {
+      "config": {
+        "chunker": "recursive",
+        "size": 160,
+        "overlap": 40,
+        "model": "text-embedding-3-small",
+        "k": 1
+      },
+      "hitRate": 0.9333333333333333,
+      "mrr": 0.9333333333333333,
+      "chunkCount": 85,
+      "perQuestion": [
+        {
+          "questionId": "q01-religion-speech",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "Congress shall make no law respecting an establishment of religion, or prohibiting the free exercise thereof; or abridging the freedom of speech, or of the pres"
+          ],
+          "spans": [
+            [
+              1905,
+              2065
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.994
+        },
+        {
+          "questionId": "q02-senator-age",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "No Person shall be a Senator who shall not have attained to the Age of thirty Years, and been nine Years a Citizen of the United States, and who shall not, when"
+          ],
+          "spans": [
+            [
+              1290,
+              1450
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q03-house-term",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "The House of Representatives shall be composed of Members chosen every second Year by the People of the several States, and the Electors in each State shall hav"
+          ],
+          "spans": [
+            [
+              593,
+              753
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q04-president-eligibility",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "President; neither shall any Person be eligible to that Office who shall not have attained to the Age of thirty five Years, and been fourteen Years a Resident"
+          ],
+          "spans": [
+            [
+              1705,
+              1865
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.793
+        },
+        {
+          "questionId": "q05-unreasonable-searches",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "The right of the people to be secure in their persons, houses, papers, and effects, against unreasonable searches and seizures, shall not be violated, and no Wa"
+          ],
+          "spans": [
+            [
+              2527,
+              2687
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q06-warrant-requirements",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "rrants shall issue, but upon probable cause, supported by Oath or affirmation, and particularly describing the place to be searched, and the persons or things t"
+          ],
+          "spans": [
+            [
+              2687,
+              2847
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.963
+        },
+        {
+          "questionId": "q07-double-jeopardy",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "than two years of a term to which some other person was elected President shall be elected to the office of the President more than once."
+          ],
+          "spans": [
+            [
+              6678,
+              6817
+            ]
+          ],
+          "firstHitRank": 8,
+          "bestOverlap": 0.615
+        },
+        {
+          "questionId": "q08-civil-jury-threshold",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "In Suits at common law, where the value in controversy shall exceed twenty dollars, the right of trial by jury shall be preserved, and no fact tried by a jury,"
+          ],
+          "spans": [
+            [
+              3974,
+              4134
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q09-cruel-unusual",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "Excessive bail shall not be required, nor excessive fines imposed, nor cruel and unusual punishments inflicted."
+          ],
+          "spans": [
+            [
+              4264,
+              4377
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q10-reserved-powers",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "The powers not delegated to the United States by the Constitution, nor prohibited by it to the States, are reserved to the States respectively, or to the people"
+          ],
+          "spans": [
+            [
+              4536,
+              4696
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.994
+        },
+        {
+          "questionId": "q11-slavery-abolished",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "Neither slavery nor involuntary servitude, except as a punishment for crime whereof the party shall have been duly convicted, shall exist within the United Sta"
+          ],
+          "spans": [
+            [
+              4725,
+              4885
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.981
+        },
+        {
+          "questionId": "q12-birthright-citizenship",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "All persons born or naturalized in the United States, and subject to the jurisdiction thereof, are citizens of the United States and of the State wherein they"
+          ],
+          "spans": [
+            [
+              5054,
+              5214
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.958
+        },
+        {
+          "questionId": "q13-suffrage-sex",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "The right of citizens of the United States to vote shall not be denied or abridged by the United States or by any State on account of sex."
+          ],
+          "spans": [
+            [
+              6228,
+              6368
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q14-two-term-limit",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "No person shall be elected to the office of the President more than twice, and no person who has held the office of President, or acted as President, for more"
+          ],
+          "spans": [
+            [
+              6518,
+              6678
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q15-voting-age",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "The right of citizens of the United States, who are eighteen years of age or older, to vote shall not be denied or abridged by the United States or by any Stat"
+          ],
+          "spans": [
+            [
+              6843,
+              7003
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.852
+        }
+      ]
+    },
+    {
+      "config": {
+        "chunker": "recursive",
+        "size": 160,
+        "overlap": 40,
+        "model": "text-embedding-3-large",
+        "k": 1
+      },
+      "hitRate": 0.8666666666666667,
+      "mrr": 0.8666666666666667,
+      "chunkCount": 85,
+      "perQuestion": [
+        {
+          "questionId": "q01-religion-speech",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "Amendment I"
+          ],
+          "spans": [
+            [
+              1892,
+              1905
+            ]
+          ],
+          "firstHitRank": 2,
+          "bestOverlap": 0.994
+        },
+        {
+          "questionId": "q02-senator-age",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "No Person shall be a Senator who shall not have attained to the Age of thirty Years, and been nine Years a Citizen of the United States, and who shall not, when"
+          ],
+          "spans": [
+            [
+              1290,
+              1450
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q03-house-term",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "The House of Representatives shall be composed of Members chosen every second Year by the People of the several States, and the Electors in each State shall hav"
+          ],
+          "spans": [
+            [
+              593,
+              753
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q04-president-eligibility",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "President; neither shall any Person be eligible to that Office who shall not have attained to the Age of thirty five Years, and been fourteen Years a Resident"
+          ],
+          "spans": [
+            [
+              1705,
+              1865
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.793
+        },
+        {
+          "questionId": "q05-unreasonable-searches",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "The right of the people to be secure in their persons, houses, papers, and effects, against unreasonable searches and seizures, shall not be violated, and no Wa"
+          ],
+          "spans": [
+            [
+              2527,
+              2687
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q06-warrant-requirements",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "rrants shall issue, but upon probable cause, supported by Oath or affirmation, and particularly describing the place to be searched, and the persons or things t"
+          ],
+          "spans": [
+            [
+              2687,
+              2847
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.963
+        },
+        {
+          "questionId": "q07-double-jeopardy",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "the land or naval forces, or in the Militia, when in actual service in time of War or public danger; nor shall any person be subject for the same offence to be"
+          ],
+          "spans": [
+            [
+              3034,
+              3194
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.615
+        },
+        {
+          "questionId": "q08-civil-jury-threshold",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "In Suits at common law, where the value in controversy shall exceed twenty dollars, the right of trial by jury shall be preserved, and no fact tried by a jury,"
+          ],
+          "spans": [
+            [
+              3974,
+              4134
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q09-cruel-unusual",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "Excessive bail shall not be required, nor excessive fines imposed, nor cruel and unusual punishments inflicted."
+          ],
+          "spans": [
+            [
+              4264,
+              4377
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q10-reserved-powers",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "The powers not delegated to the United States by the Constitution, nor prohibited by it to the States, are reserved to the States respectively, or to the people"
+          ],
+          "spans": [
+            [
+              4536,
+              4696
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.994
+        },
+        {
+          "questionId": "q11-slavery-abolished",
+          "hit": false,
+          "rr": 0,
+          "retrieved": [
+            "Amendment XIII"
+          ],
+          "spans": [
+            [
+              4699,
+              4715
+            ]
+          ],
+          "firstHitRank": 2,
+          "bestOverlap": 0.981
+        },
+        {
+          "questionId": "q12-birthright-citizenship",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "All persons born or naturalized in the United States, and subject to the jurisdiction thereof, are citizens of the United States and of the State wherein they"
+          ],
+          "spans": [
+            [
+              5054,
+              5214
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.958
+        },
+        {
+          "questionId": "q13-suffrage-sex",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "The right of citizens of the United States to vote shall not be denied or abridged by the United States or by any State on account of sex."
+          ],
+          "spans": [
+            [
+              6228,
+              6368
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q14-two-term-limit",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "No person shall be elected to the office of the President more than twice, and no person who has held the office of President, or acted as President, for more"
+          ],
+          "spans": [
+            [
+              6518,
+              6678
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 1
+        },
+        {
+          "questionId": "q15-voting-age",
+          "hit": true,
+          "rr": 1,
+          "retrieved": [
+            "The right of citizens of the United States, who are eighteen years of age or older, to vote shall not be denied or abridged by the United States or by any Stat"
+          ],
+          "spans": [
+            [
+              6843,
+              7003
+            ]
+          ],
+          "firstHitRank": 1,
+          "bestOverlap": 0.852
+        }
+      ]
+    }
+  ]
+}

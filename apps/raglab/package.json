@@ -6,7 +6,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "record-example": "node scripts/record-example.mjs"
   },
   "dependencies": {
     "@labs/doc-core": "*",

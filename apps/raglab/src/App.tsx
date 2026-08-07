@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { AuthGate } from '@labs/platform'
 import { joinPages } from './lib/chunkers'
 import {
   BenchmarkFailure,
@@ -14,6 +15,7 @@ import { readyToRun } from './lib/questions'
 import { SAMPLE_DOC, SAMPLE_QUESTIONS } from './samples/founding-documents'
 import { CacheControls } from './components/CacheControls'
 import { ConfigMatrix } from './components/ConfigMatrix'
+import { ExampleRun } from './components/ExampleRun'
 import { Leaderboard } from './components/Leaderboard'
 import { MetricChart } from './components/MetricChart'
 import { QuestionBuilder } from './components/QuestionBuilder'
@@ -51,6 +53,18 @@ type Shared =
   | { state: 'missing'; slug: string }
   | { state: 'loaded'; slug: string; experiment: ExperimentRecord }
 
+/**
+ * `example` shows a benchmark that already ran; `live` is the tool.
+ *
+ * The default is `example`, and that is a judgement about who arrives here. A
+ * first-time visitor is deciding in about ten seconds whether this thing measures
+ * anything, and the live path answers that question in ninety seconds while
+ * spending one of their two daily runs. Opening on a real, finished result costs
+ * them nothing and shows them the part worth seeing — the per-question
+ * diagnostics — immediately. The live tool is one button away and unchanged.
+ */
+type Mode = 'example' | 'live'
+
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e))
 
 export function App() {
@@ -69,6 +83,7 @@ export function App() {
     const slug = new URLSearchParams(window.location.search).get('run')
     return slug ? { state: 'loading', slug } : { state: 'none' }
   })
+  const [mode, setMode] = useState<Mode>('example')
   const abort = useRef<AbortController | null>(null)
 
   const status = useMemo(() => readyToRun(doc.text, questions), [doc.text, questions])
@@ -101,6 +116,7 @@ export function App() {
   const startOver = useCallback(() => {
     window.history.replaceState(null, '', window.location.pathname)
     setShared({ state: 'none' })
+    setMode('live')
     setDoc(SAMPLE)
     setQuestions(SAMPLE_QUESTIONS)
     setResults([])
@@ -249,7 +265,23 @@ export function App() {
     )
   }
 
-  return (
+  if (mode === 'example') {
+    return (
+      <main className="app">
+        <header className="app-header">
+          <h1>RAG Lab</h1>
+          <p className="tagline">
+            Retrieval benchmarks, not vibes. Chunk it every way, embed it, score it
+            against labelled answers, share the result.
+          </p>
+        </header>
+        <ExampleRun onRunYourOwn={() => setMode('live')} />
+        <Footer />
+      </main>
+    )
+  }
+
+  const tool = (
     <main className="app">
       <header className="app-header">
         <h1>RAG Lab</h1>
@@ -257,6 +289,17 @@ export function App() {
           Retrieval benchmarks, not vibes. Chunk it every way, embed it, score it
           against labelled answers, share the result.
         </p>
+        <div className="toolbar mode-switch">
+          <button
+            type="button"
+            className="chip"
+            disabled={running}
+            onClick={() => setMode('example')}
+          >
+            ← See the finished example
+          </button>
+          <span className="dim">Free, instant, and no run off your daily two.</span>
+        </div>
         <CacheControls />
       </header>
 
@@ -422,6 +465,11 @@ export function App() {
       <Footer />
     </main>
   )
+
+  // Only the tool is gated. A session is what lets the Edge Function charge a run
+  // and what makes a saved permalink yours; neither is in play until this point,
+  // and the example and the shared-run views above deliberately reach neither.
+  return <AuthGate>{tool}</AuthGate>
 }
 
 function Footer() {

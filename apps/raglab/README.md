@@ -4,21 +4,60 @@ Which chunking actually wins? Benchmarks, not vibes.
 
 **Live at [labs.abdash.net/raglab](https://labs.abdash.net/raglab/)**
 
-## Try it in 30 seconds
+## Try it in zero seconds
 
-No signup, nothing to upload — a public-domain document ships with fifteen hand-labelled
-questions.
+The app opens on a **finished benchmark**: twelve configurations over fifteen
+hand-labelled questions, recorded against the live embedding function on 7 August 2026 and
+shipped as a file. No signup, no wait, and none of your two daily runs.
 
-1. Press **Run benchmark**.
-2. Read the leaderboard.
-3. Now open a question the winning configuration **missed**, and read the drill-down.
+1. Read the leaderboard.
+2. Open **"Which provision abolished slavery?"** — the one question the winning
+   configuration missed.
+3. Read the drill-down.
 
 Step three is the product. A score tells you a configuration lost; the drill-down tells
-you *why*, and the three reasons need different fixes:
+you *why*, and the reasons need different fixes. From that question in the shipped run:
 
-- **impossible** — the chunk size cannot physically hold the answer
-- **boundary** — the chunker split the answer; best coverage was 38%
-- **depth** — it ranked #14 of 60, and k was 5. At k=14 this scores 0.07
+- **impossible** — six configurations chunk at 80 characters and that answer is 162, so no
+  chunk can cover the half a hit requires. Arithmetic, not retrieval. Every embedding model
+  scores zero here and switching models is wasted work.
+- **depth** — the winner ranked the right chunk **#2 of 60** and k was 1, so it was thrown
+  away. At k=2 it would score 0.50 on this question instead of 0. Nothing about the
+  chunking needs to change.
+- **boundary** — the chunker cut through the answer and no single chunk held enough of it.
+  This one **does not occur** in the shipped example: every gold passage in the sample is a
+  single clause of 73–166 characters, and a contiguous chunking large enough to be allowed
+  a hit always lands one window over half of it. The example reports zero and says so,
+  which is cheaper than inventing an illustration.
+
+Then press **Run your own benchmark** for the live tool: your document, your questions,
+your matrix.
+
+## The finished example is a recording, not a mock-up
+
+`src/example/benchmark.json` is written by `scripts/record-example.mjs`, which signs in
+anonymously, calls the deployed `raglab-embed` function, and drives the same
+`runBenchmark` the Run button drives. It records what came back — hit rates, MRR, ranks,
+best overlaps, retrieved excerpts, wall clock — and nothing else. There is no path that
+produces that file by hand.
+
+```bash
+SUPABASE_ANON_KEY=... node apps/raglab/scripts/record-example.mjs
+```
+
+That costs **one** unit of `raglab:runs` — all twelve configurations ride a single signed
+run id, which is the same mechanism that stops a visitor's twelve-config run from costing
+twelve of their allowance.
+
+Most of the fixture is checked rather than trusted. `src/example/benchmark.test.ts`
+re-derives every chunk count, every best-overlap figure and every retrieved span from the
+sample document, because those are pure geometry and depend on no embedding: edit a score
+by hand and they stop lining up. What genuinely cannot be recomputed offline — the ranks —
+is checked for internal consistency instead, since a hit's reciprocal rank must be
+`1/rank` and an aggregate must be the mean of its parts.
+
+The example needs no account, so the auth gate wraps only the benchmark tool. A visitor
+reading a saved result does not get an anonymous user minted for them.
 
 ## What it proves
 
@@ -101,6 +140,12 @@ every experiment insert failed. Invisible until real SQL ran against real Postgr
 npm install
 npm run dev -w apps/raglab
 npx vitest run apps/raglab
+
+# Re-record the bundled example. Spends one raglab run; the platform allows six a day.
+SUPABASE_ANON_KEY=... npm run record-example -w apps/raglab
+
+# Same thing without writing anything, to see the leaderboard it would ship.
+SUPABASE_ANON_KEY=... npm run record-example -w apps/raglab -- --dry-run
 ```
 
 The metrics suite is the one worth reading: it pins the half-open range boundary (a chunk

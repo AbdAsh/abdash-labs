@@ -224,6 +224,43 @@ input[type="text"] {
   user-select: text;
 }
 
+/* --- finished example --- */
+
+.mode-switch { margin: 0 0 0.35rem; font-size: 0.82rem; }
+.mode-switch .dim { font-size: 0.8rem; }
+
+.example-head { border-color: rgba(76, 194, 255, 0.35); }
+
+/* The date is the claim. It says a machine ran this on a day against a live
+   service, which is the difference between a benchmark and a screenshot. */
+.example-label {
+  margin: 0 0 0.7rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+
+.example-meta { margin-top: 0.55rem; line-height: 1.6; }
+.example-meta code { font-size: 0.85em; }
+.example-actions { margin: 1.1rem 0 0; }
+.example-actions .dim { font-size: 0.82rem; }
+
+.outcome-split { list-style: none; padding: 0; margin: 0; font-size: 0.9rem; }
+.outcome-split li { padding: 0.3rem 0; border-top: 1px solid var(--line); }
+.outcome-split li:first-child { border-top: none; }
+.outcome-split li.empty { color: var(--dim); }
+.outcome-split em { font-style: normal; }
+
+.outcome-split strong {
+  display: inline-block;
+  min-width: 2.6rem;
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.example-winner-note { margin: 1rem 0 0; }
+
 /* --- results --- */
 
 .verdict {
