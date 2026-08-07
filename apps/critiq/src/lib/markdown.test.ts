@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { findingToMarkdown, readPassed, reportToMarkdown } from './markdown'
+import {
+  findingToMarkdown,
+  readPassed,
+  reportToMarkdown,
+  storedReportToMarkdown,
+} from './markdown'
 import type { Finding } from './types'
 
 const f = (over: Partial<Finding> & { id: string }): Finding => ({
@@ -105,6 +110,53 @@ describe('reportToMarkdown', () => {
     const md = reportToMarkdown({ url: 'https://example.com/', grades: null, findings: [] })
     expect(md).toContain('**Overall grade: ?**')
     expect(md.endsWith('\n')).toBe(true)
+  })
+
+  it('quotes a provenance note above the grade table, so a paste keeps its label', () => {
+    // A saved example copied into a ticket has left the page carrying the
+    // on-screen label. Without this, the paste reads as a live review.
+    const md = reportToMarkdown({
+      url: 'https://example.com/',
+      grades: { overall: 'B', metadata: 'A' },
+      findings: [],
+      note: 'Saved example: captured 7 August 2026. Not a live review.',
+    })
+    expect(md).toContain('> Saved example: captured 7 August 2026. Not a live review.')
+    expect(md.indexOf('Saved example')).toBeLessThan(md.indexOf('| Dimension | Grade |'))
+  })
+
+  it('adds nothing when there is no note', () => {
+    const plain = reportToMarkdown({ url: 'https://example.com/', grades: null, findings: [] })
+    const blank = reportToMarkdown({
+      url: 'https://example.com/',
+      grades: null,
+      findings: [],
+      note: '   ',
+    })
+    expect(blank).toBe(plain)
+    expect(plain).not.toContain('>')
+  })
+})
+
+describe('storedReportToMarkdown', () => {
+  const stored = {
+    slug: 'abc123',
+    url: 'https://example.com/',
+    status: 'complete',
+    grades: { overall: 'B' },
+    findings: [f({ id: 'title-length' })],
+    digest: { passed: ['lang-missing'] },
+    created_at: '2026-08-07T13:19:45Z',
+  }
+
+  it('pulls the passed ids out of the digest', () => {
+    expect(storedReportToMarkdown(stored)).toContain('- The page declares its language')
+  })
+
+  it('carries the note through to the document', () => {
+    expect(storedReportToMarkdown(stored, '7 Aug 2026', 'Saved example.')).toContain(
+      '> Saved example.',
+    )
   })
 })
 

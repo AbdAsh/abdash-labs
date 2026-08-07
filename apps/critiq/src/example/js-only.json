@@ -1,0 +1,165 @@
+{
+  "$generatedBy": "apps/critiq/scripts/capture-example.mjs",
+  "$warning": "Generated file. Do not edit by hand: everything below is the response of the deployed critiq-review function, and hand-editing it would turn a real report into a fabricated one.",
+  "capture": {
+    "id": "js-only",
+    "mode": "live",
+    "why": "A client-rendered SPA, for the js-only-content critical finding.",
+    "requestedUrl": "https://excalidraw.com",
+    "endpoint": "https://jayflvpyrdvqhmftiokp.supabase.co/functions/v1/critiq-review",
+    "slug": "ug6hn5vm78f8",
+    "reviewedAt": "2026-08-07T14:50:17.865277+00:00",
+    "capturedAt": "2026-08-07T14:50:18.159Z"
+  },
+  "report": {
+    "slug": "ug6hn5vm78f8",
+    "url": "https://excalidraw.com/",
+    "status": "complete",
+    "grades": {
+      "links": "A",
+      "content": "F",
+      "overall": "E",
+      "metadata": "B",
+      "structure": "C",
+      "crawlability": "A",
+      "answer-engine": "D",
+      "structured-data": "B"
+    },
+    "findings": [
+      {
+        "id": "js-only-content",
+        "fix": "Server-render or pre-render this page. Crawlers that do not execute JavaScript — and every AI answer engine that fetches raw HTML — see an empty document, so the page cannot rank or be cited on content it does not contain.",
+        "title": "The page has almost no content without JavaScript",
+        "source": "check",
+        "evidence": "The raw HTML contains 1 words and 6 scripts, with a text-to-HTML ratio of 0.1%. The response is a shell that renders client-side.",
+        "severity": "critical",
+        "dimension": "content"
+      },
+      {
+        "id": "intent-mismatch",
+        "fix": "Add descriptive and helpful content to the homepage explaining what Excalidraw is, what distinguishes it from competitors, and how users can get started with or benefit from the tool.",
+        "title": "No meaningful content to satisfy user intent",
+        "source": "llm",
+        "evidence": "The extracted page text is only: 'Excalidraw'. The word count is 1, and there are no content paragraphs, list items, or additional body text.",
+        "severity": "critical",
+        "dimension": "content"
+      },
+      {
+        "id": "answer-engine-unfriendly",
+        "fix": "Include concise, factual, standalone sentences in the visible content, e.g., 'Excalidraw is an open-source online collaborative whiteboard tool that lets users create diagrams with a hand-drawn look.'",
+        "title": "No self-contained, attributable claims for answer engines",
+        "source": "llm",
+        "evidence": "No claim or passage is present that a model could quote; no entities are explicitly named or described in the body of the page.",
+        "severity": "critical",
+        "dimension": "answer-engine"
+      },
+      {
+        "id": "heading-outline-missing-argument",
+        "fix": "Add structured subheadings (h2s and h3s) that break down features, use cases, getting started steps, and benefits to reflect a real informational hierarchy.",
+        "title": "Heading outline lacks supporting subheadings or argument structure",
+        "source": "llm",
+        "evidence": "The heading outline is limited to a single h1: 'Excalidraw', with no subheadings to elaborate on features, benefits, or use cases.",
+        "severity": "high",
+        "dimension": "structure"
+      },
+      {
+        "id": "schema-org-missing",
+        "fix": "Add appropriate schema.org structured data, such as WebApplication or SoftwareApplication, with attributes that describe Excalidraw and its main actions.",
+        "title": "No structured data present to help search engines understand the page",
+        "source": "llm",
+        "evidence": "No JSON-LD structured data types are present (jsonLdTypes: []).",
+        "severity": "medium",
+        "dimension": "structured-data"
+      },
+      {
+        "id": "title-length",
+        "fix": "Expand towards 25–65 characters. A short title wastes the most valuable text on the page.",
+        "title": "The title is only 21 characters",
+        "source": "check",
+        "evidence": "21 characters (aim for 25–65): \"Excalidraw Whiteboard\"",
+        "severity": "low",
+        "dimension": "metadata"
+      }
+    ],
+    "digest": {
+      "og": {
+        "url": "https://excalidraw.com",
+        "type": "website",
+        "image": "https://excalidraw.com/og-image-3.png",
+        "title": "Excalidraw — Collaborative whiteboarding made easy",
+        "image:alt": "Excalidraw logo",
+        "site_name": "Excalidraw",
+        "description": "Excalidraw is a virtual collaborative whiteboard tool that lets you easily sketch diagrams that have a hand-drawn feel to them."
+      },
+      "url": "https://excalidraw.com",
+      "lang": "en",
+      "links": [],
+      "lists": 0,
+      "title": "Excalidraw Whiteboard",
+      "images": [],
+      "jsonLd": [],
+      "passed": [
+        "http-status-error",
+        "noindex-present",
+        "robots-blocked",
+        "canonical-missing",
+        "canonical-mismatch",
+        "sitemap-missing",
+        "redirect-chain",
+        "title-missing",
+        "description-missing",
+        "description-length",
+        "h1-missing",
+        "h1-multiple",
+        "lang-missing",
+        "viewport-missing"
+      ],
+      "status": 200,
+      "tables": 0,
+      "twitter": {
+        "url": "https://excalidraw.com",
+        "card": "summary_large_image",
+        "site": "@excalidraw",
+        "image": "https://excalidraw.com/og-image-3.png",
+        "title": "Excalidraw — Collaborative whiteboarding made easy",
+        "description": "Excalidraw is a virtual collaborative whiteboard tool that lets you easily sketch diagrams that have a hand-drawn feel to them."
+      },
+      "finalUrl": "https://excalidraw.com/",
+      "headings": [
+        {
+          "text": "Excalidraw",
+          "level": 1
+        }
+      ],
+      "hreflang": [],
+      "viewport": "width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover,shrink-to-fit=no",
+      "canonical": "https://excalidraw.com/",
+      "elapsedMs": 118,
+      "listItems": 0,
+      "redirects": [],
+      "truncated": false,
+      "wordCount": 1,
+      "htmlLength": 6856,
+      "judgeError": null,
+      "mainTables": 0,
+      "paragraphs": 0,
+      "robotsMeta": null,
+      "textLength": 10,
+      "xRobotsTag": null,
+      "contentType": "text/html",
+      "description": "Excalidraw is a virtual collaborative whiteboard tool that lets you easily sketch diagrams that have a hand-drawn feel to them.",
+      "robotsFound": true,
+      "scriptCount": 6,
+      "sitemapFound": true,
+      "externalLinks": 0,
+      "googlebotMeta": null,
+      "internalLinks": 0,
+      "mainListItems": 0,
+      "textHtmlRatio": 0.0015,
+      "mainParagraphs": 0,
+      "questionHeadings": 0,
+      "noscriptTextLength": 46
+    },
+    "created_at": "2026-08-07T14:50:17.865277+00:00"
+  }
+}

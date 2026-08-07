@@ -1,0 +1,269 @@
+{
+  "$generatedBy": "apps/critiq/scripts/capture-example.mjs",
+  "$warning": "Generated file. Do not edit by hand: everything below is the response of the deployed critiq-review function, and hand-editing it would turn a real report into a fabricated one.",
+  "capture": {
+    "id": "self-audit",
+    "mode": "adopted",
+    "why": "The author's own site. The findings are real criticism of it.",
+    "requestedUrl": "https://abdash.net",
+    "endpoint": "https://jayflvpyrdvqhmftiokp.supabase.co/functions/v1/critiq-review",
+    "slug": "qeqrbm7xsczv",
+    "reviewedAt": "2026-08-07T13:19:45.729011+00:00",
+    "capturedAt": "2026-08-07T14:50:09.602Z"
+  },
+  "report": {
+    "slug": "qeqrbm7xsczv",
+    "url": "https://abdash.net/",
+    "status": "complete",
+    "grades": {
+      "links": "B",
+      "content": "B",
+      "overall": "B",
+      "metadata": "A",
+      "structure": "B",
+      "crawlability": "A",
+      "answer-engine": "C",
+      "structured-data": "A"
+    },
+    "findings": [
+      {
+        "id": "answer-engine-attribution",
+        "fix": "For key projects and achievements, rewrite at least one sentence per block to be self-contained and specific (e.g., 'At Cybernetic Labs in 2023, Abdulrahman Mahmutoglu designed and launched an AI-powered frontend system that reduced code generation time by 40%.'). Include measurable results or details that can stand alone and be clearly attributed.",
+        "title": "Statements lack explicit, attributable claims for answer engines",
+        "source": "llm",
+        "evidence": "Most descriptions use general phrases like \"Developed full-stack features in a production .NET environment\" and \"Architected and implemented an AI-driven frontend generation system...\" with no project-specific context or outcome, and no sourceable data or named entities.",
+        "severity": "high",
+        "dimension": "answer-engine"
+      },
+      {
+        "id": "intent-clarity",
+        "fix": "Add a short, specific value proposition highlighting what makes Abdulrahman Mahmutoglu distinct in the frontend & AI space (e.g., a unique approach, notable achievement, or philosophy) and place it prominently near the top of the page.",
+        "title": "Search intent is mostly portfolio/informational, but missing strong differentiators or unique value statement",
+        "source": "llm",
+        "evidence": "The body outlines projects, roles, and skills, e.g. \"Results-driven Senior Frontend Engineer with 4+ years of professional experience...\", but lacks a section that answers 'Why work with/learn more about Abdulrahman Mahmutoglu?' compared to another senior frontend engineer.",
+        "severity": "medium",
+        "dimension": "content"
+      },
+      {
+        "id": "hed-outline-decorative-h3s",
+        "fix": "Remove empty h3 elements from the markup. Reorganize 'Built with...' mentions so key technologies are cited within relevant sections, not as isolated headings.",
+        "title": "Heading structure includes many empty or non-informative h3 elements",
+        "source": "llm",
+        "evidence": "\"h3: \" (There are four h3s in the outline with no text); plus, some sections in the source repeat 'Built with...' outside content structure.",
+        "severity": "medium",
+        "dimension": "structure"
+      },
+      {
+        "id": "internal-linking-opportunity",
+        "fix": "Add internal links from project summaries to dedicated pages or modal overlays with more information on each project, improving navigation and topic depth.",
+        "title": "Internal linking is sparse for a portfolio with multiple showcased projects",
+        "source": "llm",
+        "evidence": "\"internalLinks\": 2, \"contentListItems\": 8, \"contentParagraphs\": 12;\" Projects are described but not linked to detailed write-ups or case studies.",
+        "severity": "low",
+        "dimension": "links"
+      }
+    ],
+    "digest": {
+      "og": {
+        "url": "https://abdash.net",
+        "type": "website",
+        "title": "Abdulrahman Mahmutoglu — Senior Frontend & AI Engineer | abdash",
+        "site_name": "abdash",
+        "description": "Senior Frontend & AI Engineer specializing in Vue, React, Svelte, and Astro. Building scalable web architectures and AI-driven systems."
+      },
+      "url": "https://abdash.net",
+      "lang": "en",
+      "links": [
+        {
+          "rel": "noopener",
+          "href": "https://github.com/AbdAsh",
+          "text": "",
+          "internal": false
+        },
+        {
+          "rel": "noopener",
+          "href": "https://linkedin.com/in/abdash",
+          "text": "",
+          "internal": false
+        },
+        {
+          "rel": null,
+          "href": "https://abdash.net/cdn-cgi/l/email-protection#24454640514856454c49454a49454c4951504b434851644349454d480a474b49",
+          "text": "",
+          "internal": true
+        },
+        {
+          "rel": "noopener",
+          "href": "https://github.com/AbdAsh",
+          "text": "",
+          "internal": false
+        },
+        {
+          "rel": "noopener",
+          "href": "https://linkedin.com/in/abdash",
+          "text": "",
+          "internal": false
+        },
+        {
+          "rel": null,
+          "href": "https://abdash.net/cdn-cgi/l/email-protection#87e6e5e3f2ebf5e6efeae6e9eae6efeaf2f3e8e0ebf2c7e0eae6eeeba9e4e8ea",
+          "text": "",
+          "internal": true
+        }
+      ],
+      "lists": 4,
+      "title": "Abdulrahman Mahmutoglu — Senior Frontend & AI Engineer | abdash",
+      "images": [
+        {
+          "alt": "Loading",
+          "src": "https://abdash.net/logo.png"
+        },
+        {
+          "alt": "AbdAsh Logo",
+          "src": "https://abdash.net/logo.png"
+        }
+      ],
+      "jsonLd": [
+        {
+          "raw": "{\"@context\":\"https://schema.org\",\"@type\":\"Person\",\"name\":\"Abdulrahman Mahmutoglu\",\"alternateName\":\"abdash\",\"url\":\"https://abdash.net\",\"jobTitle\":\"Senior Frontend & AI Engineer\",\"worksFor\":{\"@type\":\"Organization\",\"name\":\"Cybernetic Labs\"},\"sameAs\":[\"https://github.com/AbdAsh\",\"https://linkedin.com/in/abdash\"],\"knowsAbout\":[\"Frontend Development\",\"Vue.js\",\"React\",\"Svelte\",\"Astro\",\"AI/ML\",\"n8n\"]}",
+          "types": [
+            "Person"
+          ],
+          "valid": true
+        }
+      ],
+      "passed": [
+        "http-status-error",
+        "noindex-present",
+        "robots-blocked",
+        "canonical-missing",
+        "canonical-mismatch",
+        "sitemap-missing",
+        "redirect-chain",
+        "title-missing",
+        "title-length",
+        "description-missing",
+        "description-length",
+        "js-only-content",
+        "thin-content",
+        "h1-missing",
+        "h1-multiple",
+        "heading-skip",
+        "lang-missing",
+        "viewport-missing",
+        "img-alt-missing",
+        "jsonld-invalid",
+        "jsonld-missing",
+        "generic-anchor-text",
+        "no-extractable-answers"
+      ],
+      "status": 200,
+      "tables": 0,
+      "twitter": {
+        "card": "summary_large_image",
+        "title": "Abdulrahman Mahmutoglu — Senior Frontend & AI Engineer | abdash",
+        "description": "Senior Frontend & AI Engineer specializing in Vue, React, Svelte, and Astro. Building scalable web architectures and AI-driven systems."
+      },
+      "finalUrl": "https://abdash.net/",
+      "headings": [
+        {
+          "text": "Abdulrahman Mahmutoglu",
+          "level": 1
+        },
+        {
+          "text": "About Me",
+          "level": 2
+        },
+        {
+          "text": "",
+          "level": 3
+        },
+        {
+          "text": "",
+          "level": 3
+        },
+        {
+          "text": "",
+          "level": 3
+        },
+        {
+          "text": "",
+          "level": 3
+        },
+        {
+          "text": "AI Business Plan Generator",
+          "level": 3
+        },
+        {
+          "text": "CourseFox — AI Learning Platform",
+          "level": 3
+        },
+        {
+          "text": "UI Component Library (Monorepo)",
+          "level": 3
+        },
+        {
+          "text": "E-Voting Blockchain System",
+          "level": 3
+        },
+        {
+          "text": "Microfrontend Code Generator",
+          "level": 3
+        },
+        {
+          "text": "Restaurant Management App",
+          "level": 3
+        },
+        {
+          "text": "AI & Automation",
+          "level": 2
+        },
+        {
+          "text": "Agentic AI Systems",
+          "level": 3
+        },
+        {
+          "text": "RAG Pipelines",
+          "level": 3
+        },
+        {
+          "text": "n8n Orchestration",
+          "level": 3
+        },
+        {
+          "text": "Live AI Demo",
+          "level": 3
+        }
+      ],
+      "hreflang": [],
+      "viewport": "width=device-width, initial-scale=1.0",
+      "canonical": "https://abdash.net/",
+      "elapsedMs": 628,
+      "listItems": 8,
+      "redirects": [],
+      "truncated": false,
+      "wordCount": 542,
+      "htmlLength": 53370,
+      "judgeError": null,
+      "mainTables": 0,
+      "paragraphs": 13,
+      "robotsMeta": null,
+      "textLength": 4831,
+      "xRobotsTag": null,
+      "contentType": "text/html",
+      "description": "Senior Frontend & AI Engineer specializing in Vue, React, Svelte, and Astro. Building scalable web architectures and AI-driven systems.",
+      "robotsFound": true,
+      "scriptCount": 6,
+      "sitemapFound": false,
+      "externalLinks": 4,
+      "googlebotMeta": null,
+      "internalLinks": 2,
+      "mainListItems": 8,
+      "textHtmlRatio": 0.0905,
+      "mainParagraphs": 12,
+      "questionHeadings": 0,
+      "noscriptTextLength": 0
+    },
+    "created_at": "2026-08-07T13:19:45.729011+00:00"
+  }
+}

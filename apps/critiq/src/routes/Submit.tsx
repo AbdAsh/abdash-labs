@@ -11,7 +11,8 @@ import {
   stageAt,
 } from '../lib/format'
 import { ErrorPanel } from '../components/ErrorPanel'
-import { reportPath } from '../lib/router'
+import { examplePath, reportPath } from '../lib/router'
+import { EXAMPLES, exampleSummary } from '../example'
 import type { ReportSummary } from '../lib/types'
 
 /** Matches the Edge Function's own 15 s page budget, plus room for the model. */
@@ -94,6 +95,12 @@ export function Submit({ navigate }: { navigate: (path: string) => void }) {
           metadata, content fit, semantics, structured data, and whether an AI answer engine can
           actually cite you.
         </p>
+
+        {/* Before the form, deliberately. A run costs fifteen seconds and one of
+            an anonymous visitor's one review for the day, which is far too much
+            to charge someone for the question "what does this produce?" — so
+            the finished answer is one free click, and it is offered first. */}
+        <FirstLook navigate={navigate} />
 
         <form onSubmit={submit} className="form">
           <label className="visually-hidden" htmlFor="url">URL to review</label>
@@ -181,6 +188,28 @@ export function Submit({ navigate }: { navigate: (path: string) => void }) {
         </ul>
       </section>
 
+      {EXAMPLES.length > 1 && (
+        <section className="panel panel--quiet">
+          <h2 className="subtitle">The saved examples</h2>
+          <ul className="bullets">
+            {EXAMPLES.map((example) => (
+              <li key={example.id}>
+                <a
+                  href={examplePath(example.id)}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    navigate(examplePath(example.id))
+                  }}
+                >
+                  <strong>{example.title}</strong>
+                </a>{' '}
+                — {displayUrl(example.url)}, {exampleSummary(example)}.
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {recent.length > 0 && (
         <section className="panel panel--quiet">
           <h2 className="subtitle">Your recent reviews</h2>
@@ -208,6 +237,40 @@ export function Submit({ navigate }: { navigate: (path: string) => void }) {
           </ul>
         </section>
       )}
+    </div>
+  )
+}
+
+/**
+ * The free path to a finished report.
+ *
+ * The numbers in the copy are read off the saved report rather than written
+ * here, so regenerating an example can never leave the landing page advertising
+ * a grade the example no longer has.
+ */
+function FirstLook({ navigate }: { navigate: (path: string) => void }) {
+  const example = EXAMPLES[0]
+  if (!example) return null
+
+  return (
+    <div className="firstlook">
+      <div className="firstlook__body">
+        <p className="firstlook__lead">See a finished report first</p>
+        <p className="firstlook__note">
+          A saved real review of {displayUrl(example.url)} — {exampleSummary(example)}. Instant,
+          free, and it does not touch your daily quota.
+        </p>
+      </div>
+      <a
+        className="button firstlook__go"
+        href={examplePath(example.id)}
+        onClick={(e) => {
+          e.preventDefault()
+          navigate(examplePath(example.id))
+        }}
+      >
+        See a finished example
+      </a>
     </div>
   )
 }

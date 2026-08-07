@@ -39,6 +39,16 @@ export interface ReportMarkdownInput {
   findings: Finding[]
   passed?: readonly string[]
   createdAt?: string
+  /**
+   * A line of provenance placed directly under the grade.
+   *
+   * Exists for the saved examples. A copied report outlives the page it was
+   * copied from — it goes into a ticket, a document, a message — so a label
+   * that only appears on screen stops being a label the moment anyone uses the
+   * copy button. This is how "this is a saved example, not a live review"
+   * travels with the text.
+   */
+  note?: string
 }
 
 /** The whole report, in the order the page shows it. */
@@ -52,6 +62,9 @@ export function reportToMarkdown(report: ReportMarkdownInput): string {
     `**Overall grade: ${overall}** · ${findings.length} finding${findings.length === 1 ? '' : 's'}`,
   ]
 
+  // Before the grade table, not after the findings: a note that explains what
+  // this document is has to be readable without scrolling past the report.
+  if (report.note && report.note.trim() !== '') out.push('', `> ${report.note.trim()}`)
   if (report.createdAt) out.push('', `Reviewed ${report.createdAt}.`)
 
   const dimensionGrades = Object.entries(report.grades ?? {}).filter(([key]) => key !== 'overall')
@@ -79,13 +92,18 @@ export function reportToMarkdown(report: ReportMarkdownInput): string {
 }
 
 /** Convenience for the report route, which holds a `StoredReport`. */
-export function storedReportToMarkdown(report: StoredReport, createdAt?: string): string {
+export function storedReportToMarkdown(
+  report: StoredReport,
+  createdAt?: string,
+  note?: string,
+): string {
   return reportToMarkdown({
     url: report.url,
     grades: report.grades,
     findings: report.findings ?? [],
     passed: readPassed(report.digest),
     createdAt,
+    note,
   })
 }
 

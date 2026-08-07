@@ -189,6 +189,78 @@ a { color: var(--accent); }
   .spinner { animation: none; }
 }
 
+/* ---- the free path to a finished report ---------------------------------- */
+
+.firstlook {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 0 0 1.25rem;
+  padding: 1rem 1.1rem;
+  background: #0b0e13;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+}
+
+.firstlook__body { flex: 1 1 16rem; min-width: 0; }
+.firstlook__lead { margin: 0; font-weight: 600; }
+.firstlook__note { margin: .2rem 0 0; font-size: .875rem; color: var(--muted); }
+.firstlook__go { flex: none; text-decoration: none; white-space: nowrap; }
+
+.examples { display: flex; gap: .6rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+
+.examples__tab {
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+  flex: 1 1 14rem;
+  padding: .6rem .8rem;
+  color: var(--muted);
+  text-decoration: none;
+  background: #0b0e13;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.examples__tab:hover { border-color: var(--accent); }
+.examples__tab.is-active { border-color: var(--accent); background: #101722; }
+.examples__title { font-weight: 600; color: var(--text); }
+.examples__url { font-size: .8rem; overflow-wrap: anywhere; }
+.examples__blurb { margin-bottom: 1rem; }
+
+/* The provenance label on a saved example. Sits inside the report card, above
+   the grade, and is not dismissible: a reader who mistakes stored output for a
+   review they triggered has been misled about what the tool just did. */
+.stamp {
+  display: flex;
+  align-items: baseline;
+  gap: .6rem;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: .7rem .9rem;
+  font-size: .85rem;
+  color: var(--muted);
+  background: #0b0e13;
+  border: 1px solid var(--fair);
+  border-radius: var(--radius);
+}
+
+.stamp > span:last-child { flex: 1 1 18rem; min-width: 0; }
+.stamp code { font-size: .95em; overflow-wrap: anywhere; }
+
+.stamp__tag {
+  flex: none;
+  padding: .1rem .5rem;
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: #241a00;
+  background: var(--fair);
+  border-radius: 999px;
+}
+
 /* ---- grades -------------------------------------------------------------- */
 
 .report__head { display: flex; flex-direction: column; gap: 1.25rem; }

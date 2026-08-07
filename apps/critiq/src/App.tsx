@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { parseRoute } from './lib/router'
 import { Submit } from './routes/Submit'
 import { Report } from './routes/Report'
+import { Example } from './routes/Example'
 
 export default function App() {
   const [path, setPath] = useState(() => window.location.pathname)
@@ -23,9 +24,9 @@ export default function App() {
 
   return (
     <main className="app">
-      {route.name === 'report'
-        ? <Report slug={route.slug} navigate={navigate} />
-        : <Submit navigate={navigate} />}
+      {route.name === 'report' && <Report slug={route.slug} navigate={navigate} />}
+      {route.name === 'example' && <Example id={route.id} navigate={navigate} />}
+      {route.name === 'submit' && <Submit navigate={navigate} />}
     </main>
   )
 }
