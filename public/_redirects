@@ -1,6 +1,26 @@
-/recto/*      /recto/index.html      200
-/asksheet/*   /asksheet/index.html   200
-/critiq/*     /critiq/index.html     200
-/raglab/*     /raglab/index.html     200
-/graphread/*  /graphread/index.html  200
-/planemode/*  /planemode/index.html  200
+# Critiq is the only app on this origin that routes on the path. The other five
+# put their state in the query string (?run=, ?g=, ?mode=), so their URLs are
+# always a real directory and the asset server resolves them with no help.
+#
+# Two things constrain what can be written here, and both were learned the hard
+# way from a rejected deploy:
+#
+#   1. A rule whose target ends in `/index` or `/index.html` is REJECTED when the
+#      source ends in `/*`. Not a warning and not conditional on html_handling —
+#      workers-sdk rejects it outright, because html_handling would strip the
+#      `/index.html` back off and re-trigger the same rule forever. So these
+#      point at `/critiq/`, the directory, and never at the file inside it.
+#
+#   2. That target is only stable because html_handling is "force-trailing-slash",
+#      which makes `/critiq/` the canonical spelling. Under the default
+#      "auto-trailing-slash" the canonical form is `/critiq` and this target would
+#      bounce through a 307 that rewrites the address bar — destroying the very
+#      permalink the rule exists to serve.
+#
+# The rules are also deliberately narrow. `/critiq/*` would cover the built
+# assets too, and whether a 200 rewrite outranks a real file is a question worth
+# never having to ask; `/critiq/r/` and `/critiq/example` contain no files.
+/critiq/example    /critiq/  200
+/critiq/example/   /critiq/  200
+/critiq/example/*  /critiq/  200
+/critiq/r/*        /critiq/  200

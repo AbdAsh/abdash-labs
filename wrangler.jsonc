@@ -38,21 +38,28 @@
 
   "assets": {
     "directory": "./dist",
-    "html_handling": "auto-trailing-slash",
+
+    // Makes `/critiq/` the canonical spelling of a directory rather than
+    // `/critiq`. That is load-bearing, not cosmetic: the fallback rules in
+    // public/_redirects proxy to `/critiq/`, and they are only loop-free because
+    // that target is already canonical and so resolves without a redirect. Under
+    // the default "auto-trailing-slash" the canonical form is `/critiq`, and the
+    // same rule would bounce a permalink through a 307 that rewrites the address
+    // bar — losing the slug the link exists to carry.
+    "html_handling": "force-trailing-slash",
 
     // Deliberately NOT "single-page-application", which is right for Ruya and
-    // wrong here. This origin hosts SIX separate SPAs under path prefixes, and
-    // that setting answers every unknown path with the ROOT index.html — so
-    // /critiq/r/<slug> would render the labs landing page instead of the report
-    // it names, and every deep link in every app would quietly break.
+    // wrong here. That setting answers every unknown path with the ROOT
+    // index.html, so /critiq/r/<slug> would render the labs landing page instead
+    // of the report it names. Confirmed against the docs rather than assumed:
+    // SPA mode serves `/index.html`, not the nearest ancestor's.
     //
-    // Per-app fallbacks live in public/_redirects instead, one 200 proxy rule
-    // per prefix, which Workers static assets supports for relative URLs:
+    // Only Critiq needs path fallbacks — the other five apps keep their state in
+    // the query string, so their URLs are always real directories. Its rules live
+    // in public/_redirects and are narrow by design.
     //
-    //     /critiq/*  /critiq/index.html  200
-    //
-    // That leaves genuinely unknown paths — /nonsense, a typo'd app name — to
-    // land on the root 404, which is the honest answer for them.
+    // Everything genuinely unknown — /nonsense, a typo'd app name — lands on the
+    // root 404, which is the honest answer for it.
     "not_found_handling": "404-page"
   }
 }
