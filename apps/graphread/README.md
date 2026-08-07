@@ -4,7 +4,27 @@ Feed it a document; it extracts the entities and relationships and renders them 
 interactive force-directed graph — **every node and edge traceable back to the source passage
 that asserted it**.
 
-Deployed at `labs.abdash.net/graphread`.
+**Live at [labs.abdash.net/graphread](https://labs.abdash.net/graphread/)**
+
+## Try it in 30 seconds
+
+No signup, nothing to upload — a demo graph loads immediately.
+
+1. Click any **edge** between two nodes.
+2. Read the sentence in the panel. That is the verbatim text that justified the
+   relationship, taken from the source document.
+3. Now click a **node** and see every passage that mentioned it, including under names
+   the resolver merged.
+
+Every edge in this graph has a supporting quote, or it was discarded before you saw it.
+That is the difference between a graph a model produced and a graph you can check.
+
+## What it proves
+
+Structured extraction with provenance — and honesty about the hard part. Cross-chunk
+entity resolution genuinely makes mistakes, so the UI ships merge and split controls
+rather than pretending automation suffices. Correcting a wrong merge is a feature, not an
+admission.
 
 ## The two ideas worth reading the code for
 

@@ -3,7 +3,30 @@
 A PWA that runs a small LLM entirely in the browser via WebGPU. Download it once, switch on
 airplane mode, keep chatting.
 
-Deployed at `labs.abdash.net/planemode/`.
+**Live at [labs.abdash.net/planemode](https://labs.abdash.net/planemode/)**
+
+## Try it in 30 seconds — well, more like ten minutes
+
+This is the one demo that asks something of you: a model download of about 0.7 GB. There
+is no way around it, and pretending otherwise would be the wrong product.
+
+1. Open it. It checks your hardware and tells you the download size **before** you commit.
+2. Let the model download. Close the tab halfway if you like — it resumes.
+3. When it's ready, **turn on airplane mode**.
+4. Keep chatting.
+
+The badge that reads *Offline verified* only lights after a reply has been generated
+start-to-finish with no network. It will not light on a warm-up generation, and it will
+not light if connectivity returned mid-reply.
+
+Needs a WebGPU-capable browser — recent Chrome or Edge. Anything else gets an honest
+explainer rather than a broken page.
+
+## What it proves
+
+On-device inference, and the discipline to keep it that way. There is no account, no
+telemetry, and no request to any server after the weights are cached — verifiable in your
+own network tab.
 
 ## There is no backend
 
