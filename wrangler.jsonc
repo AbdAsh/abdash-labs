@@ -1,0 +1,58 @@
+{
+  // Cloudflare Workers (Static Assets) — same shape as the Marka and Ruya projects.
+  //
+  // A Workers project, not a Pages project: Workers Builds runs `npx wrangler
+  // deploy`, which needs an "assets" block. A "pages_build_output_dir" key makes
+  // wrangler treat this as Pages and fail with "Missing entry-point to Worker
+  // script or to assets directory".
+  //
+  // No "main": six static SPAs and a landing page, no server code. Everything
+  // that runs on a server in this project is a Supabase Edge Function.
+  "name": "abdash-labs",
+  "compatibility_date": "2026-08-07",
+
+  // Runs before every deploy, including on Cloudflare's builder. dist/ is
+  // git-ignored and nothing else builds it, so without this a fresh CI checkout
+  // fails with "The directory specified by the assets.directory field does not
+  // exist". Keeping it here means the repo deploys with no dashboard config.
+  //
+  // scripts/build-all.mjs discovers apps/*, skips underscore-prefixed dirs,
+  // builds each one and copies it to dist/<app>, then lays public/ over the top
+  // so _redirects lands at the origin root where the asset server reads it.
+  "build": {
+    "command": "npm run build"
+  },
+
+  // labs.abdash.net. The zone is already on Cloudflare — abdash.net runs on
+  // Cloudflare nameservers with the apex proxied through to GitHub Pages — so
+  // declaring the custom domain here creates the DNS record on deploy rather
+  // than needing a dashboard click. The apex is untouched: the portfolio keeps
+  // deploying to GitHub Pages independently, and a broken labs build cannot
+  // take the CV down with it.
+  "routes": [
+    {
+      "pattern": "labs.abdash.net",
+      "custom_domain": true
+    }
+  ],
+
+  "assets": {
+    "directory": "./dist",
+    "html_handling": "auto-trailing-slash",
+
+    // Deliberately NOT "single-page-application", which is right for Ruya and
+    // wrong here. This origin hosts SIX separate SPAs under path prefixes, and
+    // that setting answers every unknown path with the ROOT index.html — so
+    // /critiq/r/<slug> would render the labs landing page instead of the report
+    // it names, and every deep link in every app would quietly break.
+    //
+    // Per-app fallbacks live in public/_redirects instead, one 200 proxy rule
+    // per prefix, which Workers static assets supports for relative URLs:
+    //
+    //     /critiq/*  /critiq/index.html  200
+    //
+    // That leaves genuinely unknown paths — /nonsense, a typo'd app name — to
+    // land on the root 404, which is the honest answer for them.
+    "not_found_handling": "404-page"
+  }
+}

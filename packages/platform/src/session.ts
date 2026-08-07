@@ -19,13 +19,18 @@ export function toSession(user: User): Session {
 
 /** Returns the current session, creating an anonymous one if none exists.
  *  The captcha token is required by Supabase when Turnstile protection is on. */
-export async function ensureAnonymousSession(captchaToken: string): Promise<Session> {
+export async function ensureAnonymousSession(captchaToken?: string): Promise<Session> {
   const { data } = await supabase.auth.getSession()
   if (data.session?.user) return toSession(data.session.user)
 
-  const { data: created, error } = await supabase.auth.signInAnonymously({
-    options: { captchaToken },
-  })
+  // Omit `options` entirely when there is no token. Passing
+  // `{ captchaToken: undefined }` is not the same thing to every client
+  // version, and Supabase rejects a token-less sign-in anyway when its own
+  // captcha protection is enabled — which is the loud failure we want over a
+  // silent one.
+  const { data: created, error } = await supabase.auth.signInAnonymously(
+    captchaToken ? { options: { captchaToken } } : undefined,
+  )
   if (error) throw error
   return toSession(created.user!)
 }
