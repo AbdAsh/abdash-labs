@@ -12,6 +12,9 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   test: {
     include: ['tests/rls/**/*.test.ts'],
+    // Signs the shared identity pool in ONCE per run. Without this the pool is
+    // rebuilt per test file, which is how three sign-ins became fifteen.
+    globalSetup: ['tests/rls/globalSetup.ts'],
     // Anonymous sign-ups and quota counters are shared state; parallel files
     // would race on the same daily counter rows and produce flaky failures.
     fileParallelism: false,

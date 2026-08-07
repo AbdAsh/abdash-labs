@@ -1,4 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { readFileSync } from 'node:fs'
+import { POOL_FILE, type PooledSession } from './globalSetup'
 
 const URL = process.env.SUPABASE_URL!
 const ANON = process.env.SUPABASE_ANON_KEY!
@@ -25,8 +27,6 @@ export interface TestUser {
  *
  * Three, not two, because a handful of tests take a third party as a bystander.
  */
-const POOL_SIZE = 3
-
 let pool: TestUser[] | null = null
 let cursor = 0
 
@@ -36,24 +36,41 @@ async function signIn(): Promise<TestUser> {
   if (error) {
     throw new Error(
       `Anonymous sign-in failed: ${error.message}. ` +
-        'If this says "rate limit", the hourly budget is spent — wait, or raise it under ' +
-        'Authentication → Rate Limits. If it says "disabled", enable anonymous sign-ins ' +
-        'under Authentication → Sign In / Providers.',
+        'If this says "rate limit", the hourly budget is spent — wait for the window ' +
+        'rather than raising the limit, which is a real abuse control.',
     )
   }
   return { db, userId: data.user!.id }
 }
 
+/**
+ * Rehydrates the pool that `globalSetup.ts` signed in once for the whole run.
+ *
+ * Deliberately not signed in here. Vitest gives each test file its own module
+ * registry, so a pool built in this module is rebuilt once per file — five
+ * files, fifteen sign-ins — which is how a "pool of three" quietly became
+ * seventeen and stayed over the rate limit.
+ */
 async function ensurePool(): Promise<TestUser[]> {
   if (pool) return pool
   if (!URL || !ANON) {
     throw new Error('SUPABASE_URL and SUPABASE_ANON_KEY must be set to run RLS tests')
   }
-  // Serially, not Promise.all: a burst of simultaneous sign-ups is exactly the
-  // shape the rate limiter is watching for.
-  const users: TestUser[] = []
-  for (let i = 0; i < POOL_SIZE; i++) users.push(await signIn())
-  pool = users
+
+  const raw = readFileSync(POOL_FILE, 'utf8')
+  const sessions = JSON.parse(raw) as PooledSession[]
+
+  pool = await Promise.all(
+    sessions.map(async (s) => {
+      const db = createClient(URL, ANON, { auth: { persistSession: false } })
+      const { error } = await db.auth.setSession({
+        access_token: s.accessToken,
+        refresh_token: s.refreshToken,
+      })
+      if (error) throw error
+      return { db, userId: s.userId }
+    }),
+  )
   return pool
 }
 
