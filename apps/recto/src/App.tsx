@@ -30,7 +30,7 @@ import { say } from './lib/errors'
 
 const IDLE: UploadState = { status: 'idle', done: 0, total: 0, message: '' }
 
-export default function App() {
+export default function App({ onSeeExample }: { onSeeExample?: () => void } = {}) {
   const { session } = useSession()
 
   const [notebooks, setNotebooks] = useState<Notebook[]>([])
@@ -342,9 +342,30 @@ export default function App() {
               Google
             </button>{' '}
             to raise the limits. Your existing notebooks stay yours.
+            {/* The way back. Someone who arrived on the recording and clicked
+                through has an empty notebook in front of them; leaving them no
+                route to the thing they were just looking at is a dead end. */}
+            {onSeeExample && (
+              <>
+                {' '}
+                <button type="button" className="link" onClick={onSeeExample}>
+                  Back to the saved example
+                </button>
+              </>
+            )}
           </p>
         ) : (
-          <p>Signed in. Limits raised.</p>
+          <p>
+            Signed in. Limits raised.
+            {onSeeExample && (
+              <>
+                {' '}
+                <button type="button" className="link" onClick={onSeeExample}>
+                  Back to the saved example
+                </button>
+              </>
+            )}
+          </p>
         )}
       </footer>
     </>

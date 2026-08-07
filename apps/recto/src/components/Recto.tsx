@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Turn, type TurnData } from './Turn'
 import type { ConversationSummary } from '../lib/conversations'
 
@@ -29,6 +29,7 @@ export function Recto({
   onAsk,
   onSelectConversation,
   onDeleteConversation,
+  exhibit,
 }: {
   loading: boolean
   hasNotebook: boolean
@@ -46,13 +47,26 @@ export function Recto({
   onAsk: (question: string) => void
   onSelectConversation: (id: string | undefined) => void
   onDeleteConversation: (id: string) => void
+  /** Present when this transcript is a saved run rather than a live exchange.
+   *  It takes the composer's place — which is where a visitor's eye goes when
+   *  they want to ask something, and therefore the one spot where "this already
+   *  happened, on a date, without you" cannot be missed. */
+  exhibit?: ReactNode
 }) {
   const [input, setInput] = useState('')
   const tail = useRef<HTMLDivElement>(null)
+  const frozen = exhibit !== undefined
 
   useEffect(() => {
+    // A saved transcript opens where the reader would start, not where it
+    // finished. Following the tail is for an answer arriving now; doing it to a
+    // recording drops someone into the middle of a conversation they have not
+    // read, and `scrollIntoView` walks every scrollable ancestor on its way —
+    // including the document, which would carry the banner off the top of the
+    // page.
+    if (frozen) return
     tail.current?.scrollIntoView({ block: 'end' })
-  }, [turns.length])
+  }, [turns.length, frozen])
 
   const outOfMessages = messagesLeft === 0
   const canAsk = readyCount > 0 && !outOfMessages
@@ -90,16 +104,17 @@ export function Recto({
             <select
               id="conversation"
               value={conversationId ?? ''}
+              disabled={frozen}
               onChange={(e) => onSelectConversation(e.target.value || undefined)}
             >
-              <option value="">New conversation</option>
+              {!frozen && <option value="">New conversation</option>}
               {conversations.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.title || 'Untitled'}
                 </option>
               ))}
             </select>
-            {conversationId && (
+            {!frozen && conversationId && (
               <button
                 type="button"
                 className="action action--quiet"
@@ -181,33 +196,39 @@ export function Recto({
       {/* Composer and allowance dock together, so the count stays with the
           field it constrains when the transcript scrolls past both. */}
       <div className="composer-dock">
-        <form
-          className="composer"
-          onSubmit={(e) => {
-            e.preventDefault()
-            submit(input)
-          }}
-        >
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={outOfMessages ? 'Daily limit reached' : 'Ask this notebook…'}
-            disabled={busy || !canAsk}
-            aria-label="Ask this notebook a question"
-            dir="auto"
-          />
-          <button type="submit" disabled={busy || !input.trim() || !canAsk}>
-            {busy ? 'Asking…' : 'Ask'}
-          </button>
-        </form>
+        {frozen ? (
+          exhibit
+        ) : (
+          <>
+            <form
+              className="composer"
+              onSubmit={(e) => {
+                e.preventDefault()
+                submit(input)
+              }}
+            >
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={outOfMessages ? 'Daily limit reached' : 'Ask this notebook…'}
+                disabled={busy || !canAsk}
+                aria-label="Ask this notebook a question"
+                dir="auto"
+              />
+              <button type="submit" disabled={busy || !input.trim() || !canAsk}>
+                {busy ? 'Asking…' : 'Ask'}
+              </button>
+            </form>
 
-        {/* The cap is worth seeing before it is hit, not only after. */}
-        {messagesLeft !== null && (
-          <p className="allowance" data-spent={outOfMessages || undefined}>
-            {outOfMessages
-              ? 'No messages left today. Link GitHub or Google below to raise the limit.'
-              : `${messagesLeft} ${messagesLeft === 1 ? 'message' : 'messages'} left today.`}
-          </p>
+            {/* The cap is worth seeing before it is hit, not only after. */}
+            {messagesLeft !== null && (
+              <p className="allowance" data-spent={outOfMessages || undefined}>
+                {outOfMessages
+                  ? 'No messages left today. Link GitHub or Google below to raise the limit.'
+                  : `${messagesLeft} ${messagesLeft === 1 ? 'message' : 'messages'} left today.`}
+              </p>
+            )}
+          </>
         )}
       </div>
     </div>

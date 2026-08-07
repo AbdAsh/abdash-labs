@@ -1,0 +1,302 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R 9 0 R 11 0 R 13 0 R] /Count 5 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Length 1307 >>
+stream
+BT
+/F1 10 Tf
+1 0 0 1 56 736 Tm
+14 TL
+(HALVERD INSTRUMENTS, INC.) Tj
+T*
+(Quarterly Report — Second Quarter, Fiscal Year 2026) Tj
+T*
+(Quarter ended 30 April 2026. Reported 21 May 2026.) Tj
+T*
+() Tj
+T*
+(SUMMARY) Tj
+T*
+() Tj
+T*
+(Revenue for the second quarter was $31.2 million, an increase of 8 percent against the) Tj
+T*
+($28.9 million reported in the second quarter of fiscal 2025. Gross margin was 58.4) Tj
+T*
+(percent, down 110 basis points year over year, reflecting expedited freight on PT-40 die) Tj
+T*
+(shipments and the initial cost of the HX-9 firmware remediation programme. Operating) Tj
+T*
+(income was $4.1 million. Net income was $3.3 million, or $0.19 per diluted share.) Tj
+T*
+() Tj
+T*
+(We are reaffirming full-year fiscal 2026 revenue guidance of $118 million to $124 million) Tj
+T*
+(and full-year gross margin guidance of 58 to 60 percent.) Tj
+T*
+() Tj
+T*
+(Two matters dominate this report and are discussed in full below: the HX-9 depth drift) Tj
+T*
+(defect, for which we have recorded a warranty accrual this quarter, and the single-source) Tj
+T*
+(position on the PT-40 pressure transducer die.) Tj
+T*
+() Tj
+T*
+(Halverd Instruments is a fictional company. This document was written to demonstrate retrieval software and describes no real business, product, person or transaction.) Tj
+T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
+endobj
+6 0 obj
+<< /Length 1328 >>
+stream
+BT
+/F1 10 Tf
+1 0 0 1 56 736 Tm
+14 TL
+(SEGMENT RESULTS) Tj
+T*
+() Tj
+T*
+(Subsea Sensing revenue was $19.4 million, up 11 percent year over year, carried by the) Tj
+T*
+(HX-9 and HX-11 depth and conductivity instruments and by a full quarter of the Vessel) Tj
+T*
+(Integration Kit introduced in the first quarter.) Tj
+T*
+() Tj
+T*
+(Industrial Calibration revenue was $11.8 million, up 3 percent year over year. Growth here) Tj
+T*
+(remains slower than the segment plan we set in November, and we now expect Industrial) Tj
+T*
+(Calibration to finish the year at the low end of its range.) Tj
+T*
+() Tj
+T*
+(Backlog at quarter end was $46.7 million, of which $29.3 million is scheduled to ship in) Tj
+T*
+(fiscal 2026.) Tj
+T*
+() Tj
+T*
+(CUSTOMER CONCENTRATION) Tj
+T*
+() Tj
+T*
+(Trondsen Offshore AS accounted for 41 percent of second-quarter revenue, up from 34) Tj
+T*
+(percent in the second quarter of fiscal 2025. Trondsen operates four survey vessels and) Tj
+T*
+(has standardised on the HX-9 for depth reference. No other customer accounted for more) Tj
+T*
+(than 9 percent of revenue in the quarter.) Tj
+T*
+() Tj
+T*
+(We regard this concentration as our single largest commercial risk. A deferral or) Tj
+T*
+(cancellation by Trondsen would have a material effect on quarterly revenue and on the) Tj
+T*
+(full-year range given above.) Tj
+T*
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 6 0 R >>
+endobj
+8 0 obj
+<< /Length 1446 >>
+stream
+BT
+/F1 10 Tf
+1 0 0 1 56 736 Tm
+14 TL
+(HX-9 DEPTH DRIFT — DESCRIPTION AND PROVISION) Tj
+T*
+() Tj
+T*
+(In March 2026 a customer reported that HX-9 units held at depth for extended periods) Tj
+T*
+(returned depth values that drifted upward over time. Our engineering review confirmed the) Tj
+T*
+(behaviour and traced it to an accumulator overflow in the pressure-compensation routine of) Tj
+T*
+(firmware releases 4.2.0 through 4.4.1. Affected units drift by up to 1.8 metres after) Tj
+T*
+(approximately 900 hours of continuous submersion. The drift is gradual and does not) Tj
+T*
+(trigger the instrument's own fault flag, which is why it was not caught in qualification.) Tj
+T*
+() Tj
+T*
+(A corrected firmware release, 4.4.2, entered controlled release on 6 May 2026. Units in) Tj
+T*
+(the field can be updated over the vessel link; units in inventory are being updated before) Tj
+T*
+(shipment.) Tj
+T*
+() Tj
+T*
+(We estimate the affected population at 3,100 units, being all HX-9 instruments shipped) Tj
+T*
+(with firmware 4.2.0 or later between June 2024 and April 2026. We have recorded a warranty) Tj
+T*
+(accrual of $2.4 million in the second quarter, covering firmware deployment, field) Tj
+T*
+(engineering time and the replacement of units that cannot be updated remotely.) Tj
+T*
+() Tj
+T*
+(Management believes this accrual reflects our current best estimate and is sufficient to) Tj
+T*
+(cover the affected population. No recall is planned.) Tj
+T*
+ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 8 0 R >>
+endobj
+10 0 obj
+<< /Length 1481 >>
+stream
+BT
+/F1 10 Tf
+1 0 0 1 56 736 Tm
+14 TL
+(SUPPLY — PT-40 PRESSURE TRANSDUCER DIE) Tj
+T*
+() Tj
+T*
+(Every instrument in the Subsea Sensing segment depends on the PT-40 pressure transducer) Tj
+T*
+(die. The PT-40 is supplied to us by a single vendor, Tessin Micro Fabrication Ltd, under a) Tj
+T*
+(supply agreement that expires on 31 January 2027. Tessin manufactures the die on a legacy) Tj
+T*
+(150 millimetre line at one site. We hold approximately eleven weeks of PT-40 inventory.) Tj
+T*
+() Tj
+T*
+(An interruption at that site, or a failure to renew the agreement on acceptable terms,) Tj
+T*
+(would stop production of every Subsea Sensing product within one quarter. We consider this) Tj
+T*
+(the most serious operational risk carried by the business.) Tj
+T*
+() Tj
+T*
+(We have identified a second source, Kaldbakur Semiconductor hf, and received first samples) Tj
+T*
+(in February 2026. Electrical characterisation of those samples is complete and within) Tj
+T*
+(specification. Qualification is not finished: the samples have not yet passed the) Tj
+T*
+(1,000-hour pressure-cycling test or the salt-fog corrosion test, and we have not yet run a) Tj
+T*
+(production lot. Kaldbakur is therefore identified and sampled but not qualified, and no) Tj
+T*
+(Kaldbakur die is in any shipped product.) Tj
+T*
+() Tj
+T*
+(We are targeting completion of qualification during the third quarter of fiscal 2026.) Tj
+T*
+(Until it completes, the single-source exposure described above is unmitigated.) Tj
+T*
+ET
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 10 0 R >>
+endobj
+12 0 obj
+<< /Length 1111 >>
+stream
+BT
+/F1 10 Tf
+1 0 0 1 56 736 Tm
+14 TL
+(LIQUIDITY, CAPITAL AND OUTLOOK) Tj
+T*
+() Tj
+T*
+(Cash and cash equivalents were $44.6 million at 30 April 2026, against $41.9 million at) Tj
+T*
+(the end of the first quarter. The company carries no debt. Capital expenditure in the) Tj
+T*
+(quarter was $1.8 million, principally the pressure-cycling chamber installed at the) Tj
+T*
+(Aberdeen test facility.) Tj
+T*
+() Tj
+T*
+(Operating cash flow was $5.2 million. Days sales outstanding were 61, unchanged from the) Tj
+T*
+(prior quarter.) Tj
+T*
+() Tj
+T*
+(FULL-YEAR GUIDANCE) Tj
+T*
+() Tj
+T*
+(We are reaffirming revenue guidance of $118 million to $124 million for fiscal 2026. The) Tj
+T*
+(guidance assumes that HX-9 firmware remediation is completed within the $2.4 million) Tj
+T*
+(accrued, that Trondsen Offshore takes delivery on the schedule in the current backlog, and) Tj
+T*
+(that PT-40 supply is uninterrupted.) Tj
+T*
+() Tj
+T*
+(The board has not authorised a dividend or a repurchase programme for fiscal 2026.) Tj
+T*
+() Tj
+T*
+(This report contains forward-looking statements about a company that does not exist.) Tj
+T*
+ET
+endstream
+endobj
+13 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 12 0 R >>
+endobj
+xref
+0 14
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000141 00000 n 
+0000000238 00000 n 
+0000001596 00000 n 
+0000001722 00000 n 
+0000003101 00000 n 
+0000003227 00000 n 
+0000004724 00000 n 
+0000004850 00000 n 
+0000006383 00000 n 
+0000006511 00000 n 
+0000007674 00000 n 
+trailer
+<< /Size 14 /Root 1 0 R >>
+startxref
+7802
+%%EOF

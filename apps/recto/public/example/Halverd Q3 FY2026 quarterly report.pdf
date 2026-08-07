@@ -1,0 +1,308 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R 9 0 R 11 0 R 13 0 R] /Count 5 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Length 1436 >>
+stream
+BT
+/F1 10 Tf
+1 0 0 1 56 736 Tm
+14 TL
+(HALVERD INSTRUMENTS, INC.) Tj
+T*
+(Quarterly Report — Third Quarter, Fiscal Year 2026) Tj
+T*
+(Quarter ended 31 July 2026. Reported 20 August 2026.) Tj
+T*
+() Tj
+T*
+(SUMMARY) Tj
+T*
+() Tj
+T*
+(Revenue for the third quarter was $24.9 million, a decrease of 14 percent against the) Tj
+T*
+($29.0 million reported in the third quarter of fiscal 2025. Gross margin was 51.2 percent.) Tj
+T*
+(Operating loss was $2.6 million. Net loss was $2.1 million, or $0.12 per diluted share.) Tj
+T*
+() Tj
+T*
+(We are reducing full-year fiscal 2026 revenue guidance to $104 million to $109 million,) Tj
+T*
+(from the $118 million to $124 million range reaffirmed in our second-quarter report.) Tj
+T*
+(Full-year gross margin guidance is reduced to 53 to 55 percent.) Tj
+T*
+() Tj
+T*
+(The reduction has two causes, both discussed below. The HX-9 depth drift defect is) Tj
+T*
+(materially larger than we estimated in the second quarter and now requires a partial) Tj
+T*
+(recall. Trondsen Offshore has deferred two survey programmes pending completion of that) Tj
+T*
+(work.) Tj
+T*
+() Tj
+T*
+(One matter has resolved favourably: the second source for the PT-40 pressure transducer) Tj
+T*
+(die completed qualification during the quarter.) Tj
+T*
+() Tj
+T*
+(Halverd Instruments is a fictional company. This document was written to demonstrate retrieval software and describes no real business, product, person or transaction.) Tj
+T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
+endobj
+6 0 obj
+<< /Length 1396 >>
+stream
+BT
+/F1 10 Tf
+1 0 0 1 56 736 Tm
+14 TL
+(SEGMENT RESULTS) Tj
+T*
+() Tj
+T*
+(Subsea Sensing revenue was $13.1 million, down 31 percent year over year. The decline is) Tj
+T*
+(attributable almost entirely to deferred HX-9 and Vessel Integration Kit shipments to) Tj
+T*
+(Trondsen Offshore.) Tj
+T*
+() Tj
+T*
+(Industrial Calibration revenue was $11.8 million, flat against the prior quarter and up 1) Tj
+T*
+(percent year over year. The segment will finish fiscal 2026 below the range set in) Tj
+T*
+(November, as indicated in the second-quarter report.) Tj
+T*
+() Tj
+T*
+(Backlog at quarter end was $51.4 million. Backlog rose while revenue fell because deferred) Tj
+T*
+(Trondsen orders remain in backlog rather than being cancelled.) Tj
+T*
+() Tj
+T*
+(CUSTOMER CONCENTRATION) Tj
+T*
+() Tj
+T*
+(Trondsen Offshore AS accounted for 29 percent of third-quarter revenue, down from 41) Tj
+T*
+(percent in the second quarter. The change reflects lower absolute shipments to Trondsen) Tj
+T*
+(rather than growth elsewhere. On 11 June 2026 Trondsen deferred two survey programmes,) Tj
+T*
+(together representing approximately $7.4 million of planned third and fourth quarter) Tj
+T*
+(revenue, until HX-9 remediation is complete and verified on their fleet. Trondsen has not) Tj
+T*
+(cancelled and has not sought damages.) Tj
+T*
+() Tj
+T*
+(No other customer accounted for more than 11 percent of revenue in the quarter.) Tj
+T*
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 6 0 R >>
+endobj
+8 0 obj
+<< /Length 1431 >>
+stream
+BT
+/F1 10 Tf
+1 0 0 1 56 736 Tm
+14 TL
+(HX-9 DEPTH DRIFT — REVISED ESTIMATE AND RECALL) Tj
+T*
+() Tj
+T*
+(Field data collected after the second-quarter report changes both the scope and the cost) Tj
+T*
+(of this defect.) Tj
+T*
+() Tj
+T*
+(Onset is earlier than we reported. Drift begins at approximately 600 hours of continuous) Tj
+T*
+(submersion, not the 900 hours stated in the second-quarter report. The 900-hour figure) Tj
+T*
+(came from bench testing at constant temperature; the shorter onset appears in units cycled) Tj
+T*
+(through thermoclines, which is ordinary operating use.) Tj
+T*
+() Tj
+T*
+(The affected population is larger than we reported. Firmware 4.1.3, which we had excluded,) Tj
+T*
+(carries the same accumulator defect. The affected population is therefore 7,450 units) Tj
+T*
+(rather than the 3,100 units stated in the second-quarter report.) Tj
+T*
+() Tj
+T*
+(Approximately 1,200 of those units are on hardware revision B, which cannot accept) Tj
+T*
+(firmware 4.4.2 over the vessel link. Those units must be returned and reflashed at a) Tj
+T*
+(service centre. We announced this partial recall on 3 July 2026.) Tj
+T*
+() Tj
+T*
+(The warranty accrual recorded in the second quarter was $2.4 million, and we stated at the) Tj
+T*
+(time that we believed it sufficient. It is not sufficient. We have increased the total) Tj
+T*
+(accrual to $6.1 million, recording an additional $3.7 million charge in the third quarter.) Tj
+T*
+ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 8 0 R >>
+endobj
+10 0 obj
+<< /Length 1201 >>
+stream
+BT
+/F1 10 Tf
+1 0 0 1 56 736 Tm
+14 TL
+(SUPPLY — PT-40 SECOND SOURCE QUALIFIED) Tj
+T*
+() Tj
+T*
+(Kaldbakur Semiconductor hf completed qualification as a second source for the PT-40) Tj
+T*
+(pressure transducer die on 14 May 2026. The Kaldbakur die passed the 1,000-hour) Tj
+T*
+(pressure-cycling test and the salt-fog corrosion test, and a production lot of 4,000 die) Tj
+T*
+(was accepted on 2 July 2026.) Tj
+T*
+() Tj
+T*
+(Kaldbakur die entered shipped product on 28 July 2026. We expect Kaldbakur to supply) Tj
+T*
+(between 30 and 40 percent of PT-40 volume during the fourth quarter of fiscal 2026, rising) Tj
+T*
+(to approximately half in fiscal 2027.) Tj
+T*
+() Tj
+T*
+(The second-quarter report described the second source as identified and sampled but not) Tj
+T*
+(qualified, and described the resulting single-source exposure as unmitigated. That) Tj
+T*
+(exposure is now mitigated.) Tj
+T*
+() Tj
+T*
+(Separately, on 19 June 2026 we extended the Tessin Micro Fabrication supply agreement to) Tj
+T*
+(31 January 2028 on substantially the same commercial terms. We reduced PT-40 inventory) Tj
+T*
+(cover from eleven weeks to eight weeks in July, which released $1.1 million of working) Tj
+T*
+(capital.) Tj
+T*
+ET
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 10 0 R >>
+endobj
+12 0 obj
+<< /Length 1289 >>
+stream
+BT
+/F1 10 Tf
+1 0 0 1 56 736 Tm
+14 TL
+(LIQUIDITY, CAPITAL AND OUTLOOK) Tj
+T*
+() Tj
+T*
+(Cash and cash equivalents were $38.2 million at 31 July 2026, against $44.6 million at the) Tj
+T*
+(end of the second quarter. The company carries no debt. The reduction is principally the) Tj
+T*
+(third-quarter operating loss, $2.9 million of cash warranty spend, and $1.4 million of) Tj
+T*
+(capital expenditure.) Tj
+T*
+() Tj
+T*
+(REVISED FULL-YEAR GUIDANCE) Tj
+T*
+() Tj
+T*
+(Revenue guidance for fiscal 2026 is reduced to $104 million to $109 million, from $118) Tj
+T*
+(million to $124 million. Of the approximately $14 million reduction at the midpoint, we) Tj
+T*
+(attribute roughly $7.4 million to the deferred Trondsen programmes and the remainder to) Tj
+T*
+(slower HX-9 shipments generally while the recall is in progress.) Tj
+T*
+() Tj
+T*
+(The revised guidance assumes that the total warranty accrual of $6.1 million is sufficient,) Tj
+T*
+(that the recall completes during the fourth quarter, and that Trondsen resumes deliveries) Tj
+T*
+(in the first quarter of fiscal 2027. We note that our previous sufficiency estimate for) Tj
+T*
+(this defect proved wrong by a factor of more than two.) Tj
+T*
+() Tj
+T*
+(This report contains forward-looking statements about a company that does not exist.) Tj
+T*
+ET
+endstream
+endobj
+13 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 12 0 R >>
+endobj
+xref
+0 14
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000141 00000 n 
+0000000238 00000 n 
+0000001725 00000 n 
+0000001851 00000 n 
+0000003298 00000 n 
+0000003424 00000 n 
+0000004906 00000 n 
+0000005032 00000 n 
+0000006285 00000 n 
+0000006413 00000 n 
+0000007754 00000 n 
+trailer
+<< /Size 14 /Root 1 0 R >>
+startxref
+7882
+%%EOF

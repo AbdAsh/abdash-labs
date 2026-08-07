@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "example": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/generate-example.mjs"
   },
   "dependencies": {
     "@labs/doc-core": "*",

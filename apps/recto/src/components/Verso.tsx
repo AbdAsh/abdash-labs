@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import type { Notebook } from '../lib/notebooks'
 import type { DocumentRow } from '../lib/documents'
 
@@ -55,6 +55,7 @@ export function Verso({
   onDeleteNotebook,
   onUpload,
   onDeleteDocument,
+  exhibit,
 }: {
   loading: boolean
   notebooks: Notebook[]
@@ -72,10 +73,16 @@ export function Verso({
   onDeleteNotebook: (id: string) => void
   onUpload: (file: File) => void
   onDeleteDocument: (id: string) => void
+  /** Present when this page is a saved run rather than the visitor's own
+   *  notebook. Every control that would change something is withdrawn — a ×
+   *  that deletes nothing is worse than no × — and this takes the dropzone's
+   *  place, which is where a visitor looks when they want to add something. */
+  exhibit?: ReactNode
 }) {
   const [renaming, setRenaming] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
   const [confirming, setConfirming] = useState<string | null>(null)
+  const frozen = exhibit !== undefined
 
   // Both caps fail closed while the tier is unknown. `quotaFor` answers 0 for a
   // lookup that failed, and 0 has to mean "no slots" rather than "no ceiling" —
@@ -134,6 +141,7 @@ export function Verso({
                     aria-current={n.id === activeId || undefined}
                     onClick={() => onSelectNotebook(n.id)}
                     onDoubleClick={() => {
+                      if (frozen) return
                       setRenaming(n.id)
                       setDraft(n.title)
                     }}
@@ -147,7 +155,7 @@ export function Verso({
                   </button>
                 )}
 
-                {confirming === n.id ? (
+                {frozen ? null : confirming === n.id ? (
                   <span className="row__confirm">
                     <button type="button" onClick={() => onDeleteNotebook(n.id)}>
                       Delete
@@ -171,14 +179,16 @@ export function Verso({
           </ul>
         )}
 
-        <button
-          type="button"
-          className="action"
-          onClick={onCreateNotebook}
-          disabled={loading || atNotebookCap}
-        >
-          {!loading && atNotebookCap ? 'Notebook limit reached' : 'New notebook'}
-        </button>
+        {!frozen && (
+          <button
+            type="button"
+            className="action"
+            onClick={onCreateNotebook}
+            disabled={loading || atNotebookCap}
+          >
+            {!loading && atNotebookCap ? 'Notebook limit reached' : 'New notebook'}
+          </button>
+        )}
       </section>
 
       <section className="panel" aria-labelledby="documents-heading" aria-busy={documentsLoading}>
@@ -220,52 +230,58 @@ export function Verso({
                     </span>
                   )}
                 </span>
-                <button
-                  type="button"
-                  className="row__discard"
-                  aria-label={`Delete ${d.name}`}
-                  onClick={() => onDeleteDocument(d.id)}
-                >
-                  ×
-                </button>
+                {!frozen && (
+                  <button
+                    type="button"
+                    className="row__discard"
+                    aria-label={`Delete ${d.name}`}
+                    onClick={() => onDeleteDocument(d.id)}
+                  >
+                    ×
+                  </button>
+                )}
               </li>
             ))}
           </ul>
         )}
 
-        <label className="dropzone" data-status={upload.status}>
-          <input
-            type="file"
-            accept=".pdf,.txt,.md"
-            disabled={busyUploading || loading || !activeId || atDocumentCap}
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              e.target.value = ''
-              if (file) onUpload(file)
-            }}
-          />
-          {upload.status === 'reading' && <span>Reading the file…</span>}
-          {upload.status === 'indexing' && (
-            <span>
-              Indexing… {upload.done} of {upload.total} passages
-            </span>
-          )}
-          {upload.status === 'error' && <span className="error">{upload.message}</span>}
-          {upload.status === 'idle' &&
-            (loading ? (
-              <span>…</span>
-            ) : !activeId ? (
-              <span>No notebook to add to yet.</span>
-            ) : atDocumentCap ? (
+        {frozen ? (
+          <div className="exhibit-note">{exhibit}</div>
+        ) : (
+          <label className="dropzone" data-status={upload.status}>
+            <input
+              type="file"
+              accept=".pdf,.txt,.md"
+              disabled={busyUploading || loading || !activeId || atDocumentCap}
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                e.target.value = ''
+                if (file) onUpload(file)
+              }}
+            />
+            {upload.status === 'reading' && <span>Reading the file…</span>}
+            {upload.status === 'indexing' && (
               <span>
-                Document limit reached
-                {limits ? ` (${limits.documents} across all notebooks)` : ''}. Remove one to add
-                another.
+                Indexing… {upload.done} of {upload.total} passages
               </span>
-            ) : (
-              <span>Add a PDF, .txt or .md</span>
-            ))}
-        </label>
+            )}
+            {upload.status === 'error' && <span className="error">{upload.message}</span>}
+            {upload.status === 'idle' &&
+              (loading ? (
+                <span>…</span>
+              ) : !activeId ? (
+                <span>No notebook to add to yet.</span>
+              ) : atDocumentCap ? (
+                <span>
+                  Document limit reached
+                  {limits ? ` (${limits.documents} across all notebooks)` : ''}. Remove one to add
+                  another.
+                </span>
+              ) : (
+                <span>Add a PDF, .txt or .md</span>
+              ))}
+          </label>
+        )}
       </section>
     </div>
   )

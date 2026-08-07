@@ -715,6 +715,146 @@ button:focus-visible {
   text-underline-offset: 2px;
 }
 
+/* ─── The saved example ────────────────────────────────────────────────── */
+
+/* The frame is exactly the viewport and the spread takes whatever the band and
+   the colophon leave, so the document itself never scrolls: the transcript has
+   its own overflow, and the label at the top cannot be scrolled away from
+   because there is nowhere to scroll to. Subtracting fixed heights instead was
+   wrong the moment either one wrapped to a second line.
+
+   `--band` is still needed at narrow widths, where the drawer is fixed to the
+   viewport and has to be told where the band ends. ExampleApp measures it. */
+.exhibit-frame {
+  --band: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  block-size: 100dvh;
+}
+
+.exhibit-frame > .exhibit,
+.exhibit-frame > .colophon {
+  flex: none;
+}
+
+/* `minmax(0, 1fr)` rather than the default auto row, and `min-block-size: 0` on
+   both pages. Without those three the row still sizes to the transcript, the
+   spread overflows the frame, and the sticky composer paints over the colophon
+   — which is how the live app works on purpose (the *document* scrolls there)
+   and exactly what the example must not do. */
+.exhibit-frame > .spread {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.exhibit-frame .spread__verso,
+.exhibit-frame .spread__recto {
+  min-block-size: 0;
+}
+
+.exhibit-frame .spread__verso {
+  max-block-size: none;
+}
+
+.exhibit {
+  /* Above the drawer and its scrim: the one thing on the page that may never be
+     covered is the sentence saying the page is a recording. */
+  position: relative;
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  min-block-size: 2.5rem;
+  padding-block: 0.5rem;
+  padding-inline: clamp(1rem, 4vw, 2.5rem);
+  background: var(--accent-wash);
+  border-block-end: 1px solid var(--accent);
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+
+.exhibit__lead {
+  flex: 1 1 22rem;
+  text-wrap: pretty;
+}
+
+.exhibit__lead strong {
+  color: var(--ink);
+}
+
+.exhibit__leave {
+  flex: none;
+  font-size: var(--step--1);
+  font-weight: 600;
+  padding-block: 0.25rem;
+  padding-inline: 0.7rem;
+  color: var(--paper);
+  background: var(--accent);
+}
+
+.exhibit__leave:hover {
+  background: var(--ink);
+}
+
+/* Where the dropzone would be: what these documents are, and how to get them. */
+.exhibit-note {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border: 1px dashed var(--rule-strong);
+  padding-block: 0.75rem;
+  padding-inline: 0.6rem;
+  font-size: var(--step--2);
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.exhibit-note__files {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+/* Where the composer would be, and sticky for the same reason it is: whatever
+   the reader has scrolled to, this stays under the transcript. */
+.exhibit-dock {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding-block: 0.7rem;
+  padding-inline: clamp(1rem, 4vw, 2.5rem);
+}
+
+.exhibit-dock__label {
+  flex: 1 1 18rem;
+  font-size: var(--step--2);
+  color: var(--ink-faint);
+  text-wrap: pretty;
+}
+
+.exhibit-dock__cta {
+  flex: none;
+  font-size: var(--step--1);
+  font-weight: 600;
+  padding-block: 0.4rem;
+  padding-inline: 1rem;
+  border: 1px solid var(--ink);
+}
+
+.exhibit-dock__cta:hover {
+  color: var(--paper);
+  background: var(--ink);
+}
+
+.colophon code {
+  font-size: 0.95em;
+}
+
 /* ─── The AuthGate, before anything of ours renders ────────────────────── */
 
 .auth-gate {
@@ -798,6 +938,14 @@ button:focus-visible {
 
   .recto__head {
     padding-block-start: 1rem;
+  }
+
+  /* The band sits above the spread in the flow, but the drawer and its toggle
+     are fixed to the viewport — so both are pushed clear of it rather than
+     sliding underneath the label. */
+  .exhibit-frame .spread__drawer-toggle,
+  .exhibit-frame .spread__verso {
+    inset-block-start: var(--band);
   }
 }
 
