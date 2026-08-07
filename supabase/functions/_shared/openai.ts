@@ -6,6 +6,17 @@ interface EmbeddingItem {
   embedding: number[]
 }
 
+/** Not transient, however much the HTTP status suggests otherwise. Callers should
+ *  surface this as a service problem and must not offer a retry. */
+export class EmbeddingUnavailableError extends Error {
+  readonly retryable = false
+  status = 503
+  constructor(message: string) {
+    super(message)
+    this.name = 'EmbeddingUnavailableError'
+  }
+}
+
 /** Batch-embeds, returning vectors in INPUT order. OpenRouter has no embeddings
  *  endpoint, which is the entire reason OpenAI is in this stack.
  *
@@ -36,7 +47,22 @@ export async function embed(
     },
     body: JSON.stringify({ model, input: texts }),
   })
-  if (!res.ok) throw new Error(`OpenAI embeddings ${res.status}: ${await res.text()}`)
+  if (!res.ok) {
+    const text = await res.text()
+
+    // `insufficient_quota` arrives as a 429, which every sensible retry policy
+    // reads as "slow down and try again". It is not that: the account is out of
+    // credit and will still be out in an hour. Telling a visitor to wait is
+    // advice that can never come true, so it is separated here rather than left
+    // for each caller's status-code heuristic to get wrong.
+    if (res.status === 429 && text.includes('insufficient_quota')) {
+      throw new EmbeddingUnavailableError(
+        'The embedding provider account is out of credit. This is a billing problem on ' +
+          'our side, not a problem with your document — retrying will not help.',
+      )
+    }
+    throw new Error(`OpenAI embeddings ${res.status}: ${text}`)
+  }
 
   const body = await res.json()
   const items = body?.data as EmbeddingItem[] | undefined

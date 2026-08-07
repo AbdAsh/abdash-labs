@@ -50,6 +50,13 @@ function dbError(what: string, error: PostgrestFailure): Error {
  *  reader round the same loop for nothing. */
 function embeddingFailure(e: unknown): Response {
   const message = e instanceof Error ? e.message : String(e)
+
+  // Explicitly not retryable, even though it reaches us as a 429. Offering a
+  // retry here sends the reader round a loop that can never succeed.
+  if ((e as { retryable?: boolean })?.retryable === false) {
+    return jsonResponse({ error: message, retryable: false }, 503)
+  }
+
   const status = Number(/\b(\d{3})\b/.exec(message)?.[1] ?? 0)
   if (status === 429 || (status >= 500 && status <= 599)) {
     return jsonResponse(
