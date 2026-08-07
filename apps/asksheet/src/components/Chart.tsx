@@ -10,6 +10,20 @@ import type { QueryResult } from '../lib/types'
  * that fails to render is dropped silently — the answer's table is already there
  * and is the thing that carries the information.
  */
+/**
+ * Fetches the renderer before anything needs it.
+ *
+ * The example path tells a sceptic to open DevTools, click a question, and watch
+ * nothing happen. That is true of the query — it runs in the DuckDB already in
+ * the tab — but the dynamic import below would have put one same-origin chunk on
+ * the network at the moment of the click, which is exactly the moment being
+ * watched. Pulling it in while the visitor is still reading keeps the claim
+ * literal without making every live-path visitor pay for Vega up front.
+ */
+export function warmChartRenderer(): void {
+  void import('vega-embed').catch(() => undefined)
+}
+
 export function Chart({
   spec,
   result,

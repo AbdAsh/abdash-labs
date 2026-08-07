@@ -1,9 +1,5 @@
-import * as duckdb from '@duckdb/duckdb-wasm'
-import { createRequire } from 'node:module'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { Worker as NodeWorker } from 'node:worker_threads'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { bootNodeDuck } from '../../test/nodeDuck'
 import {
   attachDuck,
   FileTooLargeError,
@@ -23,11 +19,15 @@ import { buildProfile, disclosedTokens, MAX_SAMPLES, redactSqlError } from './pr
  * A real DuckDB, on real bytes.
  *
  * The browser bootstrap in `initDuck()` fetches the single-threaded bundle from
- * jsDelivr and wraps the worker in a blob shim; neither works under Node, so the
- * test builds an equivalent Node-flavoured database and attaches it. Everything
- * below this line — CSV registration, type inference, the timeout, the row cap,
- * the type override, and `buildProfile` against a genuine engine — is the real
- * code path.
+ * jsDelivr and wraps the worker in a blob shim; neither works under Node, so
+ * `test/nodeDuck.ts` builds an equivalent Node-flavoured database and this
+ * attaches it. Everything below that line — CSV registration, type inference,
+ * the timeout, the row cap, the type override, and `buildProfile` against a
+ * genuine engine — is the real code path.
+ *
+ * The same boot is what `scripts/capture-example.mjs` uses to profile the
+ * bundled sample before sending that profile to the live planner, which is why
+ * it lives in its own module rather than here.
  */
 
 const CSV = `month,region,revenue_usd,is_enterprise,signed_on
@@ -44,76 +44,6 @@ const RAGGED = `a,b,c
 4,5
 6,7,8,9
 `
-
-/** Supplies the Web Worker globals inside the worker. See the file for why. */
-const WORKER_BOOTSTRAP = fileURLToPath(
-  new URL('../../test/duckdb-node-worker.cjs', import.meta.url),
-)
-
-/**
- * The main-thread half of the Web Worker API, over `node:worker_threads`.
- *
- * `AsyncDuckDB` drives its worker through `addEventListener`, `postMessage` and
- * `terminate`. Together with the bootstrap above this replaces the `web-worker`
- * package the published Node recipe reaches for — a dependency whose only job in
- * this repo would be these thirty lines.
- */
-type Listener = (event: unknown) => void
-
-class NodeWorkerShim {
-  private readonly worker: NodeWorker
-  private readonly listeners = new Map<string, Set<Listener>>()
-
-  constructor(scriptPath: string) {
-    this.worker = new NodeWorker(WORKER_BOOTSTRAP, { workerData: { script: scriptPath } })
-    this.worker.on('message', (data: unknown) => this.emit('message', { data }))
-    this.worker.on('error', (error: Error) => this.emit('error', { message: error.message, error }))
-    this.worker.on('exit', () => this.emit('close', {}))
-  }
-
-  private emit(type: string, event: unknown): void {
-    for (const listener of this.listeners.get(type) ?? []) listener(event)
-  }
-
-  addEventListener(type: string, listener: Listener): void {
-    const set = this.listeners.get(type) ?? new Set<Listener>()
-    set.add(listener)
-    this.listeners.set(type, set)
-  }
-
-  removeEventListener(type: string, listener: Listener): void {
-    this.listeners.get(type)?.delete(listener)
-  }
-
-  postMessage(message: unknown, transfer?: readonly unknown[]): void {
-    this.worker.postMessage(message, transfer as never)
-  }
-
-  terminate(): void {
-    void this.worker.terminate()
-  }
-}
-
-async function bootNodeDuck(): Promise<duckdb.AsyncDuckDB> {
-  const require = createRequire(import.meta.url)
-  const dist = path.dirname(require.resolve('@duckdb/duckdb-wasm'))
-  const bundle = await duckdb.selectBundle({
-    mvp: {
-      mainModule: path.resolve(dist, './duckdb-mvp.wasm'),
-      mainWorker: path.resolve(dist, './duckdb-node-mvp.worker.cjs'),
-    },
-    eh: {
-      mainModule: path.resolve(dist, './duckdb-eh.wasm'),
-      mainWorker: path.resolve(dist, './duckdb-node-eh.worker.cjs'),
-    },
-  })
-  const db = new duckdb.AsyncDuckDB(
-    new duckdb.ConsoleLogger(duckdb.LogLevel.ERROR),
-    new NodeWorkerShim(bundle.mainWorker!) as never,
-  )
-  await db.instantiate(bundle.mainModule)
-  return db
-}
 
 describe('duck', () => {
   beforeAll(async () => {

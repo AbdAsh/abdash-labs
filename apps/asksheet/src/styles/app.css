@@ -95,6 +95,55 @@ a {
   flex: 1 1 2rem;
 }
 
+/* ---------- the two paths ---------- */
+
+.mode-switch {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 0.6rem;
+  margin-top: 1.1rem;
+}
+
+.mode {
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--ink-soft);
+  padding: 0.65rem 0.85rem;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.92rem;
+}
+
+.mode span {
+  display: block;
+  color: var(--ink-faint);
+  font-size: 0.78rem;
+  margin-top: 0.15rem;
+}
+
+.mode:hover:not(:disabled),
+.mode:focus-visible {
+  border-color: var(--accent);
+}
+
+.mode[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.mode[aria-pressed='true'] span {
+  font-weight: 400;
+}
+
+.mode:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
 /* ---------- the privacy contract ---------- */
 
 .contract {
@@ -176,6 +225,129 @@ a {
   display: block;
   color: var(--ink-faint);
   font-size: 0.8rem;
+}
+
+/* Same slot as the toggle, so the contract keeps its shape on both paths. */
+.strict-inert {
+  display: block;
+  margin: 0.8rem 0 0;
+  color: var(--ink-faint);
+  font-size: 0.82rem;
+  cursor: default;
+}
+
+/* ---------- the finished example ---------- */
+
+.example {
+  border-left: 3px solid var(--accent);
+}
+
+.example-lede {
+  margin: 0 0 0.8rem;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+}
+
+.example-split {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.3rem 0.7rem;
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+  background: var(--panel-2);
+  font-size: 0.84rem;
+}
+
+.example-split dt {
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  color: var(--accent);
+  white-space: nowrap;
+  padding-top: 0.12rem;
+}
+
+.example-split dd {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 30rem) {
+  .example-split {
+    grid-template-columns: 1fr;
+    gap: 0.05rem;
+  }
+  .example-split dd {
+    margin-bottom: 0.45rem;
+  }
+}
+
+.example-questions {
+  list-style: decimal;
+  margin: 0;
+  padding-left: 1.4rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.example-questions li::marker {
+  color: var(--ink-faint);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+}
+
+.example-question {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: inherit;
+  padding: 0.55rem 0.7rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+.example-question:hover:not(:disabled),
+.example-question:focus-visible {
+  border-color: var(--accent);
+}
+
+.example-question:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.example-question .q {
+  display: block;
+  font-size: 0.92rem;
+}
+
+.example-question .tags {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--ink-faint);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+}
+
+.example-question.is-shown {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.example-footer {
+  margin: 1rem 0 0;
+  padding-top: 0.8rem;
+  border-top: 1px dashed var(--line);
+  color: var(--ink-faint);
+  font-size: 0.82rem;
+}
+
+.example-footer .link {
+  color: var(--accent);
 }
 
 /* ---------- panels ---------- */
@@ -344,6 +516,15 @@ button {
   border-color: var(--accent);
 }
 
+/* Read-only on the example path: the saved SQL was planned against these types. */
+.chip.is-static {
+  cursor: default;
+}
+
+.chip.is-static:hover {
+  border-color: var(--line);
+}
+
 .chip .cname {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -502,6 +683,26 @@ button {
   background: var(--warn-soft);
   color: var(--warn);
   border-color: currentColor;
+}
+
+.badge-replay {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: currentColor;
+}
+
+/* The label that keeps the recording and the computation apart. Permanent, and
+   deliberately not styled as a dismissible aside. */
+.answer.is-replay {
+  border-left: 3px solid var(--accent);
+}
+
+.provenance {
+  margin: 0 0 0.2rem;
+  padding-block: 0.55rem 0.7rem;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  border-bottom: 1px dashed var(--line);
 }
 
 .table-scroll {

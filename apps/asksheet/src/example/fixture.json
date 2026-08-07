@@ -1,0 +1,323 @@
+{
+  "README": "GENERATED FILE — do not edit. Every sql, narration and chart below is verbatim output from the deployed asksheet-plan function. Regenerate with SUPABASE_ANON_KEY=... node apps/asksheet/scripts/capture-example.mjs",
+  "schema": 1,
+  "generatedBy": "apps/asksheet/scripts/capture-example.mjs",
+  "capturedAt": "2026-08-07T15:07:04.075Z",
+  "endpoint": "https://jayflvpyrdvqhmftiokp.supabase.co/functions/v1/asksheet-plan",
+  "sampleId": "saas-revenue",
+  "table": "data",
+  "strict": false,
+  "plans": [
+    {
+      "question": "Which month had the highest revenue and why is it an outlier?",
+      "follows": null,
+      "request": {
+        "profile": {
+          "table": "data",
+          "columns": [
+            {
+              "name": "month",
+              "type": "VARCHAR",
+              "samples": [
+                "2024-10",
+                "2025-03",
+                "2024-01",
+                "2025-12",
+                "2024-04"
+              ]
+            },
+            {
+              "name": "region",
+              "type": "VARCHAR",
+              "samples": [
+                "APAC",
+                "EMEA",
+                "NA"
+              ]
+            },
+            {
+              "name": "plan",
+              "type": "VARCHAR",
+              "samples": [
+                "Pro",
+                "Starter",
+                "Enterprise"
+              ]
+            },
+            {
+              "name": "contract_type",
+              "type": "VARCHAR",
+              "samples": [
+                "monthly",
+                "annual_prepay"
+              ]
+            },
+            {
+              "name": "new_customers",
+              "type": "BIGINT",
+              "samples": [
+                "107",
+                "148",
+                "131",
+                "29",
+                "100"
+              ]
+            },
+            {
+              "name": "churned_customers",
+              "type": "BIGINT",
+              "samples": [
+                "0",
+                "15",
+                "2",
+                "40",
+                "18"
+              ]
+            },
+            {
+              "name": "revenue_usd",
+              "type": "DOUBLE",
+              "samples": [
+                "49493.89",
+                "20700.3",
+                "75525.79",
+                "36445.88",
+                "48229.86"
+              ]
+            }
+          ],
+          "rowCount": 219
+        },
+        "history": [],
+        "question": "Which month had the highest revenue and why is it an outlier?"
+      },
+      "requestBytes": 726,
+      "sql": "SELECT month, SUM(revenue_usd) AS total_revenue FROM data GROUP BY month ORDER BY total_revenue DESC LIMIT 1",
+      "narration": "This query identifies the month with the highest total revenue from the dataset.",
+      "chart": null,
+      "repaired": false,
+      "observed": {
+        "columns": [
+          "month",
+          "total_revenue"
+        ],
+        "rowCount": 1
+      }
+    },
+    {
+      "question": "Now break that month down by plan and contract type",
+      "follows": 0,
+      "request": {
+        "profile": {
+          "table": "data",
+          "columns": [
+            {
+              "name": "month",
+              "type": "VARCHAR",
+              "samples": [
+                "2024-10",
+                "2025-03",
+                "2024-01",
+                "2025-12",
+                "2024-04"
+              ]
+            },
+            {
+              "name": "region",
+              "type": "VARCHAR",
+              "samples": [
+                "APAC",
+                "EMEA",
+                "NA"
+              ]
+            },
+            {
+              "name": "plan",
+              "type": "VARCHAR",
+              "samples": [
+                "Pro",
+                "Starter",
+                "Enterprise"
+              ]
+            },
+            {
+              "name": "contract_type",
+              "type": "VARCHAR",
+              "samples": [
+                "monthly",
+                "annual_prepay"
+              ]
+            },
+            {
+              "name": "new_customers",
+              "type": "BIGINT",
+              "samples": [
+                "107",
+                "148",
+                "131",
+                "29",
+                "100"
+              ]
+            },
+            {
+              "name": "churned_customers",
+              "type": "BIGINT",
+              "samples": [
+                "0",
+                "15",
+                "2",
+                "40",
+                "18"
+              ]
+            },
+            {
+              "name": "revenue_usd",
+              "type": "DOUBLE",
+              "samples": [
+                "49493.89",
+                "20700.3",
+                "75525.79",
+                "36445.88",
+                "48229.86"
+              ]
+            }
+          ],
+          "rowCount": 219
+        },
+        "history": [
+          {
+            "question": "Which month had the highest revenue and why is it an outlier?",
+            "sql": "SELECT month, SUM(revenue_usd) AS total_revenue FROM data GROUP BY month ORDER BY total_revenue DESC LIMIT 1"
+          }
+        ],
+        "question": "Now break that month down by plan and contract type"
+      },
+      "requestBytes": 909,
+      "sql": "SELECT plan, contract_type, SUM(revenue_usd) AS total_revenue FROM data WHERE month = (SELECT month FROM data GROUP BY month ORDER BY SUM(revenue_usd) DESC LIMIT 1) GROUP BY plan, contract_type ORDER BY total_revenue DESC",
+      "narration": "This query provides a breakdown of the highest revenue month by plan and contract type.",
+      "chart": null,
+      "repaired": false,
+      "observed": {
+        "columns": [
+          "plan",
+          "contract_type",
+          "total_revenue"
+        ],
+        "rowCount": 4
+      }
+    },
+    {
+      "question": "Chart monthly revenue by region so I can see where the growth is",
+      "follows": null,
+      "request": {
+        "profile": {
+          "table": "data",
+          "columns": [
+            {
+              "name": "month",
+              "type": "VARCHAR",
+              "samples": [
+                "2024-10",
+                "2025-03",
+                "2024-01",
+                "2025-12",
+                "2024-04"
+              ]
+            },
+            {
+              "name": "region",
+              "type": "VARCHAR",
+              "samples": [
+                "APAC",
+                "EMEA",
+                "NA"
+              ]
+            },
+            {
+              "name": "plan",
+              "type": "VARCHAR",
+              "samples": [
+                "Pro",
+                "Starter",
+                "Enterprise"
+              ]
+            },
+            {
+              "name": "contract_type",
+              "type": "VARCHAR",
+              "samples": [
+                "monthly",
+                "annual_prepay"
+              ]
+            },
+            {
+              "name": "new_customers",
+              "type": "BIGINT",
+              "samples": [
+                "107",
+                "148",
+                "131",
+                "29",
+                "100"
+              ]
+            },
+            {
+              "name": "churned_customers",
+              "type": "BIGINT",
+              "samples": [
+                "0",
+                "15",
+                "2",
+                "40",
+                "18"
+              ]
+            },
+            {
+              "name": "revenue_usd",
+              "type": "DOUBLE",
+              "samples": [
+                "49493.89",
+                "20700.3",
+                "75525.79",
+                "36445.88",
+                "48229.86"
+              ]
+            }
+          ],
+          "rowCount": 219
+        },
+        "history": [],
+        "question": "Chart monthly revenue by region so I can see where the growth is"
+      },
+      "requestBytes": 729,
+      "sql": "SELECT month, region, SUM(revenue_usd) AS total_revenue FROM data GROUP BY month, region ORDER BY month, region",
+      "narration": "This query retrieves the total monthly revenue for each region, allowing for analysis of revenue growth over time.",
+      "chart": {
+        "mark": "line",
+        "encoding": {
+          "x": {
+            "field": "month",
+            "type": "temporal"
+          },
+          "y": {
+            "field": "total_revenue",
+            "type": "quantitative"
+          },
+          "color": {
+            "field": "region",
+            "type": "nominal"
+          }
+        }
+      },
+      "repaired": false,
+      "observed": {
+        "columns": [
+          "month",
+          "region",
+          "total_revenue"
+        ],
+        "rowCount": 72
+      }
+    }
+  ]
+}

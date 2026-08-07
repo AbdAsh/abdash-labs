@@ -7,6 +7,29 @@ Deployed at `labs.abdash.net/asksheet`.
 
 ---
 
+## Two paths
+
+The app opens on **"See a finished example"** and the live product is one click
+away. The split exists because AskSheet is an awkward thing to demo: the
+expensive half is invisible.
+
+|  | See a finished example (default) | Ask your own question |
+| --- | --- | --- |
+| Sample | bundled CSV, preloaded | your CSV, or either sample |
+| The SQL | planned earlier, saved in the page | planned live |
+| The numbers | computed in your tab, when you click | computed in your tab |
+| Requests | **none** | one per question |
+| Session | none — no account is created | anonymous account |
+| Daily allowance | untouched | one question |
+
+Everything on the example path except the SQL, the sentence above each table and
+the chart spec is computed at the moment of the click, by the same DuckDB running
+the live path. No number on screen is stored. Every answer says so, permanently,
+rather than letting a reader assume the whole thing is a screenshot.
+
+See [The finished example](#the-finished-example) for how the saved plans are
+produced, and why none of them is hand-written.
+
 ## The claim
 
 Every "chat with your data" product uploads your data. This one does not.
@@ -24,7 +47,7 @@ taken on trust.
 
 1. Open `https://labs.abdash.net/asksheet` (or `npm run dev -w apps/asksheet`).
 2. Open **DevTools → Network** and tick **Preserve log**.
-3. Load the **SaaS revenue** sample and ask
+3. Click **Ask your own question**, load the **SaaS revenue** sample and ask
    *"Which month had the highest revenue and why is it an outlier?"*
 4. Look at every request in the list.
 
@@ -40,14 +63,41 @@ What you will see:
   else.
 - **No request carrying rows.** Not to `asksheet-plan`, not anywhere.
 
+### The stronger version, on the default path
+
+Stay on **See a finished example** and click one of the three questions. The
+Network panel does not move: **not one request**, not even the planner's.
+
+Getting there took two changes beyond saving the SQL, both worth the trouble
+because the alternative was a page that told a sceptic to open DevTools and then
+showed them traffic:
+
+- **No session.** `AuthGate` used to wrap the whole app, so a first-time visitor
+  signed up for an anonymous account — a Turnstile script, a challenge and a
+  `signInAnonymously` — before seeing anything. The example path spends no quota
+  and calls nothing, so it needs no identity; the gate now sits around the live
+  path only (`main.tsx`, and the note above the render in `App.tsx`). Reading the
+  daily allowance moved inside the gate for the same reason.
+- **The chart renderer is fetched at page load, not at the click.** Vega is
+  code-split, so drawing the first chart would have put one same-origin chunk on
+  the wire at exactly the moment being watched. `warmChartRenderer()` pulls it in
+  while the visitor is still reading, and the live path keeps its lazy import.
+
+So the whole of a first visit is: this page's HTML, JS and CSS; the DuckDB
+engine and its worker from jsDelivr; the chart renderer. Then nothing, however
+many of the three questions you click.
+
 Now tick **Strict mode** in the privacy panel and ask another question. The
 `samples` arrays in the next payload are all empty, and the conversation resets —
 see below for why that is not an inconvenience but part of the claim.
 
-For reference, a full profile of the 219-row bundled sample is **711 bytes**, and
-600 bytes in strict mode.
+For reference, a whole request against the 219-row bundled sample is **726
+bytes**, of which the profile is 626. That is not an estimate: it is measured,
+recorded in `src/example/fixture.json`, and readable in the app itself under
+*"the 726 bytes that were sent to plan it"* on any example answer — the entire
+payload, without opening DevTools at all.
 
-The same check runs as an assertion in CI, at five levels:
+The same check runs as an assertion in CI, at six levels:
 
 | Level | File | What it pins |
 | --- | --- | --- |
@@ -56,8 +106,12 @@ The same check runs as an assertion in CI, at five levels:
 | Engine | `src/lib/duck.test.ts` | Against a real DuckDB, no cell value appears anywhere in a strict-mode profile |
 | Row | `src/lib/duck.test.ts` | Against the real bundled sample, **zero of 219 source rows** can be reconstructed from a normal-mode payload |
 | Error | `src/lib/duck.test.ts`, `supabase/functions/asksheet-plan/redact.test.ts` | A real DuckDB conversion failure names the offending cell; the text that leaves does not contain it |
+| Wire | `src/example/example.test.ts` | The same row-reconstruction and key-set properties, over **bytes that actually crossed** — the request bodies saved verbatim in `fixture.json`, rather than a payload synthesised by a test |
 
-### Why those last two rows exist
+The last row is the one that needed no mocking. Everything above it reasons about
+what the code would send; that one reads what it did send.
+
+### Why the row and error levels exist
 
 Counting disclosed values is the wrong measure. The right one is what can be
 *rebuilt* from them, and the two have now come apart twice.
@@ -113,6 +167,70 @@ came from sample values or from what was typed. Sending those under a schema-onl
 badge would make the badge a lie, so enabling strict mode drops the history and
 says so.
 
+## The finished example
+
+Three questions, captured against the deployed planner and replayed locally.
+
+| # | Question | What it shows |
+| --- | --- | --- |
+| 1 | *Which month had the highest revenue and why is it an outlier?* | The headline this README promises. One row, one number, no chart. |
+| 2 | *Now break that month down by plan and contract type* | A follow-up — and the answer to the first question's second half. |
+| 3 | *Chart monthly revenue by region so I can see where the growth is* | A Vega-Lite line chart over 72 locally-computed rows. |
+
+Question 2 is the interesting one twice over. "That month" resolves only from
+question 1's SQL, so it demonstrates the thing about the design that is easiest
+to miss — **what carries conversation context is prior SQL, never prior
+results** — and the planner resolved it with a correlated subquery rather than by
+being told the answer:
+
+```sql
+SELECT plan, contract_type, SUM(revenue_usd) AS total_revenue FROM data
+WHERE month = (SELECT month FROM data GROUP BY month
+               ORDER BY SUM(revenue_usd) DESC LIMIT 1)
+GROUP BY plan, contract_type ORDER BY total_revenue DESC
+```
+
+It returns four rows, one of which is `Enterprise · annual_prepay · 851000`. That
+is *why* 2025-03 is an outlier, which question 1 alone does not say: asked on its
+own it produces a bare `ORDER BY … LIMIT 1`. Clicking question 2 first therefore
+replays question 1 before it, because a follow-up shown alone is half a
+conversation.
+
+### Nothing in the fixture is hand-written
+
+`scripts/capture-example.mjs` boots a real DuckDB, loads the real bundled CSV,
+profiles it with the app's own `buildProfile`, and drives the app's own `ask()`
+loop against the live Edge Function. `src/example/fixture.json` is exactly what
+came back.
+
+```bash
+SUPABASE_ANON_KEY=... node apps/asksheet/scripts/capture-example.mjs
+SUPABASE_ANON_KEY=... node apps/asksheet/scripts/capture-example.mjs --dry-run
+```
+
+It costs one unit of `asksheet:plans` per question, from a fresh anonymous
+session — the same tier and the same ceiling a first-time visitor gets. A
+question whose first statement fails spends two, exactly as it would in the
+browser, and the fixture records that it did.
+
+The app's TypeScript is loaded through a single Vite dev server rather than
+`runnerImport` per module, which is where the sibling recorder in `apps/raglab`
+differs: this script injects a planner into `runtime.ts` and then calls `ask()`
+from `plan.ts`, and per-module imports would give each of them its own instance
+of the registry, so the injection would silently do nothing.
+
+**Results are not captured.** No number a visitor sees comes from the file. The
+`observed` block records column names and row count at capture time so
+`example.test.ts` can catch a fixture that has drifted from the sample; it is
+never rendered.
+
+**The privacy boundary is re-checked before anything is written.** The fixture
+holds `request` — a verbatim copy of each body that crossed the network, shown in
+the UI under *"the 726 bytes that were sent to plan it"* — so the recorder runs
+the row-reconstruction property over it and refuses to write if a single source
+row could be rebuilt from the samples it discloses. The same checks run again in
+`example.test.ts`, this time against bytes that are already committed.
+
 ## How it works
 
 ```
@@ -167,10 +285,18 @@ src/
     columnTypes.ts  the cast allowlist
     starters.ts     three questions from the schema alone
     exportCsv.ts    result → CSV download
-  components/       Dropzone · SchemaChips · Answer · SqlDisclosure · Chart · PrivacyContract
+  components/       Dropzone · SchemaChips · Answer · SqlDisclosure · Chart
+                    PrivacyContract · ExamplePanel · UpgradePrompt
   samples/          two bundled CSVs
+  example/
+    fixture.json    GENERATED — the three captured plans, verbatim
+    index.ts        typed loader, prerequisite chain, provenance
+scripts/
+  capture-example.mjs      regenerates the fixture against the live planner
 test/
-  duckdb-node-worker.cjs   Web Worker globals for the Node integration test
+  nodeDuck.ts              a real DuckDB under Node; used by the integration
+                           suite and by the capture script
+  duckdb-node-worker.cjs   Web Worker globals for that engine
 ```
 
 **The DI seam.** `profile.ts` and `plan.ts` carry the privacy logic, so neither is
@@ -185,14 +311,25 @@ binary and no network client anywhere in their module graph.
 ```bash
 npm run dev   -w apps/asksheet     # needs VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY
 npm run build -w apps/asksheet     # → apps/asksheet/dist, base '/asksheet/'
-npx vitest run apps/asksheet       # 228 tests, including a real DuckDB
+npx vitest run apps/asksheet       # 259 tests, including two real DuckDBs
 npm run test:functions             # the Deno side, including redact.test.ts
+
+SUPABASE_ANON_KEY=... npm run capture:example -w apps/asksheet
 ```
 
-The DuckDB integration test boots the engine's Node bundle over
+The DuckDB integration tests boot the engine's Node bundle over
 `node:worker_threads`. The published recipe adds the `web-worker` package for
 this; `test/duckdb-node-worker.cjs` supplies the same three globals in fifteen
-lines, so there is no test-only runtime dependency.
+lines, so there is no test-only runtime dependency. `test/nodeDuck.ts` wraps that
+into one `bootNodeDuck()` shared by `duck.test.ts`, `example/replay.test.ts` and
+the capture script — the last of which is why it is a module rather than thirty
+lines inside a test file.
+
+`example/replay.test.ts` runs every saved statement against the real bundled CSV
+and asserts it still returns the shape it returned when captured, that it returns
+rows at all, that a spec survives `toChartSpec`, and that question 1 still names
+`2025-03`. A finished example that has quietly stopped finishing is worse than no
+example.
 
 ## Server side
 

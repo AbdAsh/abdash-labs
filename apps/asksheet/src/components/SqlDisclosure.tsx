@@ -10,11 +10,15 @@ import { useState } from 'react'
 export function SqlDisclosure({
   sql,
   label = 'SQL',
+  copyLabel = 'Copy SQL',
   defaultOpen = false,
   onDownload,
 }: {
   sql: string
   label?: string
+  /** The example path reuses this to show the request body that produced the SQL,
+   *  where "Copy SQL" would be a lie about what is on the clipboard. */
+  copyLabel?: string
   defaultOpen?: boolean
   onDownload?: () => void
 }) {
@@ -38,7 +42,7 @@ export function SqlDisclosure({
       </pre>
       <div className="sql-actions">
         <button type="button" className="btn" onClick={copy}>
-          {copied ? 'Copied' : 'Copy SQL'}
+          {copied ? 'Copied' : copyLabel}
         </button>
         {onDownload && (
           <button type="button" className="btn" onClick={onDownload}>

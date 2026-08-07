@@ -1,3 +1,4 @@
+import { capturedOn, type ReplayProvenance } from '../example'
 import { csvFilename, resultToCsv } from '../lib/exportCsv'
 import type { Answer as AnswerData } from '../lib/types'
 import { Chart } from './Chart'
@@ -26,12 +27,22 @@ function download(answer: AnswerData, question: string) {
   URL.revokeObjectURL(url)
 }
 
-export function AnswerCard({ question, answer }: { question: string; answer: AnswerData }) {
+export function AnswerCard({
+  question,
+  answer,
+  replay,
+}: {
+  question: string
+  answer: AnswerData
+  /** Present when this answer replayed a saved plan rather than asking the
+   *  planner. The card then has to be explicit about which half is which. */
+  replay?: ReplayProvenance
+}) {
   const { result } = answer
   const shown = result.rows.slice(0, DISPLAY_ROWS)
 
   return (
-    <article className="answer">
+    <article className={`answer${replay ? ' is-replay' : ''}`}>
       <p className="question">
         <strong>{question}</strong>
       </p>
@@ -39,7 +50,12 @@ export function AnswerCard({ question, answer }: { question: string; answer: Ans
       <p className="narration">{answer.narration}</p>
 
       <div className="badges">
-        <span className="badge badge-timing">{result.elapsedMs} ms · in-browser</span>
+        <span className="badge badge-timing">
+          {result.elapsedMs} ms · {replay ? 'computed in this tab just now' : 'in-browser'}
+        </span>
+        {replay && (
+          <span className="badge badge-replay">saved plan · {capturedOn(replay.capturedAt)}</span>
+        )}
         {answer.repaired && (
           <span className="badge badge-repaired">
             first query failed — this is the corrected one
@@ -47,6 +63,26 @@ export function AnswerCard({ question, answer }: { question: string; answer: Ans
         )}
         {result.truncated && <span className="badge badge-truncated">result capped at 5,000 rows</span>}
       </div>
+
+      {/* Permanent, not dismissible: the whole point of the example path is that
+          a visitor can tell exactly which part of it was recorded. */}
+      {replay && (
+        <p className="provenance">
+          The SQL below was written by the planner on {capturedOn(replay.capturedAt)} and saved with
+          this page. Everything above it was computed by DuckDB in this tab a moment ago, from the
+          bundled sample — no stored results, and no network request to show you them.
+          {replay.followsQuestion && (
+            <>
+              {' '}
+              It was asked as a follow-up to “{replay.followsQuestion}”, and the planner was given
+              that question’s SQL as context — never the rows it returned.
+            </>
+          )}
+          {replay.repaired && (
+            <> The planner’s first attempt failed when this was recorded; this is its correction.</>
+          )}
+        </p>
+      )}
 
       <Chart spec={answer.chart} result={result} title={question} />
 
@@ -100,7 +136,21 @@ export function AnswerCard({ question, answer }: { question: string; answer: Ans
         </p>
       )}
 
-      <SqlDisclosure sql={answer.sql} onDownload={() => download(answer, question)} />
+      <SqlDisclosure
+        sql={answer.sql}
+        label={replay ? `SQL — planned ${capturedOn(replay.capturedAt)}, replayed here` : 'SQL'}
+        onDownload={() => download(answer, question)}
+      />
+
+      {/* The claim the app is built on, shown rather than described: this is the
+          whole payload that produced the statement above, byte for byte. */}
+      {replay && (
+        <SqlDisclosure
+          sql={JSON.stringify(replay.request, null, 2)}
+          label={`the ${replay.requestBytes} bytes that were sent to plan it`}
+          copyLabel="Copy request"
+        />
+      )}
     </article>
   )
 }

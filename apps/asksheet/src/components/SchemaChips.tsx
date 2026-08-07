@@ -14,11 +14,16 @@ export function SchemaChips({
   rowCount,
   onOverride,
   busy,
+  readOnly = false,
 }: {
   columns: ColumnInfo[]
   rowCount: number | null
   onOverride: (column: string, type: string) => void
   busy: boolean
+  /** The example path shows the schema but must not let it be changed: its saved
+   *  SQL was planned against these exact types, and re-casting a column would
+   *  quietly turn a replay into a different query. */
+  readOnly?: boolean
 }) {
   const [editing, setEditing] = useState<string | null>(null)
   const [next, setNext] = useState<string>(SUPPORTED_TYPES[0])
@@ -34,7 +39,9 @@ export function SchemaChips({
 
   return (
     <section className="panel" aria-labelledby="schema-heading">
-      <h2 id="schema-heading">Schema — click a column to change its type</h2>
+      <h2 id="schema-heading">
+        {readOnly ? 'Schema' : 'Schema — click a column to change its type'}
+      </h2>
 
       {headerless && (
         <div className="notice notice-warn" role="status">
@@ -45,26 +52,35 @@ export function SchemaChips({
       )}
 
       <ul className="chips">
-        {columns.map((column) => (
-          <li key={column.name}>
-            <button
-              type="button"
-              className="chip"
-              aria-expanded={editing === column.name}
-              disabled={busy}
-              onClick={() => {
-                setEditing(editing === column.name ? null : column.name)
-                setNext(column.type.toUpperCase())
-              }}
-            >
-              <span className="cname">{column.name}</span>
-              <span className="ctype">{column.type}</span>
-            </button>
-          </li>
-        ))}
+        {columns.map((column) =>
+          readOnly ? (
+            <li key={column.name}>
+              <span className="chip is-static">
+                <span className="cname">{column.name}</span>
+                <span className="ctype">{column.type}</span>
+              </span>
+            </li>
+          ) : (
+            <li key={column.name}>
+              <button
+                type="button"
+                className="chip"
+                aria-expanded={editing === column.name}
+                disabled={busy}
+                onClick={() => {
+                  setEditing(editing === column.name ? null : column.name)
+                  setNext(column.type.toUpperCase())
+                }}
+              >
+                <span className="cname">{column.name}</span>
+                <span className="ctype">{column.type}</span>
+              </button>
+            </li>
+          ),
+        )}
       </ul>
 
-      {current && (
+      {!readOnly && current && (
         <div className="chip-editor">
           <label htmlFor="type-select">
             Read <strong>{current.name}</strong> as
