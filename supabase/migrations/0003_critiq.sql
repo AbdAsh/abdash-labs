@@ -18,8 +18,18 @@ create table critiq.reports (
 );
 
 create index reports_owner_idx on critiq.reports (owner_id, created_at desc);
+
 -- Serves the (URL, day) cache lookup that makes a resubmission free.
-create index reports_cache_idx on critiq.reports (url, (created_at::date));
+--
+-- Not `(url, (created_at::date))`. Postgres rejects that outright — casting a
+-- timestamptz to date is STABLE, not IMMUTABLE, because the result depends on
+-- the session TimeZone, and an index expression must be IMMUTABLE (42P17).
+--
+-- A plain descending column is also the right shape regardless: the lookup asks
+-- `url = $1 and created_at >= <start of window>`, which is a range scan. An
+-- expression index on the cast would not have served that query even if it had
+-- been legal.
+create index reports_cache_idx on critiq.reports (url, created_at desc);
 
 alter table critiq.reports enable row level security;
 
