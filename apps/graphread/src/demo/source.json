@@ -1,6 +1,7 @@
 {
   "docName": "Helix Labs — a short history.pdf",
-  "note": "Original text written for this demo rather than taken from a real document, so that every quote below can be verified byte-for-byte and the demo can ship with no licence question and no API call. demo.test.ts re-derives demo-graph.json from these two arrays and re-runs the quote gate over the result.",
+  "extractedOn": "2026-08-07",
+  "note": "A real extraction, saved. The passages below were written for this demo rather than lifted from a real document, so the graph ships with no licence question; the entities and relations beside them are not written at all, but exactly what the deployed graphread-extract returned when it was run over those passages on the date above, copied back unedited. demo.test.ts re-derives demo-graph.json from these two arrays through the same assembly the app uses, and re-runs the quote gate over the result.",
   "chunks": [
     {
       "id": "c0",
@@ -40,70 +41,99 @@
         {
           "name": "Helix Labs",
           "type": "organization",
-          "description": "A genomics company building a portable sequencer for field clinics."
+          "description": "was founded in Rotterdam in 2019"
         },
         {
           "name": "Dr. Sarah Chen",
           "type": "person",
-          "description": "A biochemist who founded Helix Labs."
-        },
-        {
-          "name": "Sarah Chen",
-          "type": "person",
-          "description": "A biochemist who founded Helix Labs."
+          "description": "was the founder of Helix Labs"
         },
         {
           "name": "Rotterdam",
           "type": "place",
-          "description": "The Dutch city where Helix Labs was founded."
+          "description": "location where Helix Labs was founded"
+        },
+        {
+          "name": "2019",
+          "type": "date",
+          "description": "year Helix Labs was founded"
         },
         {
           "name": "Delft University of Technology",
           "type": "organization",
-          "description": "The university where Chen spent the previous decade."
+          "description": "where Dr. Sarah Chen spent the previous decade"
         },
-        { "name": "2019", "type": "date", "description": "The year Helix Labs was founded." }
+        {
+          "name": "genomics",
+          "type": "concept",
+          "description": "field that had a bottleneck in logistics"
+        }
       ],
       "relations": [
         {
-          "source": "Dr. Sarah Chen",
+          "source": "Helix Labs",
           "relation": "founded",
-          "target": "Helix Labs",
-          "quote": "Helix Labs was founded in Rotterdam in 2019 by Dr. Sarah Chen"
-        },
-        {
-          "source": "Helix Labs",
-          "relation": "based in",
           "target": "Rotterdam",
-          "quote": "Helix Labs was founded in Rotterdam"
+          "quote": "Helix Labs was founded in Rotterdam in 2019"
         },
         {
           "source": "Helix Labs",
-          "relation": "founded in",
+          "relation": "founded",
           "target": "2019",
           "quote": "Helix Labs was founded in Rotterdam in 2019"
         },
         {
           "source": "Dr. Sarah Chen",
-          "relation": "previously at",
+          "relation": "founded",
+          "target": "Helix Labs",
+          "quote": "was founded in Rotterdam in 2019 by Dr. Sarah Chen"
+        },
+        {
+          "source": "Dr. Sarah Chen",
+          "relation": "spent",
           "target": "Delft University of Technology",
-          "quote": "Dr. Sarah Chen, a biochemist who had spent the previous decade at Delft University of Technology"
+          "quote": "who had spent the previous decade at Delft University of Technology"
+        },
+        {
+          "source": "Dr. Sarah Chen",
+          "relation": "argued",
+          "target": "genomics",
+          "quote": "Sarah Chen had argued for years that the bottleneck in genomics was not the chemistry but the logistics."
         }
       ]
     },
     {
       "chunkId": "c1",
       "entities": [
-        { "name": "Helix Labs", "type": "organization", "description": "" },
+        {
+          "name": "Helix Labs",
+          "type": "organization",
+          "description": "shipped its first prototype"
+        },
         {
           "name": "Helix",
           "type": "artifact",
-          "description": "A portable sequencer weighing under two kilograms."
+          "description": "first prototype, called Helix"
+        },
+        {
+          "name": "2021",
+          "type": "date",
+          "description": "first prototype shipped to three clinics"
         },
         {
           "name": "Marcus Webb",
           "type": "person",
-          "description": "Chief scientist at Helix Labs from 2020."
+          "description": "joined Helix Labs as chief scientist in 2020"
+        },
+        {
+          "name": "2020",
+          "type": "date",
+          "description": "Marcus Webb joined Helix Labs"
+        },
+        {
+          "name": "eighteen months",
+          "type": "date",
+          "description": "rebuilt the basecaller inside Helix twice"
         }
       ],
       "relations": [
@@ -133,12 +163,31 @@
         {
           "name": "Orbit Biosciences",
           "type": "organization",
-          "description": "A larger, better funded rival working on the same problem since 2016."
+          "description": "had been working on the same problem since 2016"
         },
-        { "name": "Sarah Chen", "type": "person", "description": "" },
-        { "name": "Helix Labs", "type": "organization", "description": "" }
+        {
+          "name": "Sarah Chen",
+          "type": "person",
+          "description": "had in fact left Orbit Biosciences to start Helix Labs"
+        },
+        {
+          "name": "Helix Labs",
+          "type": "organization",
+          "description": "Sarah Chen had in fact left Orbit Biosciences to start Helix Labs"
+        },
+        {
+          "name": "2016",
+          "type": "date",
+          "description": "had been working on the same problem since 2016"
+        }
       ],
       "relations": [
+        {
+          "source": "Orbit Biosciences",
+          "relation": "competed for",
+          "target": "Helix Labs",
+          "quote": "For four years Orbit Biosciences and Helix Labs competed for the same grants and the same customers"
+        },
         {
           "source": "Sarah Chen",
           "relation": "left",
@@ -147,15 +196,9 @@
         },
         {
           "source": "Sarah Chen",
-          "relation": "founded",
+          "relation": "started",
           "target": "Helix Labs",
           "quote": "Sarah Chen had in fact left Orbit Biosciences to start Helix Labs"
-        },
-        {
-          "source": "Orbit Biosciences",
-          "relation": "competed with",
-          "target": "Helix Labs",
-          "quote": "Orbit Biosciences and Helix Labs competed for the same grants"
         }
       ]
     },
@@ -165,28 +208,61 @@
         {
           "name": "Priya Raman",
           "type": "person",
-          "description": "Ran the field programme from Rotterdam."
+          "description": "ran the field programme from Rotterdam"
         },
-        { "name": "Rotterdam", "type": "place", "description": "" },
-        { "name": "Helix", "type": "artifact", "description": "" },
-        { "name": "Dr. Sarah Chen", "type": "person", "description": "" }
+        {
+          "name": "Rotterdam",
+          "type": "place",
+          "description": "location of the field programme"
+        },
+        {
+          "name": "Helix units",
+          "type": "artifact",
+          "description": "placed in clinics across four countries"
+        },
+        {
+          "name": "the regulators",
+          "type": "concept",
+          "description": "convinced by her data"
+        },
+        {
+          "name": "Dr. Sarah Chen",
+          "type": "person",
+          "description": "received reports directly from Priya Raman"
+        },
+        {
+          "name": "2021",
+          "type": "date",
+          "description": "start of the period during which Helix units were placed"
+        },
+        {
+          "name": "2023",
+          "type": "date",
+          "description": "end of the period during which Helix units were placed"
+        }
       ],
       "relations": [
         {
           "source": "Priya Raman",
-          "relation": "based in",
-          "target": "Rotterdam",
+          "relation": "ran",
+          "target": "field programme",
           "quote": "Priya Raman ran the field programme from Rotterdam"
         },
         {
           "source": "Priya Raman",
-          "relation": "deployed",
-          "target": "Helix",
+          "relation": "placed",
+          "target": "Helix units",
           "quote": "she placed Helix units in clinics across four countries"
         },
         {
           "source": "Priya Raman",
-          "relation": "reports to",
+          "relation": "convinced",
+          "target": "the regulators",
+          "quote": "it was her data, not the laboratory benchmarks, that convinced the regulators"
+        },
+        {
+          "source": "Priya Raman",
+          "relation": "reported directly to",
           "target": "Dr. Sarah Chen",
           "quote": "Priya Raman reported directly to Dr. Sarah Chen"
         }
@@ -195,16 +271,31 @@
     {
       "chunkId": "c4",
       "entities": [
-        { "name": "Helix Labs", "type": "organization", "description": "" },
-        { "name": "Orbit Biosciences", "type": "organization", "description": "" },
+        {
+          "name": "Helix Labs",
+          "type": "organization",
+          "description": "merged with Orbit Biosciences"
+        },
+        {
+          "name": "Orbit Biosciences",
+          "type": "organization",
+          "description": "merged with Helix Labs"
+        },
         {
           "name": "March 2023",
           "type": "date",
-          "description": "When Helix Labs and Orbit Biosciences merged."
+          "description": "when Helix Labs merged with Orbit Biosciences"
         },
-        { "name": "Marcus Webb", "type": "person", "description": "" },
-        { "name": "Priya Raman", "type": "person", "description": "" },
-        { "name": "Helix", "type": "artifact", "description": "" }
+        {
+          "name": "Marcus Webb",
+          "type": "person",
+          "description": "left within the year"
+        },
+        {
+          "name": "Priya Raman",
+          "type": "person",
+          "description": "stayed on to run the combined field programme"
+        }
       ],
       "relations": [
         {
@@ -215,26 +306,26 @@
         },
         {
           "source": "Helix Labs",
-          "relation": "merged in",
-          "target": "March 2023",
-          "quote": "In March 2023 Helix Labs merged with Orbit Biosciences"
+          "relation": "kept",
+          "target": "the Helix name for the device",
+          "quote": "The merged company kept the Helix name for the device and the Orbit Biosciences name for the business"
         },
         {
           "source": "Orbit Biosciences",
-          "relation": "kept the name of",
-          "target": "Helix",
-          "quote": "The merged company kept the Helix name for the device"
+          "relation": "kept",
+          "target": "the Orbit Biosciences name for the business",
+          "quote": "The merged company kept the Helix name for the device and the Orbit Biosciences name for the business"
         },
         {
           "source": "Marcus Webb",
           "relation": "left",
-          "target": "Helix Labs",
+          "target": "within the year",
           "quote": "Marcus Webb left within the year"
         },
         {
           "source": "Priya Raman",
-          "relation": "stayed at",
-          "target": "Orbit Biosciences",
+          "relation": "stayed on to run",
+          "target": "the combined field programme",
           "quote": "Priya Raman stayed on to run the combined field programme"
         }
       ]
@@ -242,24 +333,33 @@
     {
       "chunkId": "c5",
       "entities": [
-        { "name": "Delft University of Technology", "type": "organization", "description": "" },
-        { "name": "Helix Labs", "type": "organization", "description": "" },
-        { "name": "Helix", "type": "artifact", "description": "" },
-        { "name": "Dr. Sarah Chen", "type": "person", "description": "" },
-        { "name": "Orbit Biosciences", "type": "organization", "description": "" }
+        {
+          "name": "Delft University of Technology",
+          "type": "organization",
+          "description": "retained a small equity stake in Helix Labs"
+        },
+        {
+          "name": "Helix Labs",
+          "type": "organization",
+          "description": "retained a small equity stake from the founding"
+        },
+        {
+          "name": "Dr. Sarah Chen",
+          "type": "person",
+          "description": "returned to Delft as a visiting professor in 2024"
+        },
+        {
+          "name": "Orbit Biosciences",
+          "type": "organization",
+          "description": "remained on the board of"
+        }
       ],
       "relations": [
         {
           "source": "Delft University of Technology",
-          "relation": "holds a stake in",
+          "relation": "retained",
           "target": "Helix Labs",
           "quote": "Delft University of Technology retained a small equity stake in Helix Labs from the founding"
-        },
-        {
-          "source": "Delft University of Technology",
-          "relation": "tested",
-          "target": "Helix",
-          "quote": "two of its laboratories continued to test the Helix in the field"
         },
         {
           "source": "Dr. Sarah Chen",
@@ -269,7 +369,7 @@
         },
         {
           "source": "Dr. Sarah Chen",
-          "relation": "sits on the board of",
+          "relation": "remained on the board of",
           "target": "Orbit Biosciences",
           "quote": "while remaining on the board of Orbit Biosciences"
         }

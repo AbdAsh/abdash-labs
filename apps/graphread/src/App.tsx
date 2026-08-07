@@ -10,7 +10,12 @@ import { pagesFromFile, runExtraction, toSourceChunks, type SourceChunk } from '
 import type { Graph } from './lib/graph'
 import { loadGraph, saveCorrections, saveGraph } from './lib/persist'
 import { ENTITY_TYPES, type EntityType } from './lib/validate'
-import { DEMO_DOC_NAME, DEMO_GRAPH, demoChunkPages } from './demo'
+import {
+  DEMO_DOC_NAME,
+  DEMO_EXTRACTED_ON_LABEL,
+  DEMO_GRAPH,
+  demoChunkPages,
+} from './demo'
 
 type Stage = 'ready' | 'opening' | 'estimating' | 'extracting'
 
@@ -248,7 +253,7 @@ export default function App() {
           <h1>GraphRead</h1>
           <p className="doc-name">
             {docName}
-            {isDemo && <span className="badge">demo</span>}
+            {isDemo && <span className="badge">saved example</span>}
             {!canEdit && <span className="badge">shared</span>}
           </p>
         </div>
@@ -258,20 +263,11 @@ export default function App() {
               Undo last correction
             </button>
           )}
-          <label className={`file-button${busy ? ' is-disabled' : ''}`}>
-            {stage === 'estimating' ? 'Reading the document…' : 'Open a document'}
-            <input
-              type="file"
-              accept="application/pdf,text/plain"
-              disabled={busy}
-              onChange={(e) => {
-                const file = e.target.files?.[0]
-                // Reset, so picking the same file twice still fires a change.
-                e.target.value = ''
-                if (file) void onPickFile(file)
-              }}
-            />
-          </label>
+          <OpenDocument
+            busy={busy}
+            label={stage === 'estimating' ? 'Reading the document…' : 'Open a document'}
+            onPick={onPickFile}
+          />
           {shareable && (
             <button type="button" onClick={() => void onShare()} disabled={slug !== null}>
               {slug ? 'Permalink created' : 'Create a permalink'}
@@ -293,6 +289,22 @@ export default function App() {
             dismiss
           </button>
         </p>
+      )}
+
+      {/* The demo has to say three things before it says anything else: that it
+          is real output rather than a mock-up, that looking at it is free, and
+          where the button is. Without the first it proves nothing; without the
+          second people ration a free allowance they have not spent; without the
+          third they read it as the whole product and leave. */}
+      {isDemo && !pending && stage === 'ready' && (
+        <div className="demo-bar">
+          <p>
+            <strong>A finished extraction, saved on {DEMO_EXTRACTED_ON_LABEL}.</strong> Every edge
+            below is one the extractor actually returned, and clicking one shows the sentence it was
+            quoted from. Reading it costs nothing — no run, no allowance.
+          </p>
+          <OpenDocument busy={busy} label="Run one on your own document" onPick={onPickFile} />
+        </div>
       )}
 
       {pending && stage !== 'extracting' && (
@@ -400,6 +412,38 @@ export default function App() {
         )}
       </main>
     </div>
+  )
+}
+
+/**
+ * The file picker, as a label wrapping a hidden input. Extracted because it
+ * appears twice — once in the header and once in the demo bar — and a second
+ * copy of the reset-on-change detail is a second place to get it wrong.
+ */
+function OpenDocument({
+  busy,
+  label,
+  onPick,
+}: {
+  busy: boolean
+  label: string
+  onPick: (file: File) => void
+}) {
+  return (
+    <label className={`file-button${busy ? ' is-disabled' : ''}`}>
+      {label}
+      <input
+        type="file"
+        accept="application/pdf,text/plain"
+        disabled={busy}
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          // Reset, so picking the same file twice still fires a change.
+          e.target.value = ''
+          if (file) onPick(file)
+        }}
+      />
+    </label>
   )
 }
 

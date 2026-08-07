@@ -3,13 +3,20 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { assemble } from '../lib/graph'
 import { lexicalPass } from '../lib/resolve'
-import { quoteSupportedBy, type ChunkExtraction, type RawEntity } from '../lib/validate'
+import {
+  nameAppearsIn,
+  quoteSupportedBy,
+  validateExtraction,
+  type ChunkExtraction,
+  type RawEntity,
+} from '../lib/validate'
 import sourceJson from './source.json'
 
 const GRAPH_PATH = fileURLToPath(new URL('./demo-graph.json', import.meta.url))
 
 const source = sourceJson as unknown as {
   docName: string
+  extractedOn: string
   chunks: { id: string; page: number; content: string }[]
   extractions: ChunkExtraction[]
 }
@@ -44,14 +51,30 @@ describe('demo source', () => {
     }
   })
 
-  it('names an extracted entity at both ends of every relation', () => {
+  it('names one endpoint in every quote', () => {
     for (const extraction of source.extractions) {
-      const known = new Set(source.extractions.flatMap((x) => x.entities.map((e) => e.name)))
       for (const r of extraction.relations) {
-        expect(known.has(r.source), `${extraction.chunkId} source ${r.source}`).toBe(true)
-        expect(known.has(r.target), `${extraction.chunkId} target ${r.target}`).toBe(true)
+        expect(
+          nameAppearsIn(r.quote, r.source) || nameAppearsIn(r.quote, r.target),
+          `${extraction.chunkId}: ${JSON.stringify(r.quote)} names neither ${r.source} nor ${r.target}`,
+        ).toBe(true)
       }
     }
+  })
+
+  it('is a recording, not a rewrite — nothing here was repaired by hand', () => {
+    // The committed extraction is what the deployed function returned, warts
+    // included. The warts are the point: five of its relations hang off a bare
+    // noun the model never listed as an entity ("field programme", "within the
+    // year"), and the resolver refuses all five below. Quietly deleting them
+    // from this file would turn an honest recording into a brochure, and would
+    // hide the one failure mode the quote gate cannot catch on its own.
+    const listed = new Set(source.extractions.flatMap((x) => x.entities.map((e) => e.name)))
+    const danglers = source.extractions.flatMap((x) =>
+      x.relations.filter((r) => !listed.has(r.source) || !listed.has(r.target)),
+    )
+    expect(danglers).toHaveLength(5)
+    expect(source.extractedOn).toBe('2026-08-07')
   })
 })
 
@@ -64,9 +87,38 @@ describe('demo graph', () => {
     expect(serialized).toBe(readFileSync(GRAPH_PATH, 'utf8'))
   })
 
-  it('drops nothing — a demo that fails its own gate is not a demo', () => {
+  it('loses nothing at the quote gate', () => {
+    // Zero is the number that matters, and it is not luck: every quote in the
+    // recording was checked against its chunk and every one of them held.
     expect(built.stats.droppedRelations).toBe(0)
-    expect(built.stats.unresolvedRelations).toBe(0)
+  })
+
+  it('refuses the five relations whose endpoints were never named', () => {
+    // Counted, not hidden — the UI shows this number, because "we could not
+    // place 5 of 23 claims" is an honest thing to say about a model.
+    expect(built.stats.unresolvedRelations).toBe(5)
+    expect(built.stats.keptRelations).toBe(18)
+  })
+
+  it('quotes every edge verbatim, naming one of its own endpoints', () => {
+    // The end-to-end restatement of the two gates, checked against the graph
+    // the user actually sees rather than against the input that produced it.
+    const byId = new Map(built.nodes.map((n) => [n.id, n]))
+    for (const edge of built.edges) {
+      const from = byId.get(edge.source)!
+      const to = byId.get(edge.target)!
+      for (const evidence of edge.evidence) {
+        const text = chunkTexts.get(evidence.chunkId)
+        expect(quoteSupportedBy(evidence.quote, text!), `${edge.id}: not in ${evidence.chunkId}`).toBe(
+          true,
+        )
+        const names = [from.name, ...from.aliases, to.name, ...to.aliases]
+        expect(
+          names.some((n) => nameAppearsIn(evidence.quote, n)),
+          `${edge.id}: ${JSON.stringify(evidence.quote)} names neither end`,
+        ).toBe(true)
+      }
+    }
   })
 
   it('keeps the company and its product as two nodes', () => {
@@ -83,15 +135,17 @@ describe('demo graph', () => {
     expect(chen.mentions).toBeGreaterThan(2)
   })
 
-  it('collapses the twice-asserted founding into one edge with two quotes', () => {
-    const founded = built.edges.find(
-      (e) =>
-        e.source === 'person:sarah-chen' &&
-        e.relation === 'founded' &&
-        e.target === 'organization:helix-labs',
-    )!
-    expect(founded.weight).toBe(2)
-    expect(founded.evidence.map((x) => x.chunkId).sort()).toEqual(['c0', 'c2'])
+  it('leaves the same founding on two edges, because the model used two verbs', () => {
+    // c0 says Chen "founded" Helix Labs and c2 says she "started" it. Relation
+    // labels are free text taken from the passage, so those are two edges, and
+    // no amount of prompt work reliably makes a model pick one verb twice.
+    // This is exactly what the merge correction in the UI is for, and a demo
+    // that quietly hand-edited the second verb would be hiding the seam.
+    const chenToLabs = built.edges.filter(
+      (e) => e.source === 'person:sarah-chen' && e.target === 'organization:helix-labs',
+    )
+    expect(chenToLabs.map((e) => e.relation).sort()).toEqual(['founded', 'started'])
+    expect(chenToLabs.flatMap((e) => e.evidence.map((x) => x.chunkId)).sort()).toEqual(['c0', 'c2'])
   })
 
   it('points every edge at a node that exists', () => {
@@ -106,5 +160,16 @@ describe('demo graph', () => {
     expect(JSON.stringify(built).length).toBeLessThan(64_000)
     expect(built.nodes.length).toBeGreaterThan(6)
     expect(built.edges.length).toBeGreaterThan(12)
+  })
+
+  it('agrees with the gate run directly over the recording', () => {
+    // Belt and braces: assemble() runs the gate internally, so re-running it
+    // here from the outside proves the graph's own drop count is not just a
+    // number assemble() decided to report.
+    let dropped = 0
+    for (const x of source.extractions) {
+      dropped += validateExtraction(x, chunkTexts.get(x.chunkId) ?? '').dropped.length
+    }
+    expect(dropped).toBe(built.stats.droppedRelations)
   })
 })
