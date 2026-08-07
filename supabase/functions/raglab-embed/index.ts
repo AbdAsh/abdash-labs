@@ -1,6 +1,6 @@
 import { preflight, jsonResponse, errorResponse } from '../_shared/cors.ts'
 import { getCaller } from '../_shared/auth.ts'
-import { consumeQuota } from '../_shared/quota.ts'
+import { consumeQuota, refundQuota } from '../_shared/quota.ts'
 import { embed } from '../_shared/openai.ts'
 
 /**
@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
       // not a run, and an anonymous visitor has two a day — two upstream hiccups
       // would lock them out for the rest of it. So put the unit back.
       if (charging) {
-        await consumeQuota(caller.jwt, 'raglab', 'runs', -1).catch(() => {})
+        await refundQuota(caller.jwt, 'raglab', 'runs')
       }
       throw e
     }
