@@ -29,10 +29,28 @@ const MAX_SAMPLES = 5
 const MAX_SAMPLE_CHARS = 64
 const MAX_COLUMNS = 200
 
+/**
+ * Strict structured output, which is stricter than JSON Schema.
+ *
+ * `chart` is a *string* holding JSON rather than an object, and that is forced
+ * rather than chosen. OpenAI's strict mode requires every object to declare
+ * `additionalProperties: false` and every property to appear in `required` — but
+ * a Vega-Lite spec is arbitrary-shaped, so `additionalProperties: false` would
+ * forbid the exact keys the chart needs. The two constraints cannot both hold.
+ *
+ * Declaring it an object without those keys is valid JSON Schema and rejected by
+ * the provider:
+ *
+ *   Invalid schema for response_format 'out': In context=('properties','chart'),
+ *   'additionalProperties' is required to be supplied and to be false.
+ *
+ * So the spec travels as text and is parsed here. `chart` is also required — an
+ * absent chart is the empty string, because strict mode has no optional keys.
+ */
 const SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['sql', 'narration'],
+  required: ['sql', 'narration', 'chart'],
   properties: {
     sql: {
       type: 'string',
@@ -43,9 +61,10 @@ const SCHEMA = {
       description: 'One sentence framing the answer. No markdown.',
     },
     chart: {
-      type: 'object',
+      type: 'string',
       description:
-        'Optional Vega-Lite spec referencing only columns the SQL returns. Omit when a table says it better.',
+        'A Vega-Lite v5 spec as a JSON string, referencing only columns the SQL returns and '
+        + 'carrying no "data" property. Use the empty string when a table says it better.',
     },
   },
 } as const
@@ -242,7 +261,22 @@ function cleanSql(sql: string): string {
 interface PlanOutput {
   sql: string
   narration: string
-  chart?: Record<string, unknown>
+  /** JSON text, or empty. See the note on SCHEMA for why this is not an object. */
+  chart?: string
+}
+
+/** A spec that will not parse is dropped rather than forwarded. The answer and
+ *  its SQL are still useful without a picture; a broken spec is not. */
+function parseChart(raw: unknown): Record<string, unknown> | null {
+  if (typeof raw !== 'string' || raw.trim() === '') return null
+  try {
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null
+  } catch {
+    return null
+  }
 }
 
 Deno.serve(async (req: Request) => {
@@ -293,13 +327,15 @@ Deno.serve(async (req: Request) => {
       )
     }
 
+    const chart = parseChart(output?.chart)
+
     return jsonResponse({
       sql,
       narration:
         typeof output?.narration === 'string' && output.narration.trim() !== ''
           ? output.narration.trim()
           : 'Here is what that query returns.',
-      ...(output?.chart && typeof output.chart === 'object' ? { chart: output.chart } : {}),
+      ...(chart ? { chart } : {}),
     })
   } catch (error) {
     // Deliberately no logging of question or profile content: the privacy note
