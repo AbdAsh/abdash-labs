@@ -1,11 +1,18 @@
 import { describe, it, expect } from 'vitest'
-import { anonUser } from './helpers'
+import { anonUser, freshUser } from './helpers'
 
 // Every call chains .schema('platform') explicitly — `helpers.ts` is shared with
 // every app's RLS suite and must not pin a default schema.
+//
+// Two tests below use `freshUser()` rather than the pool. Both are about state
+// that only a never-before-seen account has: the signup trigger firing, and a
+// daily quota counter still sitting at zero. A pooled identity survives between
+// runs, so on the second run of any given day it would already have spent the
+// quota and the assertion would fail for a reason that has nothing to do with
+// the code under test.
 describe('platform RLS', () => {
   it('creates a profile row for a new anonymous user', async () => {
-    const { db, userId } = await anonUser()
+    const { db, userId } = await freshUser()
     const { data } = await db.schema('platform')
       .from('profiles').select('id').eq('id', userId).single()
     expect(data?.id).toBe(userId)
@@ -27,7 +34,7 @@ describe('platform RLS', () => {
   })
 
   it('returns false once a daily rate limit is exceeded', async () => {
-    const { db } = await anonUser()
+    const { db } = await freshUser()
     // critiq anon reviews = 1
     const first = await db.schema('platform')
       .rpc('consume_quota', { p_app: 'critiq', p_key: 'reviews', p_amount: 1 })
