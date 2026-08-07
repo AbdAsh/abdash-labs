@@ -90,11 +90,27 @@
   --radius-pill: 100px;
 
   --measure: 68ch;
+
+  /* Height of the sticky "in development" strip. Layouts that size themselves
+     against the viewport subtract this; if the banner is ever removed, set it
+     to 0 and every one of them corrects itself. */
+  --labs-banner-h: 32px;
+
   color-scheme: dark;
 }
 
-/* ═══ RESET ═══ */
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+/* ═══ RESET ═══
+   box-sizing ONLY. This deliberately does not zero margins.
+
+   It did, briefly, and that was a bad call: a blanket `* { margin: 0 }` in a
+   theme that six existing apps opt into silently deletes the vertical rhythm of
+   every one that was relying on the browser's default paragraph and heading
+   margins — which was five of the six. Nothing errors; the text just closes up.
+   An app that wants a hard reset does it in its own stylesheet, where the
+   consequences are visible to whoever wrote the layout. */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
 
 html {
   font-size: 16px;
@@ -192,7 +208,27 @@ code, pre, kbd, samp { font-family: var(--font-mono); font-size: 0.875em; }
     0 0 20px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.06);
 }
 
-/* ═══ CONTROLS ═══ */
+/* ═══ CONTROLS ═══
+   ───────────────────────────────────────────────────────────────────────────
+   ONE button system. Every app on this origin uses these declarations, under
+   whatever class name it already had, because six apps that each invented their
+   own button is exactly what made the set look unrelated.
+
+   No button is ever a solid block of accent with inverted text, and that is a
+   measured decision rather than a stylistic one. The six accents span a wide
+   lightness range: white text on the teal is 2.17:1 and on the green 1.93:1 —
+   illegible — while dark text on the violet is 4.11:1, which fails AA for
+   text this size. There is no single "on-accent" colour that works across the
+   set, so a filled button would need a per-app exception and would eventually
+   get one wrong.
+
+   Accent AS TEXT on this background needs no exception: it measures 4.55:1
+   (violet) to 9.97:1 (green), all passing AA. It is also what the portfolio
+   already does — .available-badge, .social-link:hover, .tab.active are all
+   accent-on-tint, and there is not one filled button on abdash.net.
+
+   Primary and secondary are therefore separated by the WEIGHT of the tint, not
+   by inverting the text. */
 .labs-btn {
   display: inline-flex;
   align-items: center;
@@ -200,10 +236,11 @@ code, pre, kbd, samp { font-family: var(--font-mono); font-size: 0.875em; }
   gap: var(--space-xs);
   padding: var(--space-xs) var(--space-md);
   border-radius: var(--radius-control);
-  border: 1px solid var(--accent-border);
-  background: var(--accent-glow);
-  color: var(--accent);
-  font: 500 var(--step--1) / 1 var(--font-body);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--white);
+  font: 500 var(--step--1) / 1.2 var(--font-body);
+  text-decoration: none;
   cursor: pointer;
   transition:
     background var(--duration-fast) var(--ease-smooth),
@@ -212,24 +249,51 @@ code, pre, kbd, samp { font-family: var(--font-mono); font-size: 0.875em; }
     transform var(--duration-fast) var(--ease-out-quart);
 }
 .labs-btn:hover:not(:disabled) {
-  background: var(--accent-soft);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--accent-border);
   color: #fff;
   transform: translateY(-1px);
 }
 .labs-btn:active:not(:disabled) { transform: translateY(0); }
-.labs-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.labs-btn:disabled { opacity: 0.42; cursor: not-allowed; transform: none; }
 
-/* Not every button is primary. */
-.labs-btn--quiet {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.08);
+/* The one action a screen most wants you to take. */
+.labs-btn--primary {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+.labs-btn--primary:hover:not(:disabled) {
+  background: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.24);
+  border-color: var(--accent-muted);
+  color: var(--accent);
+  box-shadow: 0 0 20px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.12);
+}
+
+/* Reads as prose, not furniture. */
+.labs-btn--ghost {
+  border-color: transparent;
+  background: transparent;
   color: var(--silver);
 }
-.labs-btn--quiet:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: var(--accent-border);
+.labs-btn--ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
   color: #fff;
 }
+
+.labs-btn--danger {
+  border-color: rgba(248, 81, 73, 0.32);
+  background: rgba(248, 81, 73, 0.08);
+  color: var(--bad);
+}
+.labs-btn--danger:hover:not(:disabled) {
+  background: rgba(248, 81, 73, 0.16);
+  border-color: rgba(248, 81, 73, 0.5);
+  color: var(--bad);
+}
+
+.labs-btn--sm { padding: 5px 10px; font-size: var(--step--2); }
 
 .labs-input,
 .labs-select,

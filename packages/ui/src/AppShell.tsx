@@ -14,6 +14,7 @@
 import { useEffect, type ReactNode } from 'react'
 import { ACCENTS, applyAccent, type AppName } from './accents'
 import { Byline } from './Byline'
+import { DevBanner } from './DevBanner'
 import { Starfield } from './Starfield'
 
 export interface AppShellProps {
@@ -37,6 +38,7 @@ export function AppShell({ app, children, starfield = true, density }: AppShellP
   return (
     <>
       {starfield && <Starfield rgb={ACCENTS[app]} density={density} />}
+      <DevBanner />
       <div className="labs-above labs-fade">{children}</div>
       <Byline app={app} />
     </>

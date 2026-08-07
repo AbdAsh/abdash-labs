@@ -419,47 +419,59 @@ button {
   font: inherit;
 }
 
+/* The house button system — same declarations as .labs-btn in @labs/ui, under
+   the class names this app already uses. See theme.css for why no button on
+   this origin is a solid block of accent: white on this teal measures 2.17:1. */
 .btn {
-  border: 1px solid var(--line-strong);
-  border-radius: 8px;
-  background: var(--panel);
-  color: var(--ink);
-  padding: 0.42rem 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: var(--radius-control);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--white);
+  padding: 0.45rem 0.85rem;
   cursor: pointer;
-  font-size: 0.87rem;
+  font: 500 0.87rem/1.2 var(--font-body);
+  transition:
+    background var(--duration-fast) var(--ease-smooth),
+    border-color var(--duration-fast) var(--ease-smooth),
+    color var(--duration-fast) var(--ease-smooth),
+    transform var(--duration-fast) var(--ease-out-quart);
 }
 
 .btn:hover:not(:disabled),
 .btn:focus-visible {
-  border-color: var(--accent);
-  color: var(--accent);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--accent-border);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.42;
   cursor: not-allowed;
+  transform: none;
 }
 
 .btn-primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .btn-primary:hover:not(:disabled),
 .btn-primary:focus-visible {
-  color: #fff;
-  filter: brightness(1.08);
-}
-
-@media (prefers-color-scheme: dark) {
-  .btn-primary {
-    color: rgba(0, 0, 0, 0.22);
-  }
-  .btn-primary:hover:not(:disabled),
-  .btn-primary:focus-visible {
-    color: rgba(0, 0, 0, 0.22);
-  }
+  background: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.24);
+  border-color: var(--accent-muted);
+  color: var(--accent);
+  box-shadow: 0 0 20px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.12);
 }
 
 :focus-visible {

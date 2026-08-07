@@ -34,18 +34,28 @@ const CSS = `
   font: 400 .75rem/1.4 var(--font-body, ui-sans-serif, system-ui, sans-serif);
   letter-spacing: .01em;
   color: var(--silver, #a0a4a8);
-  background: rgba(13, 27, 42, .55);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+
+  /* Opaque, not tinted glass. This is a fixed element sitting on top of
+     scrolling content, and at 55% the page text underneath read straight
+     through it — two overlapping sentences competing in the same 20 pixels.
+     A backdrop-filter does not save it either: blurring text you can still see
+     is not the same as not seeing it. So: solid.
+
+     The colour is --darker rather than the panel tint, so the strip reads as
+     part of the page furniture rather than a floating card. */
+  background: #0a1421;
   border-start-start-radius: .75rem;
   border-block-start: 1px solid var(--accent-border, rgba(255, 255, 255, .1));
   border-inline-start: 1px solid var(--accent-border, rgba(255, 255, 255, .1));
-  opacity: .62;
-  transform: translateY(0);
-  transition: opacity .24s cubic-bezier(.4,0,.2,1), border-color .8s ease;
+  box-shadow: -6px -6px 20px rgba(7, 15, 24, .55);
+
+  /* Dimmed rather than transparent — the text stays fully opaque against its
+     own solid background, so nothing shows through at rest. */
+  color-scheme: dark;
+  transition: color .24s cubic-bezier(.4,0,.2,1), border-color .8s ease;
 }
 .labs-byline:hover,
-.labs-byline:focus-within { opacity: 1; }
+.labs-byline:focus-within { color: var(--white, #e8edf2); }
 
 .labs-byline a {
   color: inherit;
@@ -72,7 +82,7 @@ const CSS = `
 `
 
 export interface BylineProps {
-  /** This app's name, so "all seven demos" reads as a way out rather than a repeat. */
+  /** Present when the byline is inside an app, which changes what the exit says. */
   app?: string
 }
 
@@ -97,7 +107,11 @@ export function Byline({ app }: BylineProps) {
         <span className="labs-byline__sep" aria-hidden="true">
           ·
         </span>
-        <a href={LABS}>{app ? 'All seven demos' : 'abdash labs'}</a>
+        {/* Inside an app this is a way out, so it says where it goes. It used to
+            read "All seven demos", which described a set rather than an action
+            and had also quietly gone stale — the labs host six, and the seventh
+            lives on abdash.net. */}
+        <a href={LABS}>{app ? 'Back to labs' : 'abdash labs'}</a>
       </footer>
     </>
   )

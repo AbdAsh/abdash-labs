@@ -19,6 +19,7 @@
     <meta property="og:url" content="https://labs.abdash.net/" />
     <meta property="og:type" content="website" />
 
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -233,9 +234,49 @@
         }
         .card { opacity: 1; transform: none }
       }
+
+      /* Matches DevBanner in @labs/ui. Sticky and in flow, not fixed, so it
+         never overlaps what is under it. */
+      .devbar {
+        position: sticky;
+        inset-block-start: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        height: 32px;
+        padding-inline: .75rem;
+        font: 500 .72rem/1 var(--font-body);
+        color: var(--silver);
+        background: #0a1421;
+        border-bottom: 1px solid var(--accent-border);
+        transition: border-color var(--color-shift);
+      }
+      .devbar__dot {
+        width: 6px; height: 6px; border-radius: 50%; flex: none;
+        background: var(--accent);
+        animation: pulse 2s ease-in-out infinite;
+      }
+      .devbar__label {
+        color: var(--accent);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        font-size: .66rem;
+        transition: color var(--color-shift);
+      }
+      .devbar a { color: inherit; text-decoration: underline; text-underline-offset: 2px }
+      .devbar a:hover { color: var(--white) }
+      @media (max-width: 40rem) { .devbar__long { display: none } }
     </style>
   </head>
   <body>
+    <div class="devbar" role="status">
+      <span class="devbar__dot" aria-hidden="true"></span>
+      <span class="devbar__label">In development</span>
+      <span class="devbar__long">Live demos, actively being built &mdash; things may change or briefly break. <a href="https://github.com/AbdAsh/abdash-labs">Source</a></span>
+    </div>
     <canvas id="starfield" aria-hidden="true"></canvas>
 
     <main>

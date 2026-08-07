@@ -21,11 +21,16 @@ body {
   font: 15px/1.55 var(--font-body);
 }
 
+/* The house button system — same declarations as .labs-btn in @labs/ui. */
 button {
-  font: inherit;
-  color: inherit;
-  background: var(--bg-raised);
-  border: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font: 500 var(--step--1)/1.2 var(--font-body);
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: var(--radius-control);
   padding: 0.4rem 0.75rem;
   cursor: pointer;
@@ -35,9 +40,10 @@ button {
     transform var(--duration-fast) var(--ease-out-quart);
 }
 
-button:hover {
+button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.07);
   border-color: var(--accent-border);
-  background: var(--accent-glow);
+  color: #fff;
   transform: translateY(-1px);
 }
 
@@ -57,7 +63,7 @@ button:active {
 .app {
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  min-height: calc(100dvh - var(--labs-banner-h));
 }
 
 .app-head {
@@ -98,17 +104,28 @@ button:active {
   align-items: center;
 }
 
+/* Opening a document is the whole point of the app, so it is the primary. */
 .file-button {
-  display: inline-block;
-  padding: 0.4rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  background: var(--bg-raised);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.85rem;
+  font: 600 var(--step--1)/1.2 var(--font-body);
+  color: var(--accent);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-control);
+  background: var(--accent-soft);
   cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease-smooth),
+    border-color var(--duration-fast) var(--ease-smooth),
+    transform var(--duration-fast) var(--ease-out-quart);
 }
 
 .file-button:hover {
-  border-color: var(--accent);
+  background: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.24);
+  border-color: var(--accent-muted);
+  transform: translateY(-1px);
 }
 
 .file-button input {
@@ -309,7 +326,7 @@ button:disabled:hover {
   border-left: 1px solid var(--border);
   background: var(--bg-raised);
   overflow-y: auto;
-  max-height: calc(100dvh - 8rem);
+  max-height: calc(100dvh - 8rem - var(--labs-banner-h));
 }
 
 .panel-head {

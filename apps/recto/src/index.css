@@ -152,7 +152,7 @@ button:focus-visible {
      to the edges the radius is clipped away and the glass stops looking like a
      panel at all — it just looks like the page is dark. */
   margin: var(--space-sm);
-  min-block-size: calc(100dvh - 2.5rem - (var(--space-sm) * 2));
+  min-block-size: calc(100dvh - 2.5rem - (var(--space-sm) * 2) - var(--labs-banner-h));
   overflow: hidden;
   background: var(--paper);
   backdrop-filter: blur(10px);
@@ -176,7 +176,7 @@ button:focus-visible {
   border-inline-start: 3px double var(--rule);
   background: var(--paper-sunk);
   overflow-y: auto;
-  max-block-size: calc(100dvh - 2.5rem);
+  max-block-size: calc(100dvh - 2.5rem - var(--labs-banner-h));
   position: sticky;
   inset-block-start: 0;
 }
@@ -328,16 +328,26 @@ button:focus-visible {
   inline-size: 100%;
 }
 
+/* Recto's buttons speak the house colour language and keep the house's square
+   corners. Inside the spread this is still print, so nothing here is a pill —
+   the palette is shared, the shape is not. */
 .action {
   align-self: start;
   font-size: var(--step--1);
   padding-block: 0.35rem;
-  padding-inline: 0.6rem;
-  border: 1px solid var(--rule-strong);
+  padding-inline: 0.7rem;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--rule);
+  transition: background var(--duration-fast) var(--ease-smooth),
+              border-color var(--duration-fast) var(--ease-smooth),
+              color var(--duration-fast) var(--ease-smooth);
 }
 
 .action:hover:not(:disabled) {
-  border-color: var(--ink);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--accent-border);
+  color: #fff;
 }
 
 .action:disabled {
@@ -481,8 +491,14 @@ button:focus-visible {
   gap: 2rem;
 }
 
+/* Centred within the page rather than jammed against the gutter. The measure
+   is a reading constraint, not an alignment: left-aligned at 34rem on a 1440px
+   spread it left roughly a third of the recto page empty on the outer edge,
+   which reads as a broken layout rather than a margin. `margin-inline` keeps
+   the file's no-physical-direction rule intact, so RTL still mirrors. */
 .opening {
   max-inline-size: var(--measure);
+  margin-inline: auto;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -518,6 +534,7 @@ button:focus-visible {
 
 .turn {
   max-inline-size: var(--measure);
+  margin-inline: auto;
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
@@ -690,11 +707,15 @@ button:focus-visible {
   border-block-start: 1px solid var(--rule-strong);
 }
 
+/* Sits under the text block it belongs to, at the same measure and centring. */
 .composer {
   display: flex;
   gap: 0.5rem;
   padding-block: 0.85rem;
   padding-inline: clamp(1rem, 4vw, 2.5rem);
+  max-inline-size: calc(var(--measure) + 9rem);
+  margin-inline: auto;
+  inline-size: 100%;
 }
 
 .composer input {
@@ -705,14 +726,25 @@ button:focus-visible {
 
 .composer button[type='submit'] {
   flex: none;
-  border: 1px solid var(--ink);
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
   padding-block: 0.4rem;
   padding-inline: 1rem;
   font-size: var(--step--1);
+  transition: background var(--duration-fast) var(--ease-smooth),
+              border-color var(--duration-fast) var(--ease-smooth);
+}
+
+.composer button[type='submit']:hover:not(:disabled) {
+  background: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.24);
+  border-color: var(--accent-muted);
 }
 
 .composer button[type='submit']:disabled {
-  border-color: var(--rule-strong);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--rule);
   color: var(--ink-faint);
   cursor: not-allowed;
 }
@@ -722,6 +754,9 @@ button:focus-visible {
 .allowance {
   padding-block-end: 0.65rem;
   padding-inline: clamp(1rem, 4vw, 2.5rem);
+  max-inline-size: calc(var(--measure) + 9rem);
+  margin-inline: auto;
+  inline-size: 100%;
   font-size: var(--step--2);
   color: var(--ink-faint);
   font-variant-numeric: tabular-nums;
@@ -740,6 +775,18 @@ button:focus-visible {
   font-size: var(--step--2);
   color: var(--ink-faint);
   min-block-size: 2.5rem;
+}
+
+/* The byline is a fixed strip in the bottom corner and this is the only surface
+   on the origin whose own content reaches that corner. Reserving the width
+   stops the last clause of the provenance line from being covered — it is
+   opaque now, so what used to be two sentences fighting became one sentence
+   hidden, which is quieter but no more readable. Only above the width where the
+   byline still shows all three of its links. */
+@media (min-width: 46rem) {
+  .colophon {
+    padding-inline-end: 23rem;
+  }
 }
 
 .link {
@@ -762,7 +809,7 @@ button:focus-visible {
   --band: 2.5rem;
   display: flex;
   flex-direction: column;
-  block-size: 100dvh;
+  block-size: calc(100dvh - var(--labs-banner-h));
 }
 
 .exhibit-frame > .exhibit,
@@ -824,12 +871,14 @@ button:focus-visible {
   font-weight: 600;
   padding-block: 0.25rem;
   padding-inline: 0.7rem;
-  color: var(--paper);
-  background: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
 }
 
 .exhibit__leave:hover {
-  background: var(--ink);
+  background: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.24);
+  border-color: var(--accent-muted);
 }
 
 /* Where the dropzone would be: what these documents are, and how to get them. */
@@ -876,12 +925,16 @@ button:focus-visible {
   font-weight: 600;
   padding-block: 0.4rem;
   padding-inline: 1rem;
-  border: 1px solid var(--ink);
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  transition: background var(--duration-fast) var(--ease-smooth),
+              border-color var(--duration-fast) var(--ease-smooth);
 }
 
 .exhibit-dock__cta:hover {
-  color: var(--paper);
-  background: var(--ink);
+  background: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.24);
+  border-color: var(--accent-muted);
 }
 
 .colophon code {
@@ -896,7 +949,7 @@ button:focus-visible {
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  min-block-size: 100dvh;
+  min-block-size: calc(100dvh - var(--labs-banner-h));
   color: var(--ink-soft);
 }
 
@@ -931,7 +984,7 @@ button:focus-visible {
     inset-block: 0;
     inset-inline-start: 0;
     inline-size: min(90vw, 21rem);
-    max-block-size: 100dvh;
+    max-block-size: calc(100dvh - var(--labs-banner-h));
     border-inline-start: 0;
     border-inline-end: 3px double var(--rule-strong);
     translate: var(--drawer-hidden) 0;

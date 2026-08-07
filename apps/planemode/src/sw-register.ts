@@ -65,5 +65,49 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
     return null
   }
 
+  takeUpdatesImmediately(container, registration)
   return registration
+}
+
+/**
+ * Lets a new build replace the running one on the next load.
+ *
+ * Without this a returning visitor keeps the previously cached shell until they
+ * close every PlaneMode tab, because that is when a waiting worker is allowed
+ * to activate. It is the default, and for most offline apps it is the safe
+ * default — but here it means a visitor who saw this page once is pinned to
+ * whatever it looked like that day. That is not theoretical: an entire restyle
+ * shipped and this app kept serving the old stylesheet, which cost real time to
+ * diagnose because the served bundle and the built bundle disagreed.
+ *
+ * The generated worker already listens for SKIP_WAITING; nothing was sending it.
+ *
+ * `reloaded` guards the one real hazard here. `controllerchange` also fires on
+ * the very first registration, and reloading on that would be an infinite loop.
+ * Reloading is limited to the case where a controller was already in place —
+ * an update, not an install — and to once per page.
+ */
+function takeUpdatesImmediately(
+  container: Partial<ServiceWorkerContainer>,
+  registration: ServiceWorkerRegistration,
+): void {
+  const prompt = (worker: ServiceWorker | null) => {
+    if (worker?.state === 'installed' && container.controller) {
+      worker.postMessage({ type: 'SKIP_WAITING' })
+    }
+  }
+
+  prompt(registration.waiting)
+
+  registration.addEventListener?.('updatefound', () => {
+    const installing = registration.installing
+    installing?.addEventListener('statechange', () => prompt(installing))
+  })
+
+  let reloaded = false
+  container.addEventListener?.('controllerchange', () => {
+    if (reloaded) return
+    reloaded = true
+    globalThis.location?.reload()
+  })
 }
