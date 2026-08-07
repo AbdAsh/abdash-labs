@@ -18,7 +18,7 @@ import { useId } from 'react'
 
 const HOME = 'https://abdash.net'
 const SOURCE = 'https://github.com/AbdAsh/abdash-labs'
-const LABS = 'https://labs.abdash.net/'
+const LABS = 'https://abdash.net/?tab=ai'
 
 const CSS = `
 .labs-byline {
@@ -107,10 +107,9 @@ export function Byline({ app }: BylineProps) {
         <span className="labs-byline__sep" aria-hidden="true">
           ·
         </span>
-        {/* Inside an app this is a way out, so it says where it goes. It used to
-            read "All seven demos", which described a set rather than an action
-            and had also quietly gone stale — the labs host six, and the seventh
-            lives on abdash.net. */}
+        {/* Inside an app this is a way out, so it says where it goes. It points
+            straight at the AI tab rather than at labs.abdash.net, which now only
+            redirects there — no reason to make the visitor take two hops. */}
         <a href={LABS}>{app ? 'Back to labs' : 'abdash labs'}</a>
       </footer>
     </>

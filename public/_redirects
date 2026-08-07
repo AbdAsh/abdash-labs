@@ -1,3 +1,14 @@
+# The labs have no home page of their own any more. The AI tab on the portfolio
+# IS the index for them — it lists all six with live links — and maintaining a
+# second landing page that says the same thing in a different voice was two
+# places to update and one of them was always going to go stale.
+#
+# 302 rather than 301 on purpose: a permanent redirect is cached hard by
+# browsers and would be painful to walk back if a real labs landing page is
+# ever wanted again. Absolute targets are allowed here because this is a real
+# redirect, not a 200 proxy.
+/    https://abdash.net/?tab=ai    302
+
 # Critiq is the only app on this origin that routes on the path. The other five
 # put their state in the query string (?run=, ?g=, ?mode=), so their URLs are
 # always a real directory and the asset server resolves them with no help.
