@@ -13,6 +13,7 @@
     "@labs/platform": "*",
     "react": "^19.2.7",
     "react-dom": "^19.2.3",
-    "react-force-graph-2d": "^1.29.1"
+    "react-force-graph-2d": "^1.29.1",
+    "@labs/ui": "*"
   }
 }

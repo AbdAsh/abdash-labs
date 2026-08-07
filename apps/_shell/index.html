@@ -1,16 +1,74 @@
 <!doctype html>
 <meta charset="utf-8">
-<title>abdash labs</title>
+<title>abdash labs — seven AI demos by Abdulrahman Mahmutoglu</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<main style="font: 16px/1.6 system-ui; max-width: 40rem; margin: 4rem auto; padding: 0 1rem">
+<meta name="description" content="Seven applied-AI applications sharing one account: retrieval, realtime voice, code generation, evaluation, structured extraction and on-device inference. Built by Abdulrahman Mahmutoglu.">
+<meta name="author" content="Abdulrahman Mahmutoglu">
+<link rel="canonical" href="https://labs.abdash.net/">
+<meta property="og:title" content="abdash labs — seven AI demos">
+<meta property="og:description" content="Every one opens on a finished example. No signup, nothing to prepare.">
+<meta property="og:url" content="https://labs.abdash.net/">
+<meta property="og:type" content="website">
+<style>
+  :root { color-scheme: light dark; --fg:#111827; --muted:#6b7280; --line:rgba(0,0,0,.1); --bg:#fff; --card:rgba(0,0,0,.02); }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg:#e9eaee; --muted:#9ca3af; --line:rgba(255,255,255,.12); --bg:#0e0f13; --card:rgba(255,255,255,.03); }
+  }
+  * { box-sizing: border-box }
+  body { margin:0; background:var(--bg); color:var(--fg);
+    font:16px/1.65 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; }
+  main { max-width:46rem; margin:0 auto; padding:4rem 1.25rem 6rem }
+  h1 { font-size:1.5rem; letter-spacing:-.01em; margin:0 0 .35rem }
+  .lede { color:var(--muted); margin:0 0 .4rem }
+  .by { color:var(--muted); font-size:.9rem; margin:0 0 2.5rem }
+  .by a { color:inherit }
+  h2 { font-size:.75rem; text-transform:uppercase; letter-spacing:.08em;
+    color:var(--muted); font-weight:600; margin:2.5rem 0 .85rem }
+  ul { list-style:none; margin:0; padding:0; display:grid; gap:.5rem }
+  li a { display:block; padding:.85rem 1rem; border:1px solid var(--line);
+    border-radius:.55rem; background:var(--card); color:inherit; text-decoration:none }
+  li a:hover, li a:focus-visible { border-color:currentColor }
+  .name { font-weight:600 }
+  .what { color:var(--muted); font-size:.9rem; display:block; margin-top:.15rem }
+  footer { margin-top:3.5rem; padding-top:1.25rem; border-top:1px solid var(--line);
+    color:var(--muted); font-size:.85rem }
+  footer a { color:inherit }
+</style>
+<main>
   <h1>abdash labs</h1>
-  <p>Seven AI demos sharing one account.</p>
+  <p class="lede">Seven AI applications sharing one account, one database and one deploy.</p>
+  <p class="by">
+    Built by <a href="https://abdash.net">Abdulrahman Mahmutoglu</a> ·
+    <a href="https://github.com/AbdAsh/abdash-labs">Source</a>
+  </p>
+
+  <p>
+    Each one proves a different thing about applied AI engineering, and each opens on a
+    <strong>finished example</strong> — real captured output, instant, no signup and nothing
+    to prepare. The live tool is always one click further in.
+  </p>
+
+  <h2>The seven</h2>
   <ul>
-    <li><a href="/recto/">Recto</a> — multi-document notebooks with citations</li>
-    <li><a href="/asksheet/">AskSheet</a> — ask your spreadsheet, in your browser</li>
-    <li><a href="/critiq/">Critiq</a> — SEO and answer-engine review</li>
-    <li><a href="/raglab/">RAG Lab</a> — retrieval benchmarks, not vibes</li>
-    <li><a href="/graphread/">GraphRead</a> — see the shape of a document</li>
-    <li><a href="/planemode/">PlaneMode</a> — AI that works in airplane mode</li>
+    <li><a href="/recto/"><span class="name">Recto</span>
+      <span class="what">Multi-document notebooks where every answer names which document it came from.</span></a></li>
+    <li><a href="/asksheet/"><span class="name">AskSheet</span>
+      <span class="what">Ask a spreadsheet in English. The data never leaves your browser — check the network tab.</span></a></li>
+    <li><a href="/critiq/"><span class="name">Critiq</span>
+      <span class="what">SEO and answer-engine review of any URL. The self-audit of abdash.net is not flattering.</span></a></li>
+    <li><a href="/raglab/"><span class="name">RAG Lab</span>
+      <span class="what">Which chunking actually wins? Benchmarks, not vibes — and the expensive model lost.</span></a></li>
+    <li><a href="/graphread/"><span class="name">GraphRead</span>
+      <span class="what">A document as an entity graph. Click any edge for the sentence that justified it.</span></a></li>
+    <li><a href="/planemode/"><span class="name">PlaneMode</span>
+      <span class="what">A language model running entirely in your browser. Turn on airplane mode and keep going.</span></a></li>
+    <li><a href="https://abdash.net"><span class="name">Concierge ↗</span>
+      <span class="what">A voice agent that has read the CV, embedded on the portfolio. Interrupt it mid-sentence.</span></a></li>
   </ul>
+
+  <footer>
+    One anonymous account works across all of them, created on first paint and never asked for.
+    Isolation between visitors is enforced by Postgres row-level security and verified by
+    cross-user tests, not asserted. <a href="https://github.com/AbdAsh/abdash-labs">Read the source</a>.
+  </footer>
 </main>

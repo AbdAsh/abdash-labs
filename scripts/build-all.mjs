@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process'
-import { mkdirSync, cpSync, existsSync, readdirSync } from 'node:fs'
+import { mkdirSync, cpSync, existsSync, readdirSync, rmSync } from 'node:fs'
 
 // Directories starting with `_` are not apps: `_shell` is the origin landing page
 // and `_probe-*` are throwaway harnesses. Everything else in apps/ builds.

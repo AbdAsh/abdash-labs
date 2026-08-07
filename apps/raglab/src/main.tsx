@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { Byline } from '@labs/ui'
 import { App } from './App'
 import './app.css'
 
@@ -18,6 +19,9 @@ if (!root) throw new Error('#root is missing from index.html')
  */
 createRoot(root).render(
   <StrictMode>
-    <App />
+    <>
+      <App />
+      <Byline app="RAG Lab" />
+    </>
   </StrictMode>,
 )

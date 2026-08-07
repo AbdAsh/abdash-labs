@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { Byline } from '@labs/ui'
 import App from './App'
 import { registerServiceWorker } from './sw-register'
 import './styles.css'
@@ -11,7 +12,10 @@ if (!container) throw new Error('Missing #root')
 // shares an origin with six apps that do have a session; it must never read it.
 createRoot(container).render(
   <StrictMode>
-    <App />
+    <>
+      <App />
+      <Byline app="PlaneMode" />
+    </>
   </StrictMode>,
 )
 

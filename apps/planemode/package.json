@@ -12,7 +12,8 @@
     "@mlc-ai/web-llm": "0.2.84",
     "idb": "^8.0.3",
     "react": "^19.2.8",
-    "react-dom": "^19.2.3"
+    "react-dom": "^19.2.3",
+    "@labs/ui": "*"
   },
   "devDependencies": {
     "@types/react": "^19.2.17",

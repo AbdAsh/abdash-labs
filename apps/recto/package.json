@@ -13,6 +13,7 @@
     "@labs/doc-core": "*",
     "@labs/platform": "*",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "@labs/ui": "*"
   }
 }

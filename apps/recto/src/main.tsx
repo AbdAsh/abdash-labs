@@ -1,5 +1,6 @@
 import { StrictMode, useState } from 'react'
 import { createRoot } from 'react-dom/client'
+import { Byline } from '@labs/ui'
 import { AuthGate } from '@labs/platform'
 import App from './App'
 import { ExampleApp } from './example/ExampleApp'
@@ -37,6 +38,9 @@ if (!root) throw new Error('index.html is missing #root')
 
 createRoot(root).render(
   <StrictMode>
-    <Root />
+    <>
+      <Root />
+      <Byline app="Recto" />
+    </>
   </StrictMode>,
 )

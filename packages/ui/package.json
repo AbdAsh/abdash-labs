@@ -1,0 +1,7 @@
+{
+  "name": "@labs/ui",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "peerDependencies": { "react": "^19.2.7" }
+}
